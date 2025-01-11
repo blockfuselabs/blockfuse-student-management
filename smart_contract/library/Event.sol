@@ -10,4 +10,5 @@ library Event {
     event AssessmentRecorded(address studentAddress, int studentScoreAdded, int totalScore, uint time, address instructorAddress);
     event AdminAdded(address adminAdded);
     event AdminRemoved(address adminRemove);
+    event AttendanceRegistered(uint256 cohortId, address indexed student, uint256 date, bool present);
 }

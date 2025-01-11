@@ -33,12 +33,18 @@ contract BlockFuseSMS {
         mapping(Track => address[]) studentsByTrack;
     }
 
+    struct AttendanceRecord {
+        uint256 date; 
+        bool present; 
+    }
+
     uint8 public cohortCount = 1; // Counter for cohort IDs (initialized as 1, so that it will start from cohort 2)
     mapping(uint8 => Cohort) public cohorts; // Mapping of cohort ID to Cohort details
     mapping(address => string) public usernames;
     mapping(address => studentDetails) student;
     mapping(address => int[] ) public studentScore;
     mapping(address => bool) admins;
+    mapping(uint256 => mapping(address => AttendanceRecord[])) private attendanceRecords; 
     address public superAdmin;
 
     constructor () {
@@ -67,6 +73,12 @@ contract BlockFuseSMS {
 
     modifier studentExist(address _studentWalletAddress){
         require(_studentWalletAddress != address(0) && student[_studentWalletAddress].isActive == true, Error.STUDENT_DOES_NOT_EXIST());
+        _;
+    }
+
+    // Modifier to ensure student is active
+    modifier onlyActiveStudent(address _student) {
+        require(student[_student].isActive, Error.STUDENT_IS_NOT_ACTIVE());
         _;
     }
 
@@ -120,6 +132,26 @@ contract BlockFuseSMS {
         int score = student[_studentWalletAddress].finalScore += _studentScore;
         emit Event.AssessmentRecorded(_studentWalletAddress, _studentScore,score,block.timestamp , msg.sender);
         return true;
+
+    }
+
+    // Register attendance for a specific student
+    function registerAttendance(
+        address _student,
+        uint256 _date,
+        bool _present
+    ) external {
+        studentDetails storage student = student[_student];
+        uint256 cohortId = student.cohort;
+
+        AttendanceRecord memory record = AttendanceRecord({
+            date: _date,
+            present: _present
+        });
+
+        attendanceRecords[cohortId][_student].push(record);
+
+         emit Event.AttendanceRegistered(cohortId, _student, _date, _present);
 
     }
 
@@ -194,6 +226,14 @@ contract BlockFuseSMS {
         return studentScore[_studentWalletAddress][index];
     } 
 
+    // Get attendance records for a specific student
+    function getStudentAttendance(address _student) external view returns (AttendanceRecord[] memory) {
+        studentDetails storage student = student[_student];
+        uint256 cohortId = student.cohort;
+
+        return attendanceRecords[cohortId][_student];
+    }
+
     // =====================================================================================
     // =========================== HELPER FUNCTIONS ========================================
     // =====================================================================================
@@ -238,48 +278,4 @@ contract BlockFuseSMS {
     function testTrackToString(Track _track) public pure returns (string memory) {
         return trackToString(_track);
     }    // Attendance structure for storing attendance records
-    struct AttendanceRecord {
-        uint256 date; 
-        bool present; 
-     }
-
-    
-    mapping(uint256 => mapping(address => AttendanceRecord[])) private attendanceRecords; 
-
-    // Events
-    event AttendanceRegistered(uint256 cohortId, address indexed student, uint256 date, bool present);
-
-    // Modifier to ensure student is active
-    modifier onlyActiveStudent(address _student) {
-        require(student[_student].isActive, "Student is not active.");
-        _;
-    }
-
-    // Register attendance for a specific student
-    function registerAttendance(
-        address _student,
-        uint256 _date,
-        bool _present
-    ) external {
-        studentDetails storage student = student[_student];
-        uint256 cohortId = student.cohort;
-
-        AttendanceRecord memory record = AttendanceRecord({
-            date: _date,
-            present: _present
-        });
-
-        attendanceRecords[cohortId][_student].push(record);
-
-         emit AttendanceRegistered(cohortId, _student, _date, _present);
-
-    }
-
-    // Get attendance records for a specific student
-    function getStudentAttendance(address _student) external view returns (AttendanceRecord[] memory) {
-        studentDetails storage student = student[_student];
-        uint256 cohortId = student.cohort;
-
-        return attendanceRecords[cohortId][_student];
-    }
 }
