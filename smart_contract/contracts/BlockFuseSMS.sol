@@ -18,9 +18,10 @@ contract BlockFuseSMS {
         string linkedin;
         string github;
         Track track;
-        uint256 cohort;
+        uint8 cohort;
         bool isActive;
         int256 finalScore;
+        address studentAddress;
     }
 
     struct Cohort {
@@ -123,6 +124,42 @@ contract BlockFuseSMS {
 
     }
 
+    function registerStudent(
+        string memory _firstname,
+        string memory _lastname,
+        string memory _username,
+        string memory _twitter,
+        string memory _linkedin,
+        string memory _github,
+        Track _track,
+        uint8 _cohort,
+        address _studentAddress
+    ) external onlyAdmin {
+        studentDetails memory newStudent = studentDetails ({
+            firstname: _firstname,
+            lastname: _lastname,
+            username: _username,
+            twitter: _twitter,
+            linkedin: _linkedin,
+            github: _github,
+            track: _track,
+            cohort: _cohort,
+            isActive: true,
+            finalScore: 0,
+            studentAddress: _studentAddress
+        });
+
+        student[_studentAddress] = newStudent;
+        usernames[_studentAddress] = _username;
+
+        // Onboard student to a particular cohort 
+
+        addStudentToCohort(_cohort, _studentAddress, _track);
+
+        emit Event.StudentAddedToCohort(_studentAddress, _username, _cohort);
+
+    }
+
     // =====================================================================================
     // =========================== GETTER FUNCTIONS ========================================
     // =====================================================================================
@@ -205,6 +242,7 @@ contract BlockFuseSMS {
             return "web3";
         }
     }
+    
 
     function addStudentToCohort(
         uint8 _cohortId, 
