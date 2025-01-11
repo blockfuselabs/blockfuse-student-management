@@ -7,7 +7,21 @@ pragma solidity ^0.8.28;
 contract BlockFuseSMS {
 
     enum Track { web2, web3 }
+    event AssessmentRecorded(address studentAddress, int studentScoreAdded, int totalScore, uint time, address instructorAddress);
+    event AddAdmin(address adminAdded);
+    event RemoveAdmin(address adminRemove);
+    modifier onlyAdmin{
+        require(admins[msg.sender], "Unauthorized access");
+        _;
+    }
 
+    modifier studentExist(address _studentWalletAddress){
+        require(_studentWalletAddress != address(0), "Wallet Address can not be address zero");
+        require(student[_studentWalletAddress].isActive == true, "Student does not exist");
+        _;
+    }
+   
+address superAdmin;
     struct studentDetails {
         string firstname;
         string lastname;
@@ -18,7 +32,7 @@ contract BlockFuseSMS {
         Track track;
         uint256 cohort;
         bool isActive;
-        uint256 finalScore;
+        int finalScore;
     }
 
     struct cohort {
@@ -33,6 +47,52 @@ contract BlockFuseSMS {
 
 
     mapping(address => studentDetails) student;
+    mapping(address => int[] ) public studentScore;
+    mapping(address => bool) admins;
 
+    constructor () {
+        superAdmin = msg.sender;
+        admins[superAdmin] = true;
+    }
+
+function addAdmin( address adminAddress) external returns(bool) {
+    require(msg.sender == superAdmin, "Unauthories access");
+    admins[adminAddress] = true;
+    emit AddAdmin(adminAddress);
+    return true;
+}
+
+function  removeAdmin(address adminAddress) external returns (bool){
+    require(msg.sender == superAdmin, "Unauthories access");
+    admins[adminAddress] = false;
+    emit RemoveAdmin(adminAddress);
+    return true;
+    
+}
+function recordStudentAssesment(address _studentWalletAddress, int _studentScore) external onlyAdmin studentExist(_studentWalletAddress) returns(bool){
+// Todo: check if the cohort that the student belongs to is still in session
+studentScore[_studentWalletAddress].push(_studentScore);
+int score = student[_studentWalletAddress].finalScore += _studentScore;
+emit AssessmentRecorded(_studentWalletAddress, _studentScore,score,block.timestamp , msg.sender);
+return true;
+
+}
+
+function getStudentAssesments(address _studentWalletAddress) external studentExist(_studentWalletAddress) view returns(int[] memory)
+{
+return studentScore[_studentWalletAddress];
+}
+
+function getStudentFinalScore(address _studentWalletAddress) external studentExist(_studentWalletAddress) view returns(int)
+{
+return student[_studentWalletAddress].finalScore;
+}
+
+function getStudentScoreByIndex(address _studentWalletAddress, uint index) external studentExist(_studentWalletAddress) view returns(int){
+require(studentScore[_studentWalletAddress].length > 0, "Student not yet Scored");
+require(index < studentScore[_studentWalletAddress].length , "Index out of range");
+
+return studentScore[_studentWalletAddress][index];
+}
 
 }
