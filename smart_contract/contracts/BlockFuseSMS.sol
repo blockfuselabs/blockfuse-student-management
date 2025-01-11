@@ -15,13 +15,16 @@ contract BlockFuseSMS {
         _;
     }
 
+      modifier onlySuperAdmin{
+         require(msg.sender == superAdmin, "Unauthories access");
+         _;
+    }
+
     modifier studentExist(address _studentWalletAddress){
-        require(_studentWalletAddress != address(0), "Wallet Address can not be address zero");
-        require(student[_studentWalletAddress].isActive == true, "Student does not exist");
+        require(_studentWalletAddress != address(0) && student[_studentWalletAddress].isActive == true, "Student does not exist");
         _;
     }
-   
-address superAdmin;
+
     struct studentDetails {
         string firstname;
         string lastname;
@@ -49,21 +52,20 @@ address superAdmin;
     mapping(address => studentDetails) student;
     mapping(address => int[] ) public studentScore;
     mapping(address => bool) admins;
+    address superAdmin;
 
     constructor () {
         superAdmin = msg.sender;
         admins[superAdmin] = true;
     }
 
-function addAdmin( address adminAddress) external returns(bool) {
-    require(msg.sender == superAdmin, "Unauthories access");
+function addAdmin( address adminAddress) external onlySuperAdmin returns(bool) {
     admins[adminAddress] = true;
     emit AddAdmin(adminAddress);
     return true;
 }
 
-function  removeAdmin(address adminAddress) external returns (bool){
-    require(msg.sender == superAdmin, "Unauthories access");
+function  removeAdmin(address adminAddress) external onlySuperAdmin returns (bool){
     admins[adminAddress] = false;
     emit RemoveAdmin(adminAddress);
     return true;
@@ -71,6 +73,7 @@ function  removeAdmin(address adminAddress) external returns (bool){
 }
 function recordStudentAssesment(address _studentWalletAddress, int _studentScore) external onlyAdmin studentExist(_studentWalletAddress) returns(bool){
 // Todo: check if the cohort that the student belongs to is still in session
+// The above Todo depends on uncle B implementation
 studentScore[_studentWalletAddress].push(_studentScore);
 int score = student[_studentWalletAddress].finalScore += _studentScore;
 emit AssessmentRecorded(_studentWalletAddress, _studentScore,score,block.timestamp , msg.sender);
