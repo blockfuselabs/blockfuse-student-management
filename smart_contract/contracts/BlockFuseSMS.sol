@@ -127,7 +127,6 @@ contract BlockFuseSMS {
     function registerStudent(
         string memory _firstname,
         string memory _lastname,
-        string memory _username,
         string memory _twitter,
         string memory _linkedin,
         string memory _github,
@@ -135,10 +134,13 @@ contract BlockFuseSMS {
         uint8 _cohort,
         address _studentAddress
     ) external onlyAdmin {
+
+        string memory usernameConstruct = string(abi.encodePacked(_firstname, " ", _lastname));
+
         studentDetails memory newStudent = studentDetails ({
             firstname: _firstname,
             lastname: _lastname,
-            username: _username,
+            username: usernameConstruct,
             twitter: _twitter,
             linkedin: _linkedin,
             github: _github,
@@ -150,13 +152,13 @@ contract BlockFuseSMS {
         });
 
         student[_studentAddress] = newStudent;
-        usernames[_studentAddress] = _username;
+        usernames[_studentAddress] = usernameConstruct;
 
         // Onboard student to a particular cohort 
 
         addStudentToCohort(_cohort, _studentAddress, _track);
 
-        emit Event.StudentAddedToCohort(_studentAddress, _username, _cohort);
+        emit Event.StudentAddedToCohort(_studentAddress, usernameConstruct, _cohort);
 
     }
 
