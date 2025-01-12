@@ -18,9 +18,10 @@ contract BlockFuseSMS {
         string linkedin;
         string github;
         Track track;
-        uint256 cohort;
+        uint8 cohort;
         bool isActive;
         int256 finalScore;
+        address studentAddress;
     }
 
     struct Cohort {
@@ -123,6 +124,44 @@ contract BlockFuseSMS {
 
     }
 
+    function registerStudent(
+        string memory _firstname,
+        string memory _lastname,
+        string memory _twitter,
+        string memory _linkedin,
+        string memory _github,
+        Track _track,
+        uint8 _cohort,
+        address _studentAddress
+    ) external onlyAdmin {
+
+        string memory usernameConstruct = string(abi.encodePacked(_firstname, " ", _lastname));
+
+        studentDetails memory newStudent = studentDetails ({
+            firstname: _firstname,
+            lastname: _lastname,
+            username: usernameConstruct,
+            twitter: _twitter,
+            linkedin: _linkedin,
+            github: _github,
+            track: _track,
+            cohort: _cohort,
+            isActive: true,
+            finalScore: 0,
+            studentAddress: _studentAddress
+        });
+
+        student[_studentAddress] = newStudent;
+        usernames[_studentAddress] = usernameConstruct;
+
+        // Onboard student to a particular cohort 
+
+        addStudentToCohort(_cohort, _studentAddress, _track);
+
+        emit Event.StudentAddedToCohort(_studentAddress, _cohort);
+
+    }
+
     // =====================================================================================
     // =========================== GETTER FUNCTIONS ========================================
     // =====================================================================================
@@ -194,6 +233,10 @@ contract BlockFuseSMS {
         return studentScore[_studentWalletAddress][index];
     } 
 
+    function getStudent(address _studentAddress) external view returns(studentDetails memory studentData) {
+        studentData = student[_studentAddress];
+    } 
+
     // =====================================================================================
     // =========================== HELPER FUNCTIONS ========================================
     // =====================================================================================
@@ -205,6 +248,7 @@ contract BlockFuseSMS {
             return "web3";
         }
     }
+    
 
     function addStudentToCohort(
         uint8 _cohortId, 
