@@ -20,154 +20,208 @@ import {
     describe("Test for recording student assesment", function () {
         it("Should record  a student score", async function () {
             const { BlockFuseSMS, superAdmin,addr1 } = await deployBlockFuseSMS();
+
+             // Create a cohort before onboarding a student
+
+             const startDate = Math.floor(Date.now() / 1000); // Current timestamp in seconds
+             const endDate = startDate + 30 * 24 * 60 * 60; // 30 days later
+     
+             // Create a cohort
+             await expect(BlockFuseSMS.connect(superAdmin).createCohort(startDate, endDate))
+                 .to.emit(BlockFuseSMS, "CohortCreated")
+                 .withArgs(2);
+     
+             // Add web3 track to the cohort
+             await expect(BlockFuseSMS.connect(superAdmin).addTrackToCohort(2, 1)) // 1 corresponds to Track.web3
+                 .to.emit(BlockFuseSMS, "CohortTrackAdded")
+                 .withArgs(2, "web3");
+     
+             // Add web2 track to the same cohort
+             await expect(BlockFuseSMS.connect(superAdmin).addTrackToCohort(2, 0)) // 0 corresponds to Track.web2
+                 .to.emit(BlockFuseSMS, "CohortTrackAdded")
+                 .withArgs(2, "web2");
+
+            const firstname = "GoldenVoice";
+            const lastname = "Yilkash";
+            const twitter = "https://www.twitter.com/dimkayilrit";
+            const linkedin = "https://www.linkedin.com/dimka";
+            const github = "https://www.github.com/dimka90";
+            const track = 0;
+            const cohortId = 2;
+
+            await expect(BlockFuseSMS.connect(superAdmin).registerStudent(
+                    firstname,
+                    lastname,
+                    twitter,
+                    linkedin,
+                    github,
+                    track,
+                    cohortId,
+                    addr1
+                )).to.emit(BlockFuseSMS, "StudentAddedToCohort").withArgs(
+                    addr1,
+                    cohortId
     
-            const studentScored = 20
-            
-    
-            // Create a cohort
-            await expect(BlockFuseSMS.connect(superAdmin).recordStudentAssesment(addr1, studentScored))
+                )
+            // Adding student scores
+            const firstAssesmentScore = 20
+            const tx = await BlockFuseSMS.connect(superAdmin).recordStudentAssesment(
+                addr1,
+                firstAssesmentScore
+                );
+            // Wait for the transaction receipt to get the block.timestamp
+            const receipt = await tx.wait();
+            const block = await hre.ethers.provider.getBlock(receipt.blockNumber);
+            await expect(tx)
                 .to.emit(BlockFuseSMS, "AssessmentRecorded")
-                .withArgs(2);
-    
-            // Verify the created cohort
+                .withArgs(addr1,
+                    firstAssesmentScore,
+                    firstAssesmentScore,
+                    block?.timestamp,
+                    superAdmin
+                );
+            
             const studentId = await BlockFuseSMS.student(addr1);
+            const studentAssessments = await BlockFuseSMS.getStudentAssesments(addr1);
+            const studentScoredByIndex = await BlockFuseSMS.getStudentScoreByIndex(addr1,0);
+            
+            expect(studentId.finalScore).to.equal(firstAssesmentScore);
+            expect(studentAssessments[0]).equal(firstAssesmentScore);
+            expect(studentScoredByIndex).equal(firstAssesmentScore)
 
-            expect(studentId.finalScore).to.equal(10);
-            // expect(cohort.startDate).to.equal(startDate);
-            // expect(cohort.endDate).to.equal(endDate);
-            // expect(cohort.duration).to.equal(endDate - startDate);
-        });
-
-        it("Should revert cohort create with error if msg.sender is not superAdmin", async function () {
-            const { BlockFuseSMS, superAdmin, otherAccount } = await loadFixture(deployBlockFuseSMS);
-    
-            const startDate = Math.floor(Date.now() / 1000); // Current timestamp in seconds
-            const endDate = startDate + 30 * 24 * 60 * 60; // 30 days later
-    
-            await expect(
-                BlockFuseSMS.connect(otherAccount).createCohort(startDate, endDate)
-            )
-                .to.be.revertedWithCustomError(BlockFuseSMS, "UNAUTHORIZED_ACCESS");
-        });
-
-        it("Should revert cohort create with error if startDate is greater than endDate", async function () {
-            const { BlockFuseSMS, superAdmin, otherAccount } = await loadFixture(deployBlockFuseSMS);
-    
-            const startDate = Math.floor(Date.now() / 1000); // Current timestamp in seconds
-            const endDate = startDate - 30 * 24 * 60 * 60; // 30 days later
-    
-            await expect(
-                BlockFuseSMS.connect(superAdmin).createCohort(startDate, endDate)
-            )
-                .to.be.revertedWithCustomError(BlockFuseSMS, "END_DATE_MUST_BE_GREATER_THAN_START");
-        });
-    });
-
-    describe("Test for adding Tracks to cohort", function() {
-        it("Should add tracks to an existing cohort", async function () {
-            const { BlockFuseSMS, superAdmin } = await deployBlockFuseSMS();
-    
-            const startDate = Math.floor(Date.now() / 1000); // Current timestamp in seconds
-            const endDate = startDate + 30 * 24 * 60 * 60; // 30 days later
-    
+            const secondAssesmentScored = 20
+            const studentTotalScore = firstAssesmentScore + secondAssesmentScored;
+            const tx2= await BlockFuseSMS.connect(superAdmin).recordStudentAssesment(
+                addr1,
+                secondAssesmentScored
+            );
+            const receipt2 = await tx2.wait();
+            const block2 = await hre.ethers.provider.getBlock(receipt2.blockNumber);
             // Create a cohort
-            await expect(BlockFuseSMS.connect(superAdmin).createCohort(startDate, endDate))
-                .to.emit(BlockFuseSMS, "CohortCreated")
-                .withArgs(2);
-    
-            // Add web3 track to the cohort
-            await expect(BlockFuseSMS.connect(superAdmin).addTrackToCohort(2, 1)) // 1 corresponds to Track.web3
-                .to.emit(BlockFuseSMS, "CohortTrackAdded")
-                .withArgs(2, "web3");
-    
-            // Add web2 track to the same cohort
-            await expect(BlockFuseSMS.connect(superAdmin).addTrackToCohort(2, 0)) // 0 corresponds to Track.web2
-                .to.emit(BlockFuseSMS, "CohortTrackAdded")
-                .withArgs(2, "web2");
-    
-            // Fetch cohort tracks
-            const tracks = await BlockFuseSMS.getCohortTracks(2); // Assume a helper function is defined in the contract
-            expect(tracks.length).to.equal(2);
-            expect(tracks[0]).to.equal(1); // First track is web3
-            expect(tracks[1]).to.equal(0); // Second track is web2
+            await expect(tx2)
+                .to.emit(BlockFuseSMS, "AssessmentRecorded")
+                .withArgs(
+                    addr1,
+                    secondAssesmentScored,
+                    studentTotalScore,
+                    block2?.timestamp,
+                    superAdmin
+                );
+                
+                const studentId2 = await BlockFuseSMS.student(addr1);
+                const secondStudentAssessments = await BlockFuseSMS.getStudentAssesments(addr1);
+                const secondStudentScoredByIndex = await BlockFuseSMS.getStudentScoreByIndex(addr1,0);
+               
+                expect(studentId2.finalScore).to.equal(studentTotalScore);
+                expect(secondStudentAssessments[1]).equal(secondAssesmentScored);
+                expect(secondStudentScoredByIndex).equal(secondAssesmentScored)
+                
         });
-    
-        it("Should fail to add a track to a non-existent cohort", async function () {
-            const { BlockFuseSMS, superAdmin } = await deployBlockFuseSMS();
-    
-            // Attempt to add a track to a non-existent cohort
-            await expect(BlockFuseSMS.connect(superAdmin).addTrackToCohort(99, 1)) // Non-existent cohort ID
-                .to.be.revertedWithCustomError(BlockFuseSMS, "COHORT_DOES_NOT_EXIST");
-        });
+
     });
 
-    describe("Test for geting cohorts", function () {
-        const Track = {
-            WEB2: 0,
-            WEB3: 1,
-        };
+    it("Should record a negative  score for a student", async function () {
+        const { BlockFuseSMS, superAdmin,addr1 } = await deployBlockFuseSMS();
 
-        it("should create a cohort and retrieve details with tracks and students grouped", async function () {
-            const { BlockFuseSMS, superAdmin, addr1, addr2, addr3 } = await deployBlockFuseSMS();
+         // Create a cohort before onboarding a student
 
-            // Create a new cohort
-            const startDate = Math.floor(Date.now() / 1000); // Current timestamp
-            const endDate = startDate + 30 * 24 * 60 * 60; // 30 days later
-            await BlockFuseSMS.connect(superAdmin).createCohort(startDate, endDate);
-    
-            // Add tracks to the cohort
-            await BlockFuseSMS.connect(superAdmin).addTrackToCohort(2, Track.WEB2);
-            await BlockFuseSMS.connect(superAdmin).addTrackToCohort(2, Track.WEB3);
-    
-            // Add students to tracks
-            await BlockFuseSMS.connect(superAdmin).addStudentToCohort(2, addr1.address, Track.WEB2);
-            await BlockFuseSMS.connect(superAdmin).addStudentToCohort(2, addr2.address, Track.WEB3);
-            await BlockFuseSMS.connect(superAdmin).addStudentToCohort(2, addr3.address, Track.WEB2);
-    
-            // Fetch the cohort details
-            const cohort = await BlockFuseSMS.getCohort(2);
-    
-            // Validate cohort data
-            expect(cohort.id).to.equal(2);
-            expect(cohort.tracks).to.deep.equal(["web2", "web3"]);
-            expect(cohort.totalStudents).to.equal(3);
-            expect(cohort.startDate).to.equal(startDate);
-            expect(cohort.endDate).to.equal(endDate);
-    
-            // Validate students grouped by track
-            const studentsByTrack = cohort.studentsByTrack;
-            expect(studentsByTrack.length).to.equal(2); // Two tracks
-            expect(studentsByTrack[0]).to.deep.equal([addr1.address, addr3.address]); // WEB2 students
-            expect(studentsByTrack[1]).to.deep.equal([addr2.address]); // WEB3 students
-        });
+         const startDate = Math.floor(Date.now() / 1000); // Current timestamp in seconds
+         const endDate = startDate + 30 * 24 * 60 * 60; // 30 days later
+ 
+         // Create a cohort
+         await expect(BlockFuseSMS.connect(superAdmin).createCohort(startDate, endDate))
+             .to.emit(BlockFuseSMS, "CohortCreated")
+             .withArgs(2);
+ 
+         // Add web3 track to the cohort
+         await expect(BlockFuseSMS.connect(superAdmin).addTrackToCohort(2, 1)) // 1 corresponds to Track.web3
+             .to.emit(BlockFuseSMS, "CohortTrackAdded")
+             .withArgs(2, "web3");
+ 
+         // Add web2 track to the same cohort
+         await expect(BlockFuseSMS.connect(superAdmin).addTrackToCohort(2, 0)) // 0 corresponds to Track.web2
+             .to.emit(BlockFuseSMS, "CohortTrackAdded")
+             .withArgs(2, "web2");
 
-        it("should revert if adding a student to a non-existent track in a cohort", async function () {
-            const { BlockFuseSMS, superAdmin, addr1, addr2, addr3 } = await deployBlockFuseSMS();
+        const firstname = "GoldenVoice";
+        const lastname = "Yilkash";
+        const twitter = "https://www.twitter.com/dimkayilrit";
+        const linkedin = "https://www.linkedin.com/dimka";
+        const github = "https://www.github.com/dimka90";
+        const track = 0;
+        const cohortId = 2;
+
+        await expect(BlockFuseSMS.connect(superAdmin).registerStudent(
+                firstname,
+                lastname,
+                twitter,
+                linkedin,
+                github,
+                track,
+                cohortId,
+                addr1
+            )).to.emit(BlockFuseSMS, "StudentAddedToCohort").withArgs(
+                addr1,
+                cohortId
+
+            )
+        // Adding student scores
+        const firstAssesmentScore = 50
+        const tx = await BlockFuseSMS.connect(superAdmin).recordStudentAssesment(
+            addr1,
+            firstAssesmentScore
+            );
+        // Wait for the transaction receipt to get the block.timestamp
+        const receipt = await tx.wait();
+        const block = await hre.ethers.provider.getBlock(receipt.blockNumber);
+        await expect(tx)
+            .to.emit(BlockFuseSMS, "AssessmentRecorded")
+            .withArgs(addr1,
+                firstAssesmentScore,
+                firstAssesmentScore,
+                block?.timestamp,
+                superAdmin
+            );
+        
+        const studentId = await BlockFuseSMS.student(addr1);
+        const studentAssessments = await BlockFuseSMS.getStudentAssesments(addr1);
+        const studentScoredByIndex = await BlockFuseSMS.getStudentScoreByIndex(addr1,0);
+        
+        expect(studentId.finalScore).to.equal(firstAssesmentScore);
+        expect(studentAssessments[0]).equal(firstAssesmentScore);
+        expect(studentScoredByIndex).equal(firstAssesmentScore);
+
+
+        const secondAssesmentScored = -20
+        const studentTotalScore = firstAssesmentScore + secondAssesmentScored;
+        const tx2= await BlockFuseSMS.connect(superAdmin).recordStudentAssesment(
+            addr1,
+            secondAssesmentScored
+        );
+        const receipt2 = await tx2.wait();
+        const block2 = await hre.ethers.provider.getBlock(receipt2.blockNumber);
+        // Create a cohort
+        await expect(tx2)
+            .to.emit(BlockFuseSMS, "AssessmentRecorded")
+            .withArgs(
+                addr1,
+                secondAssesmentScored,
+                studentTotalScore,
+                block2?.timestamp,
+                superAdmin
+            );
             
-            // Create a new cohort
-            const startDate = Math.floor(Date.now() / 1000); // Current timestamp
-            const endDate = startDate + 30 * 24 * 60 * 60; // 30 days later
-            await BlockFuseSMS.connect(superAdmin).createCohort(startDate, endDate);
-    
-            // Try adding a student to a non-existent track
-            await expect(
-                BlockFuseSMS.connect(superAdmin).addStudentToCohort(1, addr1.address, Track.WEB3)
-            ).to.be.revertedWithCustomError(BlockFuseSMS, "TRACK_DOES_NOT_EXIST_IN_COHORT");
-        });
-
-        it("should revert if retrieving a non-existent cohort", async function () {
-            const { BlockFuseSMS, superAdmin, addr1, addr2, addr3 } = await deployBlockFuseSMS();
-
-            await expect(BlockFuseSMS.getCohort(99)).to.be.revertedWithCustomError(BlockFuseSMS, "COHORT_DOES_NOT_EXIST");
-        });
-    
-        it("should revert if adding a student to a non-existent cohort", async function () {
-            const { BlockFuseSMS, superAdmin, addr1, addr2, addr3 } = await deployBlockFuseSMS();
+            const studentId2 = await BlockFuseSMS.student(addr1);
+            const secondStudentAssessments = await BlockFuseSMS.getStudentAssesments(addr1);
+            const secondStudentScoredByIndex = await BlockFuseSMS.getStudentScoreByIndex(addr1,1);
+           
+            expect(studentId2.finalScore).to.equal(studentTotalScore);
+            expect(secondStudentAssessments[1]).equal(secondAssesmentScored);
+            expect(secondStudentScoredByIndex).equal(secondAssesmentScored)
+            // firstAssesmet-secondAssesment = 50-20 = 30
+            expect(studentId2.finalScore).to.equal(30)
             
-            await expect(
-                BlockFuseSMS.connect(superAdmin).addStudentToCohort(99, addr1.address, Track.WEB2)
-            ).to.be.revertedWithCustomError(BlockFuseSMS, "INVALID_COHORT_ID");
-        });
-    });
+    
 
+        });
   });

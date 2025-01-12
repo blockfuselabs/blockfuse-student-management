@@ -121,10 +121,9 @@ contract BlockFuseSMS {
             onlyAdmin studentExist(_studentWalletAddress) 
             returns(bool)
         {
-        // Todo: check if the cohort that the student belongs to is still in session
-        // The above Todo depends on uncle B implementation
         studentScore[_studentWalletAddress].push(_studentScore);
-        int score = student[_studentWalletAddress].finalScore += _studentScore;
+        student[_studentWalletAddress].finalScore += _studentScore;
+        int score = student[_studentWalletAddress].finalScore;
         emit Event.AssessmentRecorded(_studentWalletAddress, _studentScore,score,block.timestamp , msg.sender);
         return true;
 
@@ -229,9 +228,10 @@ contract BlockFuseSMS {
         return student[_studentWalletAddress].finalScore;
     }
 
-    function getStudentScoreByIndex(address _studentWalletAddress, uint index) 
-    external studentExist(_studentWalletAddress) 
-    view returns(int)
+    function getStudentScoreByIndex(
+        address _studentWalletAddress,
+        uint index
+        ) external studentExist(_studentWalletAddress) view returns(int)
     {
         require(studentScore[_studentWalletAddress].length > 0, "Student not yet Scored");
         require(index < studentScore[_studentWalletAddress].length , "Index out of range");
