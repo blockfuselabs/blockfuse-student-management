@@ -158,7 +158,7 @@ contract BlockFuseSMS {
 
         addStudentToCohort(_cohort, _studentAddress, _track);
 
-        emit Event.StudentAddedToCohort(_studentAddress, usernameConstruct, _cohort);
+        emit Event.StudentAddedToCohort(_studentAddress, _cohort);
 
     }
 
@@ -231,6 +231,10 @@ contract BlockFuseSMS {
         require(index < studentScore[_studentWalletAddress].length , "Index out of range");
 
         return studentScore[_studentWalletAddress][index];
+    } 
+
+    function getStudent(address _studentAddress) external view returns(studentDetails memory studentData) {
+        studentData = student[_studentAddress];
     } 
 
     // =====================================================================================
