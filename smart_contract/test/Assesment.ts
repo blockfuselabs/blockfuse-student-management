@@ -124,24 +124,23 @@ import {
         const { BlockFuseSMS, superAdmin,addr1 } = await deployBlockFuseSMS();
 
          // Create a cohort before onboarding a student
-
-         const startDate = Math.floor(Date.now() / 1000); // Current timestamp in seconds
-         const endDate = startDate + 30 * 24 * 60 * 60; // 30 days later
+        const startDate = Math.floor(Date.now() / 1000); // Current timestamp in seconds
+        const endDate = startDate + 30 * 24 * 60 * 60; // 30 days later
  
          // Create a cohort
-         await expect(BlockFuseSMS.connect(superAdmin).createCohort(startDate, endDate))
-             .to.emit(BlockFuseSMS, "CohortCreated")
-             .withArgs(2);
+        await expect(BlockFuseSMS.connect(superAdmin).createCohort(startDate, endDate))
+            .to.emit(BlockFuseSMS, "CohortCreated")
+            .withArgs(2);
  
          // Add web3 track to the cohort
-         await expect(BlockFuseSMS.connect(superAdmin).addTrackToCohort(2, 1)) // 1 corresponds to Track.web3
-             .to.emit(BlockFuseSMS, "CohortTrackAdded")
-             .withArgs(2, "web3");
+        await expect(BlockFuseSMS.connect(superAdmin).addTrackToCohort(2, 1)) // 1 corresponds to Track.web3
+            .to.emit(BlockFuseSMS, "CohortTrackAdded")
+            .withArgs(2, "web3");
  
          // Add web2 track to the same cohort
-         await expect(BlockFuseSMS.connect(superAdmin).addTrackToCohort(2, 0)) // 0 corresponds to Track.web2
-             .to.emit(BlockFuseSMS, "CohortTrackAdded")
-             .withArgs(2, "web2");
+        await expect(BlockFuseSMS.connect(superAdmin).addTrackToCohort(2, 0)) // 0 corresponds to Track.web2
+            .to.emit(BlockFuseSMS, "CohortTrackAdded")
+            .withArgs(2, "web2");
 
         const firstname = "GoldenVoice";
         const lastname = "Yilkash";
@@ -165,12 +164,14 @@ import {
                 cohortId
 
             )
+
         // Adding student scores
         const firstAssesmentScore = 50
         const tx = await BlockFuseSMS.connect(superAdmin).recordStudentAssesment(
             addr1,
             firstAssesmentScore
             );
+
         // Wait for the transaction receipt to get the block.timestamp
         const receipt = await tx.wait();
         const block = await hre.ethers.provider.getBlock(receipt.blockNumber);
@@ -190,7 +191,6 @@ import {
         expect(studentId.finalScore).to.equal(firstAssesmentScore);
         expect(studentAssessments[0]).equal(firstAssesmentScore);
         expect(studentScoredByIndex).equal(firstAssesmentScore);
-
 
         const secondAssesmentScored = -20
         const studentTotalScore = firstAssesmentScore + secondAssesmentScored;
@@ -220,8 +220,5 @@ import {
             expect(secondStudentScoredByIndex).equal(secondAssesmentScored)
             // firstAssesmet-secondAssesment = 50-20 = 30
             expect(studentId2.finalScore).to.equal(30)
-            
-    
-
         });
   });
