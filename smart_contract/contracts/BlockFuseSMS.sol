@@ -379,5 +379,5 @@ contract BlockFuseSMS {
 
     function testTrackToString(Track _track) public pure returns (string memory) {
         return trackToString(_track);
-    }    // Attendance structure for storing attendance records
+    }
 }
