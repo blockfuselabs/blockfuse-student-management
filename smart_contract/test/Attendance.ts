@@ -19,7 +19,7 @@ import {
 
     describe("Test for Logging Attendance", function () {
         it("Should successfully log attendance for a student", async function () {
-            const { BlockFuseSMS, superAdmin, addr1 } = await deployBlockFuseSMS();
+            const { BlockFuseSMS, superAdmin, addr1, addr3 } = await deployBlockFuseSMS();
     
             const startDate = Math.floor(Date.now() / 1000); // Current timestamp in seconds
             const endDate = startDate + 30 * 24 * 60 * 60; // 30 days later
@@ -65,6 +65,13 @@ import {
                 cohortId,
                 track
             )).to.emit(BlockFuseSMS, "AttendanceLogged");
+
+            // Verify another student can not log attendance for someone
+            await expect(BlockFuseSMS.connect(addr3).logAttendance(
+                addr1.address,
+                cohortId,
+                track
+            )).to.be.revertedWithCustomError(BlockFuseSMS, "UNAUTHORIZED_ACCESS");
     
             // Verify duplicate attendance logging is not allowed
             await expect(BlockFuseSMS.connect(addr1).logAttendance(
@@ -72,6 +79,58 @@ import {
                 cohortId,
                 track
             )).to.be.revertedWithCustomError(BlockFuseSMS, "ALREADY_MARKED_ATTENDANCE");
+        });
+
+        it("Should successfully log attendance for a student by admin / super admin", async function () {
+            const { BlockFuseSMS, superAdmin, addr1, addr2, addr3 } = await deployBlockFuseSMS();
+    
+            const startDate = Math.floor(Date.now() / 1000); // Current timestamp in seconds
+            const endDate = startDate + 30 * 24 * 60 * 60; // 30 days later
+    
+            // Create a cohort
+            await expect(BlockFuseSMS.connect(superAdmin).createCohort(startDate, endDate))
+                .to.emit(BlockFuseSMS, "CohortCreated")
+                .withArgs(2); // Cohort ID starts from 2
+    
+            // Add tracks to the cohort
+            await expect(BlockFuseSMS.connect(superAdmin).addTrackToCohort(2, 1)) // 1 corresponds to Track.web3
+                .to.emit(BlockFuseSMS, "CohortTrackAdded")
+                .withArgs(2, "web3");
+    
+            await expect(BlockFuseSMS.connect(superAdmin).addTrackToCohort(2, 0)) // 0 corresponds to Track.web2
+                .to.emit(BlockFuseSMS, "CohortTrackAdded")
+                .withArgs(2, "web2");
+    
+            // Register a student
+            const firstname = "shaaibu";
+            const lastname = "suleiman";
+            const twitter = "https://www.twitter.com/shaaibu";
+            const linkedin = "https://www.linkedin.com/shaaibu";
+            const github = "https://www.github.com/shaaibu";
+            const track = 1; // Track.web3
+            const cohortId = 2;
+    
+            await expect(BlockFuseSMS.connect(superAdmin).registerStudent(
+                firstname,
+                lastname,
+                twitter,
+                linkedin,
+                github,
+                track,
+                cohortId,
+                addr1.address
+            )).to.emit(BlockFuseSMS, "StudentAddedToCohort")
+                .withArgs(addr1.address, cohortId);
+    
+            // set addr3 as admin
+            await BlockFuseSMS.connect(superAdmin).addAdmin(addr3)
+
+            // Log attendance for the student by admin acting as addr3
+            await expect(BlockFuseSMS.connect(addr3).logAttendance(
+                addr1.address,
+                cohortId,
+                track
+            )).to.emit(BlockFuseSMS, "AttendanceLogged");
         });
     
         it("Should revert if student tries to log attendance for wrong cohort or track", async function () {

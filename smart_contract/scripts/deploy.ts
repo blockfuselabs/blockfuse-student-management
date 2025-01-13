@@ -5,7 +5,7 @@ async function main() {
 
   await blockFuseSMS.waitForDeployment();
 
-  console.log('BlockFuseSMS Contract Deployed at ' + blockFuseSMS.target);
+  console.log('BlockFuseSMS Contract Deployed at ' + blockFuseSMS.target, blockFuseSMS);
 }
 
 main().catch((error) => {

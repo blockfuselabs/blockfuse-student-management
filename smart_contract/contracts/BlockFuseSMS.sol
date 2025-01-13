@@ -86,6 +86,12 @@ contract BlockFuseSMS {
         _;
     }
 
+    // Modifier to ensure only owner of address or any of the admins to log time for students
+    modifier onlyOwnerOrAdmin(address _studentAddress) {
+        require(admins[msg.sender] || msg.sender == superAdmin || msg.sender == _studentAddress, Error.UNAUTHORIZED_ACCESS());
+        _;
+    }
+
     // =====================================================================================
     // =========================== SETTER FUNCTIONS ========================================
     // =====================================================================================
@@ -185,7 +191,7 @@ contract BlockFuseSMS {
         address _studentAddress,
         uint8 _cohortId,
         Track _track
-    ) external onlyActiveStudent(_studentAddress) {
+    ) external onlyActiveStudent(_studentAddress) onlyOwnerOrAdmin(_studentAddress) {
         require(student[_studentAddress].cohort == _cohortId, Error.INVALID_COHORT_ID());
         require(student[_studentAddress].track == _track, Error.INVALID_TRACK());
 
