@@ -11,4 +11,5 @@ library Error {
     error INVALID_TRACK();
     error TRACK_DOES_NOT_EXIST_IN_COHORT();
     error STUDENT_IS_NOT_ACTIVE();
+    error ALREADY_MARKED_ATTENDANCE();
 }

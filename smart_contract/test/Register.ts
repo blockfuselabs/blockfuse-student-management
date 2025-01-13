@@ -62,7 +62,6 @@ import {
             )).to.emit(BlockFuseSMS, "StudentAddedToCohort").withArgs(
                 addr1,
                 cohortId
-
             )
         });
 
