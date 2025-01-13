@@ -158,6 +158,5 @@ import {
         expect((await BlockFuseSMS.getStudent(addr1)).finalScore).to.eq(0);
         expect((await BlockFuseSMS.getStudent(addr1)).username).to.eq(firstname + " " + lastname);
     });
-
     
   });
