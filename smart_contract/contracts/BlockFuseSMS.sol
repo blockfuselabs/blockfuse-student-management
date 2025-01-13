@@ -129,11 +129,16 @@ contract BlockFuseSMS {
         
     }
 
-    function recordStudentAssesment(address _studentWalletAddress, int _studentScore) external onlyAdmin studentExist(_studentWalletAddress) returns(bool){
-        // Todo: check if the cohort that the student belongs to is still in session
-        // The above Todo depends on uncle B implementation
+    function recordStudentAssesment(
+        address _studentWalletAddress,
+        int _studentScore
+        ) external 
+            onlyAdmin studentExist(_studentWalletAddress) 
+            returns(bool)
+        {
         studentScore[_studentWalletAddress].push(_studentScore);
-        int score = student[_studentWalletAddress].finalScore += _studentScore;
+        student[_studentWalletAddress].finalScore += _studentScore;
+        int score = student[_studentWalletAddress].finalScore;
         emit Event.AssessmentRecorded(_studentWalletAddress, _studentScore,score,block.timestamp , msg.sender);
         return true;
 
@@ -252,23 +257,24 @@ contract BlockFuseSMS {
         return cohorts[_cohortId].cohortTracks;
     }
 
-    function getStudentAssesments(address _studentWalletAddress) 
-    external studentExist(_studentWalletAddress)
-    view returns(int[] memory)
+    function getStudentAssesments(
+        address _studentWalletAddress
+        ) external studentExist(_studentWalletAddress) view returns(int[] memory)
     {
         return studentScore[_studentWalletAddress];
     }
 
-    function getStudentFinalScore(address _studentWalletAddress) 
-    external studentExist(_studentWalletAddress) 
-    view returns(int)
+    function getStudentFinalScore(
+        address _studentWalletAddress
+        ) external studentExist(_studentWalletAddress) view returns(int)
     {
         return student[_studentWalletAddress].finalScore;
     }
 
-    function getStudentScoreByIndex(address _studentWalletAddress, uint index) 
-    external studentExist(_studentWalletAddress) 
-    view returns(int)
+    function getStudentScoreByIndex(
+        address _studentWalletAddress,
+        uint index
+        ) external studentExist(_studentWalletAddress) view returns(int)
     {
         require(studentScore[_studentWalletAddress].length > 0, "Student not yet Scored");
         require(index < studentScore[_studentWalletAddress].length , "Index out of range");
