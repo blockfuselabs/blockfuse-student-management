@@ -22,7 +22,6 @@ import {
             const { BlockFuseSMS, superAdmin, addr1 } = await deployBlockFuseSMS();
 
             // Create a cohort before onboarding a student
-
             const startDate = Math.floor(Date.now() / 1000); // Current timestamp in seconds
             const endDate = startDate + 30 * 24 * 60 * 60; // 30 days later
     
@@ -41,7 +40,6 @@ import {
                 .to.emit(BlockFuseSMS, "CohortTrackAdded")
                 .withArgs(2, "web2");
     
-
             const firstname = "shaaibu";
             const lastname = "suleiman";
             const twitter = "https://www.twitter.com/shaaibu";
@@ -62,7 +60,6 @@ import {
             )).to.emit(BlockFuseSMS, "StudentAddedToCohort").withArgs(
                 addr1,
                 cohortId
-
             )
         });
 
@@ -71,7 +68,6 @@ import {
             const { BlockFuseSMS, superAdmin, addr1 } = await deployBlockFuseSMS();
 
             // Create a cohort before onboarding a student
-
             const startDate = Math.floor(Date.now() / 1000); // Current timestamp in seconds
             const endDate = startDate + 30 * 24 * 60 * 60; // 30 days later
     
@@ -89,7 +85,6 @@ import {
             await expect(BlockFuseSMS.connect(superAdmin).addTrackToCohort(2, 0)) // 0 corresponds to Track.web2
                 .to.emit(BlockFuseSMS, "CohortTrackAdded")
                 .withArgs(2, "web2");
-    
 
             const firstname = "shaaibu";
             const lastname = "suleiman";
@@ -109,9 +104,7 @@ import {
                 cohortId,
                 addr1
             )).to.revertedWithCustomError(BlockFuseSMS, "UNAUTHORIZED_ACCESS")
-        });
-
-        
+        }); 
     });
 
 
@@ -119,7 +112,6 @@ import {
         const { BlockFuseSMS, superAdmin, addr1 } = await deployBlockFuseSMS();
 
         // Create a cohort before onboarding a student
-
         const startDate = Math.floor(Date.now() / 1000); // Current timestamp in seconds
         const endDate = startDate + 30 * 24 * 60 * 60; // 30 days later
 
@@ -138,7 +130,6 @@ import {
             .to.emit(BlockFuseSMS, "CohortTrackAdded")
             .withArgs(2, "web2");
 
-
         const firstname = "shaaibu";
         const lastname = "suleiman";
         const twitter = "https://www.twitter.com/shaaibu";
@@ -146,7 +137,6 @@ import {
         const github = "https://www.github.com/shaaibu";
         const track = 0;
         const cohortId = 2;
-
 
         const onboardStudent = await BlockFuseSMS.connect(superAdmin).registerStudent(
             firstname,
@@ -159,7 +149,6 @@ import {
             addr1
         );
 
-
         expect((await BlockFuseSMS.getStudent(addr1)).firstname).to.eq(firstname);
         expect((await BlockFuseSMS.getStudent(addr1)).lastname).to.eq(lastname);
         expect((await BlockFuseSMS.getStudent(addr1)).twitter).to.eq(twitter);
@@ -168,9 +157,6 @@ import {
         expect((await BlockFuseSMS.getStudent(addr1)).studentAddress).to.eq(addr1);
         expect((await BlockFuseSMS.getStudent(addr1)).finalScore).to.eq(0);
         expect((await BlockFuseSMS.getStudent(addr1)).username).to.eq(firstname + " " + lastname);
-
-       
     });
-
     
   });
