@@ -52,7 +52,7 @@ const SideBar = () => {
               }`
             }
           >
-            <div>e
+            <div>
               <Settings size="30" />
             </div>
             {isExpanded && (
