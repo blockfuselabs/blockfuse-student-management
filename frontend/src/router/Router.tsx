@@ -5,13 +5,16 @@ import {
   RouterProvider,
 } from "react-router";
 
+// layout
+import RootLayout from "../layout/RootLayout";
+
 // pages
 import Home from "../pages/home/Home";
 
 const router = createBrowserRouter(
   // Routes
   createRoutesFromElements(
-    <Route path="/">
+    <Route path="/" element={<RootLayout />}>
       <Route index element={<Home />} />
     </Route>
   )
@@ -19,6 +22,6 @@ const router = createBrowserRouter(
 
 const Router = () => {
   return <RouterProvider router={router} />;
-}
+};
 
 export default Router;
