@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { NavLink } from "react-router";
 // assets
-import { LayoutDashboard, Settings, User, FileText } from "lucide-react";
+import { LayoutDashboard, Settings, User, FileText, ClipboardCheck, Users, ClipboardList, UserCheck } from "lucide-react";
+
 
 const SideBar = () => {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -10,11 +11,15 @@ const SideBar = () => {
   const navItems = [
     { name: "Dashboard", icon: <LayoutDashboard size="30" />, path: "/" },
     { name: "Profile", icon: <User size="30" />, path: "/profile" },
-    { name: "Documents", icon: <FileText size="30" />, path: "/documents" },
+    { name: "Students", icon: <FileText size="30" />, path: "/students" },
+    { name: "Cohorts", icon: <Users  size="30" />, path: "/cohorts" },
+    { name: "Attendance", icon: <ClipboardCheck  size="30" />, path: "/attendance" },
+    { name: "Assessment", icon: <ClipboardList  size="30" />, path: "/assessment" },
+    { name: "Admin", icon: <UserCheck size="30" />, path: "/admin" },
   ];
 
   return (
-    <div className="px-[30px] flex items-center gap-1">
+    <div className="px-[30px] pb-80 flex items-center gap-1">
       {/* Sidebar */}
       <div
         className={`${
