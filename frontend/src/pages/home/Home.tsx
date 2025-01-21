@@ -83,8 +83,8 @@ const DashboardLayout = () => {
       <AttendanceChart/>
       <div className="bg-white rounded-lg p-6 shadow-sm mt-10">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-gray-700">Recently registered users</h2>
-          <a href="#" className="text-blue-600 text-sm">view all users</a>
+          <h2 className="text-gray-700">Recently Registered Students</h2>
+          <a href="#" className="text-blue-600 text-sm">view all students</a>
         </div>
         <table className="w-full">
           <thead>
