@@ -1,22 +1,22 @@
-// components
+// RootLayout.jsx
 import { Outlet } from "react-router";
 import Header from "./Header";
 import SideBar from "./SideBar";
 
 const RootLayout = () => {
   return (
-    <div className="">
+    <div className="min-h-screen flex flex-col">
       {/* header */}
       <Header />
-
-      <div className="flex gap-5">
+      
+      <div className="flex flex-1">
         {/* sidebar */}
         <SideBar />
-
+        
         {/* content */}
-        <div>
+        <main className="flex-1 p-4">
           <Outlet />
-        </div>
+        </main>
       </div>
     </div>
   );

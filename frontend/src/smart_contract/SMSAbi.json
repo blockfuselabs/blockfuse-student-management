@@ -1,0 +1,606 @@
+[
+  { "inputs": [], "stateMutability": "nonpayable", "type": "constructor" },
+  { "inputs": [], "name": "ALREADY_MARKED_ATTENDANCE", "type": "error" },
+  { "inputs": [], "name": "COHORT_DOES_NOT_EXIST", "type": "error" },
+  {
+    "inputs": [],
+    "name": "END_DATE_MUST_BE_GREATER_THAN_START",
+    "type": "error"
+  },
+  { "inputs": [], "name": "INVALID_COHORT_ID", "type": "error" },
+  { "inputs": [], "name": "INVALID_TRACK", "type": "error" },
+  { "inputs": [], "name": "STUDENT_DOES_NOT_EXIST", "type": "error" },
+  { "inputs": [], "name": "STUDENT_IS_NOT_ACTIVE", "type": "error" },
+  { "inputs": [], "name": "TRACK_DOES_NOT_EXIST_IN_COHORT", "type": "error" },
+  { "inputs": [], "name": "UNAUTHORIZED_ACCESS", "type": "error" },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "adminAdded",
+        "type": "address"
+      }
+    ],
+    "name": "AdminAdded",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "adminRemove",
+        "type": "address"
+      }
+    ],
+    "name": "AdminRemoved",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "studentAddress",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "int256",
+        "name": "studentScoreAdded",
+        "type": "int256"
+      },
+      {
+        "indexed": false,
+        "internalType": "int256",
+        "name": "totalScore",
+        "type": "int256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "time",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "instructorAddress",
+        "type": "address"
+      }
+    ],
+    "name": "AssessmentRecorded",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "cohortId",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "student",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "string",
+        "name": "track",
+        "type": "string"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "date",
+        "type": "uint256"
+      }
+    ],
+    "name": "AttendanceLogged",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "cohortId",
+        "type": "uint256"
+      }
+    ],
+    "name": "CohortCreated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "cohortId",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "string",
+        "name": "track",
+        "type": "string"
+      }
+    ],
+    "name": "CohortTrackAdded",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "studentAddress",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "uint8",
+        "name": "cohort",
+        "type": "uint8"
+      }
+    ],
+    "name": "StudentAddedToCohort",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "cohortId",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "string",
+        "name": "track",
+        "type": "string"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "student",
+        "type": "address"
+      }
+    ],
+    "name": "StudentAddedToTrack",
+    "type": "event"
+  },
+  {
+    "inputs": [
+      { "internalType": "address", "name": "adminAddress", "type": "address" }
+    ],
+    "name": "addAdmin",
+    "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "uint8", "name": "_cohortId", "type": "uint8" },
+      { "internalType": "address", "name": "_student", "type": "address" },
+      {
+        "internalType": "enum BlockFuseSMS.Track",
+        "name": "_track",
+        "type": "uint8"
+      }
+    ],
+    "name": "addStudentToCohort",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "uint8", "name": "_cohortId", "type": "uint8" },
+      {
+        "internalType": "enum BlockFuseSMS.Track",
+        "name": "_track",
+        "type": "uint8"
+      }
+    ],
+    "name": "addTrackToCohort",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "uint8", "name": "", "type": "uint8" },
+      {
+        "internalType": "enum BlockFuseSMS.Track",
+        "name": "",
+        "type": "uint8"
+      },
+      { "internalType": "uint256", "name": "", "type": "uint256" },
+      { "internalType": "address", "name": "", "type": "address" }
+    ],
+    "name": "attendance",
+    "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "uint8", "name": "", "type": "uint8" },
+      {
+        "internalType": "enum BlockFuseSMS.Track",
+        "name": "",
+        "type": "uint8"
+      },
+      { "internalType": "uint256", "name": "", "type": "uint256" }
+    ],
+    "name": "attendanceRecords",
+    "outputs": [
+      { "internalType": "uint256", "name": "date", "type": "uint256" },
+      { "internalType": "address", "name": "studentAddress", "type": "address" }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "cohortCount",
+    "outputs": [{ "internalType": "uint8", "name": "", "type": "uint8" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [{ "internalType": "uint8", "name": "", "type": "uint8" }],
+    "name": "cohorts",
+    "outputs": [
+      { "internalType": "uint8", "name": "cohortId", "type": "uint8" },
+      { "internalType": "uint256", "name": "totalStudents", "type": "uint256" },
+      { "internalType": "uint256", "name": "startDate", "type": "uint256" },
+      { "internalType": "uint256", "name": "endDate", "type": "uint256" },
+      { "internalType": "uint256", "name": "duration", "type": "uint256" }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "uint256", "name": "_startDate", "type": "uint256" },
+      { "internalType": "uint256", "name": "_endDate", "type": "uint256" }
+    ],
+    "name": "createCohort",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_studentAddress",
+        "type": "address"
+      }
+    ],
+    "name": "disableStudent",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_studentAddress",
+        "type": "address"
+      }
+    ],
+    "name": "enableStudent",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "uint8", "name": "_cohortId", "type": "uint8" },
+      {
+        "internalType": "enum BlockFuseSMS.Track",
+        "name": "_track",
+        "type": "uint8"
+      }
+    ],
+    "name": "getAttendanceByCohortAndTrack",
+    "outputs": [
+      { "internalType": "address[]", "name": "", "type": "address[]" },
+      { "internalType": "uint256[]", "name": "", "type": "uint256[]" }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "uint8", "name": "_cohortId", "type": "uint8" }
+    ],
+    "name": "getCohort",
+    "outputs": [
+      { "internalType": "uint256", "name": "id", "type": "uint256" },
+      { "internalType": "string[]", "name": "tracks", "type": "string[]" },
+      { "internalType": "uint256", "name": "totalStudents", "type": "uint256" },
+      { "internalType": "uint256", "name": "startDate", "type": "uint256" },
+      { "internalType": "uint256", "name": "endDate", "type": "uint256" },
+      { "internalType": "uint256", "name": "duration", "type": "uint256" },
+      {
+        "internalType": "address[][]",
+        "name": "studentsByTrack",
+        "type": "address[][]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "uint8", "name": "_cohortId", "type": "uint8" }
+    ],
+    "name": "getCohortTracks",
+    "outputs": [
+      {
+        "internalType": "enum BlockFuseSMS.Track[]",
+        "name": "",
+        "type": "uint8[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_studentAddress",
+        "type": "address"
+      }
+    ],
+    "name": "getStudent",
+    "outputs": [
+      {
+        "components": [
+          { "internalType": "string", "name": "firstname", "type": "string" },
+          { "internalType": "string", "name": "lastname", "type": "string" },
+          { "internalType": "string", "name": "username", "type": "string" },
+          { "internalType": "string", "name": "twitter", "type": "string" },
+          { "internalType": "string", "name": "linkedin", "type": "string" },
+          { "internalType": "string", "name": "github", "type": "string" },
+          {
+            "internalType": "enum BlockFuseSMS.Track",
+            "name": "track",
+            "type": "uint8"
+          },
+          { "internalType": "uint8", "name": "cohort", "type": "uint8" },
+          { "internalType": "bool", "name": "isActive", "type": "bool" },
+          { "internalType": "int256", "name": "finalScore", "type": "int256" },
+          {
+            "internalType": "address",
+            "name": "studentAddress",
+            "type": "address"
+          }
+        ],
+        "internalType": "struct BlockFuseSMS.studentDetails",
+        "name": "studentData",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_studentWalletAddress",
+        "type": "address"
+      }
+    ],
+    "name": "getStudentAssesments",
+    "outputs": [{ "internalType": "int256[]", "name": "", "type": "int256[]" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_studentWalletAddress",
+        "type": "address"
+      }
+    ],
+    "name": "getStudentFinalScore",
+    "outputs": [{ "internalType": "int256", "name": "", "type": "int256" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_studentWalletAddress",
+        "type": "address"
+      },
+      { "internalType": "uint256", "name": "index", "type": "uint256" }
+    ],
+    "name": "getStudentScoreByIndex",
+    "outputs": [{ "internalType": "int256", "name": "", "type": "int256" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_studentAddress",
+        "type": "address"
+      },
+      { "internalType": "uint8", "name": "_cohortId", "type": "uint8" },
+      {
+        "internalType": "enum BlockFuseSMS.Track",
+        "name": "_track",
+        "type": "uint8"
+      },
+      { "internalType": "uint256", "name": "_day", "type": "uint256" }
+    ],
+    "name": "hasAttendance",
+    "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "address", "name": "", "type": "address" },
+      { "internalType": "uint256", "name": "", "type": "uint256" }
+    ],
+    "name": "individualAttendanceRecord",
+    "outputs": [
+      { "internalType": "uint256", "name": "date", "type": "uint256" },
+      { "internalType": "address", "name": "studentAddress", "type": "address" }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_studentAddress",
+        "type": "address"
+      },
+      { "internalType": "uint8", "name": "_cohortId", "type": "uint8" },
+      {
+        "internalType": "enum BlockFuseSMS.Track",
+        "name": "_track",
+        "type": "uint8"
+      }
+    ],
+    "name": "logAttendance",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_studentWalletAddress",
+        "type": "address"
+      },
+      { "internalType": "int256", "name": "_studentScore", "type": "int256" }
+    ],
+    "name": "recordStudentAssesment",
+    "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "string", "name": "_firstname", "type": "string" },
+      { "internalType": "string", "name": "_lastname", "type": "string" },
+      { "internalType": "string", "name": "_twitter", "type": "string" },
+      { "internalType": "string", "name": "_linkedin", "type": "string" },
+      { "internalType": "string", "name": "_github", "type": "string" },
+      {
+        "internalType": "enum BlockFuseSMS.Track",
+        "name": "_track",
+        "type": "uint8"
+      },
+      { "internalType": "uint8", "name": "_cohort", "type": "uint8" },
+      {
+        "internalType": "address",
+        "name": "_studentAddress",
+        "type": "address"
+      }
+    ],
+    "name": "registerStudent",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "address", "name": "adminAddress", "type": "address" }
+    ],
+    "name": "removeAdmin",
+    "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [{ "internalType": "address", "name": "", "type": "address" }],
+    "name": "student",
+    "outputs": [
+      { "internalType": "string", "name": "firstname", "type": "string" },
+      { "internalType": "string", "name": "lastname", "type": "string" },
+      { "internalType": "string", "name": "username", "type": "string" },
+      { "internalType": "string", "name": "twitter", "type": "string" },
+      { "internalType": "string", "name": "linkedin", "type": "string" },
+      { "internalType": "string", "name": "github", "type": "string" },
+      {
+        "internalType": "enum BlockFuseSMS.Track",
+        "name": "track",
+        "type": "uint8"
+      },
+      { "internalType": "uint8", "name": "cohort", "type": "uint8" },
+      { "internalType": "bool", "name": "isActive", "type": "bool" },
+      { "internalType": "int256", "name": "finalScore", "type": "int256" },
+      { "internalType": "address", "name": "studentAddress", "type": "address" }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "address", "name": "", "type": "address" },
+      { "internalType": "uint256", "name": "", "type": "uint256" }
+    ],
+    "name": "studentScore",
+    "outputs": [{ "internalType": "int256", "name": "", "type": "int256" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "superAdmin",
+    "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "enum BlockFuseSMS.Track",
+        "name": "_track",
+        "type": "uint8"
+      }
+    ],
+    "name": "testTrackToString",
+    "outputs": [{ "internalType": "string", "name": "", "type": "string" }],
+    "stateMutability": "pure",
+    "type": "function"
+  },
+  {
+    "inputs": [{ "internalType": "address", "name": "", "type": "address" }],
+    "name": "usernames",
+    "outputs": [{ "internalType": "string", "name": "", "type": "string" }],
+    "stateMutability": "view",
+    "type": "function"
+  }
+]
