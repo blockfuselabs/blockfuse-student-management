@@ -11,6 +11,7 @@ pragma solidity ^0.8.0;
 import {LibDiamond} from "./libraries/LibDiamond.sol";
 import {IDiamondCut} from "./interfaces/IDiamondCut.sol";
 import "./libraries/LibAppStorage.sol";
+import "../lib/forge-std/src/console.sol";
 
 contract Diamond {
     LibAppStorage.Layout layout;
@@ -20,6 +21,8 @@ contract Diamond {
 
         layout.superAdmin = msg.sender;
         layout.admins[layout.superAdmin] = true;
+
+        console.log("superAdmin address in Diamond: ", LibAppStorage.layout().superAdmin);
 
         // Add the diamondCut external function from the diamondCutFacet
         IDiamondCut.FacetCut[] memory cut = new IDiamondCut.FacetCut[](1);

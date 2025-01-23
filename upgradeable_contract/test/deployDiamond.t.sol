@@ -5,8 +5,12 @@ import "../contracts/interfaces/IDiamondCut.sol";
 import "../contracts/facets/DiamondCutFacet.sol";
 import "../contracts/facets/DiamondLoupeFacet.sol";
 import "../contracts/facets/OwnershipFacet.sol";
-import "forge-std/Test.sol";
+import "../lib/forge-std/src/Test.sol";
 import "../contracts/Diamond.sol";
+import "../contracts/facets/AdminFacet.sol";
+import "../contracts/facets/CohortFacet.sol";
+import "../contracts/facets/StudentFacet.sol";
+import "../contracts/libraries/LibAppStorage.sol";
 
 contract DiamondDeployer is Test, IDiamondCut {
     //contract types of facets to be deployed
@@ -14,18 +18,39 @@ contract DiamondDeployer is Test, IDiamondCut {
     DiamondCutFacet dCutFacet;
     DiamondLoupeFacet dLoupe;
     OwnershipFacet ownerF;
+    AdminFacet adminFacet;
+    CohortFacet cohortFacet;
+    StudentFacet studentFacet;
 
-    function testDeployDiamond() public {
+    address superAdmin = mkaddr("superAdmin");
+    address otherAddr = mkaddr("otherAddr");
+
+    function mkaddr(string memory name) public returns (address) {
+        address addr = address(
+            uint160(uint256(keccak256(abi.encodePacked(name))))
+        );
+        vm.label(addr, name);
+        return addr;
+    }
+
+    function setUp() public {
+        vm.startPrank(superAdmin);
+
         //deploy facets
         dCutFacet = new DiamondCutFacet();
-        diamond = new Diamond(address(this), address(dCutFacet));
+        diamond = new Diamond(address(dCutFacet));
         dLoupe = new DiamondLoupeFacet();
         ownerF = new OwnershipFacet();
+        adminFacet = new AdminFacet();
+        cohortFacet = new CohortFacet();
+        studentFacet = new StudentFacet();
+
+        console.log("superAdmin address in setUp: ", LibAppStorage.layout().superAdmin);
 
         //upgrade diamond with facets
 
         //build cut struct
-        FacetCut[] memory cut = new FacetCut[](2);
+        FacetCut[] memory cut = new FacetCut[](5);
 
         cut[0] = (
             FacetCut({
@@ -43,11 +68,43 @@ contract DiamondDeployer is Test, IDiamondCut {
             })
         );
 
+        cut[2] = (
+            FacetCut({
+                facetAddress: address(adminFacet),
+                action: FacetCutAction.Add,
+                functionSelectors: generateSelectors("AdminFacet")
+            })
+        );
+
+        cut[3] = (
+            FacetCut({
+                facetAddress: address(cohortFacet),
+                action: FacetCutAction.Add,
+                functionSelectors: generateSelectors("CohortFacet")
+            })
+        );
+
+        cut[4] = (
+            FacetCut({
+                facetAddress: address(studentFacet),
+                action: FacetCutAction.Add,
+                functionSelectors: generateSelectors("StudentFacet")
+            })
+        );
+
         //upgrade diamond
         IDiamondCut(address(diamond)).diamondCut(cut, address(0x0), "");
 
         //call a function
         DiamondLoupeFacet(address(diamond)).facetAddresses();
+
+        vm.stopPrank();
+    }
+
+    function testDeployerOfTheContractIsSuperAdmin() public {
+        // vm.startPrank(superAdmin);
+        console.log("superAdmin address in test: ", LibAppStorage.layout().superAdmin);
+
     }
 
     function generateSelectors(
