@@ -1,5 +1,6 @@
 // assets
 import logo from "../assets/logo.svg";
+import { ConnectKitButton } from "connectkit";
 
 const Header = () => {
   return (
@@ -17,9 +18,12 @@ const Header = () => {
             alt="PROFILE"
           />
         </div>
-        <p className="font-inter text-[16px] font-semibold leading-[16.94px] tracking-[0.05em] text-left text-[#233255CC]">
+        <div>
+        <ConnectKitButton />
+        </div>
+        {/* <p className="font-inter text-[16px] font-semibold leading-[16.94px] tracking-[0.05em] text-left text-[#233255CC]">
           Mr Scarface
-        </p>
+        </p> */}
       </div>
     </div>
   );
