@@ -21,7 +21,7 @@ const Assessment: React.FC = () => {
       name: "John Doe", 
       cohort: "Cohort 2024A", 
       track: "Frontend", 
-      walletAddress: "0xAD0096Dfd7f1EdEDfD2462A2F268A63AbDbe1b9F" as Address 
+      walletAddress: "0x68132882c97237Cc82A18Ef69Fa3F95d92D083DA" as Address 
     }
   ];
 
