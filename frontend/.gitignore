@@ -15,6 +15,7 @@ dist-ssr
 .env
 test.tsx
 test2.txt
+test3.txt
 
 # Editor directories and files
 .vscode/*
