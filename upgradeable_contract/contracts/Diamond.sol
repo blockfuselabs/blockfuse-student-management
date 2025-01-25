@@ -19,8 +19,8 @@ contract Diamond {
     constructor(address _diamondCutFacet) payable {
         LibDiamond.setContractOwner(msg.sender);
 
-        layout.superAdmin = msg.sender;
-        layout.admins[layout.superAdmin] = true;
+        LibAppStorage.layout().superAdmin = msg.sender;
+        LibAppStorage.layout().admins[layout.superAdmin] = true;
 
         console.log("superAdmin address in Diamond: ", LibAppStorage.layout().superAdmin);
 

@@ -14,6 +14,7 @@ import "../contracts/libraries/LibAppStorage.sol";
 
 contract DiamondDeployer is Test, IDiamondCut {
     //contract types of facets to be deployed
+    LibAppStorage.Layout layout;
     Diamond diamond;
     DiamondCutFacet dCutFacet;
     DiamondLoupeFacet dLoupe;
@@ -21,6 +22,7 @@ contract DiamondDeployer is Test, IDiamondCut {
     AdminFacet adminFacet;
     CohortFacet cohortFacet;
     StudentFacet studentFacet;
+    CohortFacet boundCohortFacet;
 
     address superAdmin = mkaddr("superAdmin");
     address otherAddr = mkaddr("otherAddr");
@@ -44,8 +46,9 @@ contract DiamondDeployer is Test, IDiamondCut {
         adminFacet = new AdminFacet();
         cohortFacet = new CohortFacet();
         studentFacet = new StudentFacet();
+        boundCohortFacet = CohortFacet(address(diamond));
 
-        console.log("superAdmin address in setUp: ", LibAppStorage.layout().superAdmin);
+        console.log("superAdmin address in setUp: ", layout.superAdmin);
 
         //upgrade diamond with facets
 
@@ -102,8 +105,8 @@ contract DiamondDeployer is Test, IDiamondCut {
     }
 
     function testDeployerOfTheContractIsSuperAdmin() public {
-cx        vm.startPrank(superAdmin);
-        console.log("superAdmin address in test: ", LibAppStorage.layout().superAdmin);
+    //    vm.startPrank(superAdmin);
+        console.log("superAdmin address in test: ", boundCohortFacet.getSuperAdmin());
     }
 
     function generateSelectors(

@@ -18,6 +18,10 @@ contract CohortFacet {
          _;
     }
 
+    function getSuperAdmin() public view returns(address) {
+        return layout.superAdmin;
+    }
+
     function createCohort(
         uint256 _startDate, 
         uint256 _endDate
