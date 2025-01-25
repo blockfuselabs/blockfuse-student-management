@@ -211,7 +211,13 @@ const CohortPage: React.FC = () => {
 useEffect(() => {
   console.log('Raw cohortData:', cohortData); // Debugging
   if (cohortData && Array.isArray(cohortData)) {
+    console.log("startdate: ", cohortData[0], Number(cohortData[0]))
+    console.log("startdate: ", cohortData[2], Number(cohortData[2]),  new Date(Number(cohortData[2]) * 1000).toLocaleDateString())
+    console.log("enddate: ", cohortData[3], Number(cohortData[3]),  new Date(Number(cohortData[3]) * 1000).toLocaleDateString())
+    console.log("duration: ", cohortData[4], Number(cohortData[4]),  new Date(Number(cohortData[4]) * 1000).toLocaleDateString())
+
     const transformedCohorts = cohortData.map((cohort) => {
+      console.log(cohort)
       const startDate = cohort.startDate
         ? new Date(Number(cohort.startDate) * 1000).toLocaleDateString()
         : 'Invalid Date';
