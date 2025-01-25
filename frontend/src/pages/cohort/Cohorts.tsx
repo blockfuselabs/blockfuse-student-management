@@ -306,8 +306,10 @@ useEffect(() => {
                 name:
                   TRACK_OPTIONS[Number(track[1])] &&
                   TRACK_OPTIONS[Number(track[1])].label
-                    ? TRACK_OPTIONS[Number(track[1])].label
-                    : "Unknown",
+                  ? console.log("track------>",track)
+                    : console.log("Unknown", track),
+                    // ? TRACK_OPTIONS[Number(track[1])].label
+                    // : "Unknown",
                 trackNumber: Number(track[1]) || 0,
               }))
             : [];
