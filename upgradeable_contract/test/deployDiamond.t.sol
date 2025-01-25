@@ -102,9 +102,8 @@ contract DiamondDeployer is Test, IDiamondCut {
     }
 
     function testDeployerOfTheContractIsSuperAdmin() public {
-        // vm.startPrank(superAdmin);
+cx        vm.startPrank(superAdmin);
         console.log("superAdmin address in test: ", LibAppStorage.layout().superAdmin);
-
     }
 
     function generateSelectors(
