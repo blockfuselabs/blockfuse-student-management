@@ -31,7 +31,7 @@ interface NewStudent {
   walletAddress: string;
 }
 
-const CONTRACT_ADDRESS = "0x675ec9E03ff013479eDaE3033ecfd26d796a5f0d" as `0x${string}`;
+const CONTRACT_ADDRESS = "0x071215bd2c5bc7042b8C9151D4aC2Bc4DEF20d9C" as `0x${string}`;
 
 const Students: React.FC = () => {
   // State Management

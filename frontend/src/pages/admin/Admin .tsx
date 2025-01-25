@@ -22,7 +22,7 @@ interface Admin {
   dateAdded: string;
 }
 
-const CONTRACT_ADDRESS = "0x675ec9E03ff013479eDaE3033ecfd26d796a5f0d" as `0x${string}`;
+const CONTRACT_ADDRESS = "0x071215bd2c5bc7042b8C9151D4aC2Bc4DEF20d9C" as `0x${string}`;
 
 const Admin: React.FC = () => {
   const { address: userAddress, isConnected } = useAccount();
