@@ -8,6 +8,7 @@ import { ChevronDown, X } from "lucide-react";
 // Import your ABI from the JSON file
 import CONTRACT_ABI from '../../smart_contract/SMSAbi.json';
 import { useAssessmentService } from "../../hooks/useStudentsAssesmentService";
+import { Address } from "viem";
 
 // Enum for Track (based on contract)
 enum Track {
@@ -76,7 +77,36 @@ const Students: React.FC = () => {
     return addressesArray[trackIndex] || [];
   };
 
-  console.log("students: ", getStudentsByTrack(0))
+  const [studentDetails, setStudentDetails] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchStudentDetails = async () => {
+      try {
+        const addresses = getStudentsByTrack(0);
+        const details = [];
+  
+        for (const address of addresses) {
+          const { student } = assessmentService.useGetStudent(address);
+          if (student?.processedData) {
+            details.push(student.processedData);
+          }
+        }
+        console.log("details:", details)
+        setStudentDetails(details);
+      } catch (error) {
+        console.error('Failed to fetch student details', error);
+      }
+    };
+  
+    if (cohort?.processedData) {
+      fetchStudentDetails();
+    }
+  }, [cohort, assessmentService]);
+
+  console.log(studentDetails)
+
+  // const { student } = assessmentService.useGetStudent("0x7e9AABe5EaEe5A454217cFdD3f9f1ada36dD5bF0"); //todo:
+  // console.log(student.processedData)
 
   // Input Change Handler
   const handleInputChange = (

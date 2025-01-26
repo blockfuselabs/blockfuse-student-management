@@ -140,10 +140,44 @@ export function useAssessmentService() {
     };
   }
 
+  const useGetStudent = (address: Address) => {
+    const { 
+      data: studentData, 
+      isError, 
+      isLoading, 
+      error
+    } = useReadContract({
+      abi: CONTRACT_ABI as Abi,
+      address: CONTRACT_ADDRESS,
+      functionName: 'getStudent',
+      args: [address],
+    });
+
+    const student = {processedData: studentData};
+
+    // console.log(`Get Student:`, {
+    //   rawData: student,
+    //   processedData: studentData,
+    //   isLoading,
+    //   isError,
+    //   error
+    // });
+
+    // console.log(student)
+
+    return { 
+      student, 
+      isError, 
+      isLoading, 
+      error
+    };
+  }
+
   return {
     useStudentAssesments,
     useStudentFinalScore,
     useStudentScoreByIndex,
     useGetCohort,
+    useGetStudent,
   };
 }
