@@ -329,16 +329,34 @@ contract BlockFuseSMS {
         return student[_studentWalletAddress].finalScore;
     }
 
-    function getStudentScoreByIndex(
-        address _studentWalletAddress,
-        uint index
-        ) external studentExist(_studentWalletAddress) view returns(int)
-    {
-        require(studentScore[_studentWalletAddress].length > 0, "Student not yet Scored");
-        require(index < studentScore[_studentWalletAddress].length , "Index out of range");
+    // function getStudentScoreByIndex(
+    //     address _studentWalletAddress,
+    //     uint index
+    //     ) external studentExist(_studentWalletAddress) view returns(int)
+    // {
+    //     require(studentScore[_studentWalletAddress].length > 0, "Student not yet Scored");
+    //     require(index < studentScore[_studentWalletAddress].length , "Index out of range");
 
-        return studentScore[_studentWalletAddress][index];
-    } 
+    //     return studentScore[_studentWalletAddress][index];
+    // } 
+
+    function getStudentsByCohortAndTrack(
+        uint8 _cohortId, 
+        Track _track
+    ) public view returns (studentDetails[] memory) {
+        require(_cohortId > 0 && _cohortId <= cohortCount, Error.INVALID_COHORT_ID());
+        
+        Cohort storage cohort = cohorts[_cohortId];
+        address[] memory studentAddresses = cohort.studentsByTrack[_track];
+        
+        studentDetails[] memory studentDetailsList = new studentDetails[](studentAddresses.length);
+        
+        for (uint256 i = 0; i < studentAddresses.length; i++) {
+            studentDetailsList[i] = student[studentAddresses[i]];
+        }
+        
+        return studentDetailsList;
+    }
 
     function getAttendanceByCohortAndTrack(
         uint8 _cohortId, 
@@ -384,15 +402,6 @@ contract BlockFuseSMS {
     function getStudent(address _studentAddress) external view returns(studentDetails memory studentData) {
         studentData = student[_studentAddress];
     } 
-
-    // function getAllAdmins() public view returns (admins memory) {
-    //     Cohort[] memory allCohorts = new Cohort[](cohortCount);
-    //     for (uint8 i = 1; i <= cohortCount; i++) {
-    //         Cohort storage cohort = cohorts[i];
-    //         allCohorts[i - 1] = cohort;
-    //     }
-    //     return allCohorts;
-    // }
 
     // =====================================================================================
     // =========================== HELPER FUNCTIONS ========================================
