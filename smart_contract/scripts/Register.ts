@@ -4,7 +4,7 @@ import * as XLSX from "xlsx";
 
 async function main() {
     
-    const contractAddress = "";
+    const contractAddress = "0x071215bd2c5bc7042b8C9151D4aC2Bc4DEF20d9C";
     const contractABI = [
         "function registerStudent(string _firstname, string _lastname, string _twitter, string _linkedin, string _github, uint8 _track, uint8 _cohort, address _studentAddress) external"
     ];
@@ -12,7 +12,7 @@ async function main() {
     const [deployer] = await ethers.getSigners();
     const contract = new ethers.Contract(contractAddress, contractABI, deployer);
 
-    const filePath = "./students.xlsx";
+    const filePath = "./blockfuse.csv";
 
     const workbook = XLSX.readFile(filePath);
     const sheetName = workbook.SheetNames[0];
@@ -47,6 +47,7 @@ async function main() {
 
             const track = trackString.toLowerCase() === "web3" ? 1 : 0;
             const cohort = parseInt(cohortString, 10);
+            let result = '0x' + `${studentAddress}`;
             
             console.log(`Registering student: ${firstname} ${lastname}`);
             const tx = await contract.registerStudent(
@@ -57,10 +58,12 @@ async function main() {
                 github || "",
                 track,
                 cohort,
-                studentAddress
+                result
             );
+
             await tx.wait();
-            console.log(`Student ${firstname} ${lastname} registered successfully.`);
+
+            console.log(`Student ${result} registered successfully.`);
         } catch (error) {
             console.error(`Error registering student in row: ${row}`);
             console.error(error);
