@@ -7,6 +7,7 @@ import { ChevronDown, X } from "lucide-react";
 
 // Import your ABI from the JSON file
 import CONTRACT_ABI from '../../smart_contract/SMSAbi.json';
+import { useAssessmentService } from "../../hooks/useStudentsAssesmentService";
 
 // Enum for Track (based on contract)
 enum Track {
@@ -37,6 +38,7 @@ const Students: React.FC = () => {
   // State Management
   const [error, setError] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const assessmentService = useAssessmentService();
 
   // New Student State
   const [newStudent, setNewStudent] = useState<NewStudent>({
@@ -61,6 +63,20 @@ const Students: React.FC = () => {
   const { isSuccess: isTransactionConfirmed } = useWaitForTransactionReceipt({
     hash: registrationError ? undefined : undefined,
   });
+
+  const { cohort } = assessmentService.useGetCohort(2); //todo:
+  console.log(cohort.processedData, typeof(cohort))
+
+  const getStudentsByTrack = (trackIndex: number) => {
+    const addressesArray = cohort.processedData?.[6];
+    if (!addressesArray || !Array.isArray(addressesArray)) {
+      console.error("Invalid data structure or no track data available.");
+      return [];
+    }
+    return addressesArray[trackIndex] || [];
+  };
+
+  console.log("students: ", getStudentsByTrack(0))
 
   // Input Change Handler
   const handleInputChange = (

@@ -25,7 +25,7 @@ const Assessment: React.FC = () => {
     }
   ];
 
-const { cohort } = assessmentService.useGetCohort(2);
+const { cohort } = assessmentService.useGetCohort(2); //todo:
   console.log(cohort.processedData, typeof(cohort))
 
 const getStudentsByTrack = (trackIndex: number) => {
