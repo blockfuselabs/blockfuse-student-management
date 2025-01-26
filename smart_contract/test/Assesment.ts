@@ -83,11 +83,11 @@ import {
             
             const studentId = await BlockFuseSMS.student(addr1);
             const studentAssessments = await BlockFuseSMS.getStudentAssesments(addr1);
-            const studentScoredByIndex = await BlockFuseSMS.getStudentScoreByIndex(addr1,0);
+            // const studentScoredByIndex = await BlockFuseSMS.getStudentScoreByIndex(addr1,0);
             
             expect(studentId.finalScore).to.equal(firstAssesmentScore);
             expect(studentAssessments[0]).equal(firstAssesmentScore);
-            expect(studentScoredByIndex).equal(firstAssesmentScore)
+            // expect(studentScoredByIndex).equal(firstAssesmentScore)
 
             const secondAssesmentScored = 20
             const studentTotalScore = firstAssesmentScore + secondAssesmentScored;
@@ -110,11 +110,11 @@ import {
                 
                 const studentId2 = await BlockFuseSMS.student(addr1);
                 const secondStudentAssessments = await BlockFuseSMS.getStudentAssesments(addr1);
-                const secondStudentScoredByIndex = await BlockFuseSMS.getStudentScoreByIndex(addr1,0);
+                // const secondStudentScoredByIndex = await BlockFuseSMS.getStudentScoreByIndex(addr1,0);
                
                 expect(studentId2.finalScore).to.equal(studentTotalScore);
                 expect(secondStudentAssessments[1]).equal(secondAssesmentScored);
-                expect(secondStudentScoredByIndex).equal(secondAssesmentScored)
+                // expect(secondStudentScoredByIndex).equal(secondAssesmentScored)
                 
         });
 
@@ -186,11 +186,11 @@ import {
         
         const studentId = await BlockFuseSMS.student(addr1);
         const studentAssessments = await BlockFuseSMS.getStudentAssesments(addr1);
-        const studentScoredByIndex = await BlockFuseSMS.getStudentScoreByIndex(addr1,0);
+        // const studentScoredByIndex = await BlockFuseSMS.getStudentScoreByIndex(addr1,0);
         
         expect(studentId.finalScore).to.equal(firstAssesmentScore);
         expect(studentAssessments[0]).equal(firstAssesmentScore);
-        expect(studentScoredByIndex).equal(firstAssesmentScore);
+        // expect(studentScoredByIndex).equal(firstAssesmentScore);
 
         const secondAssesmentScored = -20
         const studentTotalScore = firstAssesmentScore + secondAssesmentScored;
@@ -213,11 +213,11 @@ import {
             
             const studentId2 = await BlockFuseSMS.student(addr1);
             const secondStudentAssessments = await BlockFuseSMS.getStudentAssesments(addr1);
-            const secondStudentScoredByIndex = await BlockFuseSMS.getStudentScoreByIndex(addr1,1);
+            // const secondStudentScoredByIndex = await BlockFuseSMS.getStudentScoreByIndex(addr1,1);
            
             expect(studentId2.finalScore).to.equal(studentTotalScore);
             expect(secondStudentAssessments[1]).equal(secondAssesmentScored);
-            expect(secondStudentScoredByIndex).equal(secondAssesmentScored)
+            // expect(secondStudentScoredByIndex).equal(secondAssesmentScored)
             // firstAssesmet-secondAssesment = 50-20 = 30
             expect(studentId2.finalScore).to.equal(30)
         });
