@@ -288,6 +288,24 @@ contract BlockFuseSMS {
         return studentScore[_studentWalletAddress][index];
     } 
 
+    function getStudentsByCohortAndTrack(
+        uint8 _cohortId, 
+        Track _track
+    ) public view returns (studentDetails[] memory) {
+        require(_cohortId > 0 && _cohortId <= cohortCount, Error.INVALID_COHORT_ID());
+        
+        Cohort storage cohort = cohorts[_cohortId];
+        address[] memory studentAddresses = cohort.studentsByTrack[_track];
+        
+        studentDetails[] memory studentDetailsList = new studentDetails[](studentAddresses.length);
+        
+        for (uint256 i = 0; i < studentAddresses.length; i++) {
+            studentDetailsList[i] = student[studentAddresses[i]];
+        }
+        
+        return studentDetailsList;
+    }
+
     function getAttendanceByCohortAndTrack(
         uint8 _cohortId, 
         Track _track
