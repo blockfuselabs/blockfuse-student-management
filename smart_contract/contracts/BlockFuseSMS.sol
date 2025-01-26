@@ -44,16 +44,21 @@ contract BlockFuseSMS {
     mapping(address => string) public usernames;
     mapping(address => studentDetails) public student;
     mapping(address => int[] ) public studentScore;
-    mapping(address => bool) admins;
+    mapping(address => bool) public admins;
+    mapping(address => uint256) adminIndexes;
     // Mapping: Cohort ID -> Track -> Day -> Student Address -> Attendance
     mapping(uint8 => mapping(Track => mapping(uint256 => mapping(address => bool)))) public attendance;
     mapping(uint8 => mapping(Track =>AttendanceRecord[])) public attendanceRecords;
     mapping(address => AttendanceRecord[]) public individualAttendanceRecord;
     address public superAdmin;
+    address[] public adminList;
+    uint256 adminCount;
 
     constructor () {
         superAdmin = msg.sender;
         admins[superAdmin] = true;
+        adminList.push(superAdmin);
+        adminIndexes[superAdmin] = adminCount++;
     }
 
     // =====================================================================================
@@ -124,15 +129,30 @@ contract BlockFuseSMS {
 
     function addAdmin( address adminAddress) external onlySuperAdmin returns(bool) {
         admins[adminAddress] = true;
+        adminList.push(adminAddress);
+        adminIndexes[adminAddress] = adminCount++;
+
         emit Event.AdminAdded(adminAddress);
         return true;
     }
 
     function  removeAdmin(address adminAddress) external onlySuperAdmin returns (bool){
         admins[adminAddress] = false;
+        uint256 index = adminIndexes[adminAddress];
+
+        uint256 lastIndex = adminList.length - 1;
+        if (index != lastIndex) {
+            address lastAdmin = adminList[lastIndex];
+            adminList[index] = lastAdmin;
+            adminIndexes[lastAdmin] = index;
+        }
+
+        adminList.pop();
+
+        delete adminIndexes[adminAddress];
+
         emit Event.AdminRemoved(adminAddress);
         return true;
-        
     }
 
     function recordStudentAssesment(
@@ -258,6 +278,38 @@ contract BlockFuseSMS {
         );
     }
 
+    function getAllCohorts()
+    public
+    view
+    returns (
+        uint8[] memory ids,
+        uint256[] memory totalStudents,
+        uint256[] memory startDates,
+        uint256[] memory endDates,
+        uint256[] memory durations,
+        Track[][] memory tracks
+    )
+    {
+
+        ids = new uint8[](cohortCount);
+        totalStudents = new uint256[](cohortCount);
+        startDates = new uint256[](cohortCount);
+        endDates = new uint256[](cohortCount);
+        durations = new uint256[](cohortCount);
+        tracks = new Track[][](cohortCount);
+
+        for (uint8 i = 2; i <= cohortCount; i++) {
+            Cohort storage cohort = cohorts[i];
+            ids[i - 2] = cohort.cohortId;
+            totalStudents[i - 2] = cohort.totalStudents;
+            startDates[i - 2] = cohort.startDate;
+            endDates[i - 2] = cohort.endDate;
+            durations[i - 2] = cohort.duration;
+            tracks[i - 2] = cohort.cohortTracks;
+        }
+
+        return (ids, totalStudents, startDates, endDates, durations, tracks);
+    }
 
     function getCohortTracks(uint8 _cohortId) public view returns (Track[] memory) {
         return cohorts[_cohortId].cohortTracks;
@@ -350,6 +402,15 @@ contract BlockFuseSMS {
     function getStudent(address _studentAddress) external view returns(studentDetails memory studentData) {
         studentData = student[_studentAddress];
     } 
+
+    // function getAllAdmins() public view returns (admins memory) {
+    //     Cohort[] memory allCohorts = new Cohort[](cohortCount);
+    //     for (uint8 i = 1; i <= cohortCount; i++) {
+    //         Cohort storage cohort = cohorts[i];
+    //         allCohorts[i - 1] = cohort;
+    //     }
+    //     return allCohorts;
+    // }
 
     // =====================================================================================
     // =========================== HELPER FUNCTIONS ========================================
