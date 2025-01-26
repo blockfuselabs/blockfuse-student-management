@@ -107,9 +107,43 @@ export function useAssessmentService() {
     };
   };
 
+  const useGetCohort = (cohortId: number) => {
+    const { 
+      data: cohortData, 
+      isError, 
+      isLoading, 
+      error
+    } = useReadContract({
+      abi: CONTRACT_ABI as Abi,
+      address: CONTRACT_ADDRESS,
+      functionName: 'getCohort',
+      args: [cohortId],
+    });
+
+    const cohort = {processedData: cohortData};
+
+    console.log(`Get Cohort:`, {
+      rawData: cohort,
+      processedData: cohortData,
+      isLoading,
+      isError,
+      error
+    });
+
+    console.log(cohort)
+
+    return { 
+      cohort, 
+      isError, 
+      isLoading, 
+      error
+    };
+  }
+
   return {
     useStudentAssesments,
     useStudentFinalScore,
     useStudentScoreByIndex,
+    useGetCohort,
   };
 }
