@@ -121,7 +121,18 @@ export const useCohortService = () => {
     return cohorts;
   };
 
-
+  const recordStudentAssesment = async (student: Address, score: number) => {
+    if (!writeContract) throw new Error('Write contract is not initialized.');
+    
+    const tx = await writeContract({
+      abi: CONTRACT_ABI as Abi,
+      address: CONTRACT_ADDRESS,
+      functionName: 'recordStudentAssesment',
+      args: [student, score]
+    });
+    
+    return tx;
+  };
 
   // Watch "CohortCreated" events
   useWatchContractEvent({
@@ -139,5 +150,6 @@ export const useCohortService = () => {
     addStudentToCohort,
     fetchCohortData,
     writeData,
+    recordStudentAssesment
   };
 };

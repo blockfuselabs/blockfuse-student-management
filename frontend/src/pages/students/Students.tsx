@@ -9,6 +9,7 @@ import { ChevronDown, X } from "lucide-react";
 import CONTRACT_ABI from '../../smart_contract/SMSAbi.json';
 import { useAssessmentService } from "../../hooks/useStudentsAssesmentService";
 import { Address } from "viem";
+import { useCohortService } from "../../hooks/useCohortService";
 
 // Enum for Track (based on contract)
 enum Track {
@@ -20,6 +21,12 @@ enum Gender {
   MALE,
   FEMALE
 }
+
+type Tab = {
+  id: "ALL" | "WEB2" | "WEB3";
+  label: string;
+  count: number;
+};
 
 // Interfaces
 interface NewStudent {
@@ -33,13 +40,14 @@ interface NewStudent {
   walletAddress: string;
 }
 
-const CONTRACT_ADDRESS = "0x071215bd2c5bc7042b8C9151D4aC2Bc4DEF20d9C" as `0x${string}`;
+const CONTRACT_ADDRESS = "0x3Db767d0407e1fB7d82dA095702937502563910A" as `0x${string}`;
 
 const Students: React.FC = () => {
   // State Management
   const [error, setError] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const assessmentService = useAssessmentService();
+  const cohortService = useCohortService();
 
   // New Student State
   const [newStudent, setNewStudent] = useState<NewStudent>({
@@ -67,43 +75,6 @@ const Students: React.FC = () => {
 
   const { cohort } = assessmentService.useGetCohort(2); //todo:
   console.log(cohort.processedData, typeof(cohort))
-
-  const getStudentsByTrack = (trackIndex: number) => {
-    const addressesArray = cohort.processedData?.[6];
-    if (!addressesArray || !Array.isArray(addressesArray)) {
-      console.error("Invalid data structure or no track data available.");
-      return [];
-    }
-    return addressesArray[trackIndex] || [];
-  };
-
-  const [studentDetails, setStudentDetails] = useState<any[]>([]);
-
-  useEffect(() => {
-    const fetchStudentDetails = async () => {
-      try {
-        const addresses = getStudentsByTrack(0);
-        const details = [];
-  
-        for (const address of addresses) {
-          const { student } = assessmentService.useGetStudent(address);
-          if (student?.processedData) {
-            details.push(student.processedData);
-          }
-        }
-        console.log("details:", details)
-        setStudentDetails(details);
-      } catch (error) {
-        console.error('Failed to fetch student details', error);
-      }
-    };
-  
-    if (cohort?.processedData) {
-      fetchStudentDetails();
-    }
-  }, [cohort, assessmentService]);
-
-  console.log(studentDetails)
 
   // const { student } = assessmentService.useGetStudent("0x7e9AABe5EaEe5A454217cFdD3f9f1ada36dD5bF0"); //todo:
   // console.log(student.processedData)
@@ -137,8 +108,6 @@ const Students: React.FC = () => {
       "Web3": Track.WEB3
     };
 
-   
-
     writeContract({
       abi: CONTRACT_ABI,
       address: CONTRACT_ADDRESS,
@@ -154,6 +123,48 @@ const Students: React.FC = () => {
         newStudent.walletAddress as `0x${string}`
       ]
     });
+  };
+
+  // Map track to track enum
+  const trackMapping: {[key: string]: Track} = {
+    "Web2": Track.WEB2,
+    "Web3": Track.WEB3
+  };
+
+  const tabs = Object.keys(trackMapping).map((trackName, index) => ({
+    id: index + 1,
+    label: trackName,
+    track: trackMapping[trackName],
+    count: 0
+  }));
+
+  const [selectedTab, setSelectedTab] = useState(tabs[0].id);
+  const [currentTrack, setCurrentTrack] = useState(Track.WEB2); 
+
+  const { studentDetails } = assessmentService.useGetStudentsByCohortAndTrack(2, currentTrack); //todo: change static
+  console.log("students:", studentDetails.processedData)
+
+
+  const [selectedStudent, setSelectedStudent] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [studentScore, setStudentScore] = useState('');
+
+  const handleViewStudent = (student) => {
+    setSelectedStudent(student);
+    setIsModalOpen(true);
+  };
+  
+  const handleAddScore = async () => {
+    try {
+      // Implement score submission logic
+      await cohortService.recordStudentAssesment(
+        selectedStudent.studentAddress, 
+        Number(studentScore)
+      );
+      setIsModalOpen(false);
+    } catch (error) {
+      console.error('Failed to update score', error);
+    }
   };
 
   // Registration Success/Error Handling
@@ -343,6 +354,105 @@ const Students: React.FC = () => {
           </div>
         </div>
       )}
+
+       {/* Tabs */}
+       <div className="flex gap-8 border-b mb-6">
+        {tabs.map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => {
+              setSelectedTab(tab.id);
+              setCurrentTrack(tab.track);
+            }}
+            className={`pb-4 px-2 relative ${
+              selectedTab === tab.id ? "text-blue-600" : "text-gray-600"
+            }`}
+          >
+            {tab.label}
+            {selectedTab === tab.id && (
+              <div className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600"></div>
+            )}
+          </button>
+        ))}
+      </div>
+
+      {/* Table */}
+      <div className="overflow-x-auto">
+        <table className="w-full">
+          <thead>
+            <tr className="text-left border-b">
+              <th className="pb-4 pr-6">
+                VIEW
+              </th>
+              <th className="pb-4 pr-6">ADDRESS</th>
+              <th className="pb-4 pr-6">
+                <div className="flex items-center gap-2">
+                  FIRST NAME
+                  {/* <ArrowDown size={16} className="text-gray-400" /> */}
+                </div>
+              </th>
+              <th className="pb-4 pr-6">LAST NAME</th>
+              <th className="pb-4">TRACK</th>
+              <th className="pb-4">SCORE</th>
+            </tr>
+          </thead>
+          <tbody>
+          {studentDetails?.processedData?.map((student, index) => (
+            <tr key={index} className="border-b">
+              <td className="py-4 pr-6">
+              <svg onClick={() => handleViewStudent(student)} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6 cursor-pointer hover:text-blue-600">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+              </svg>
+              </td>
+              <td className="py-4 pr-6">{student.studentAddress}</td>
+              <td className="py-4 pr-6">{student.firstname}</td>
+              <td className="py-4 pr-6">{student.lastname}</td>
+              <td className="py-4">{student.track === 1 ? "Web3" : "Web2"}</td>
+              <td className="py-4">{Number(student.finalScore)}</td>
+            </tr>
+          ))}
+        </tbody>
+        {/* Modal */}
+        {isModalOpen && selectedStudent && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
+            <div className="bg-white p-6 rounded-lg w-96">
+              <h2 className="text-xl font-bold mb-4">Student Details</h2>
+              <div className="space-y-2">
+                <p><strong>Name:</strong> {selectedStudent.firstname} {selectedStudent.lastname}</p>
+                <p><strong>Address:</strong> {selectedStudent.studentAddress}</p>
+                <p><strong>Track:</strong> {selectedStudent.track === 1 ? "Web3" : "Web2"}</p>
+                <p><a className="text-blue-500 underline" href={selectedStudent.twitter}><strong>Twitter</strong></a></p>
+                <p><a className="text-blue-500 underline" href={selectedStudent.linkedin}><strong>LinkedIn</strong> </a></p>
+                <p><a className="text-blue-500 underline" href={selectedStudent.github}><strong>GitHub</strong> </a></p>
+                <div className="mt-4">
+                  <label className="block mb-2">Add Student Score</label>
+                  <input 
+                    type="number" 
+                    value={studentScore}
+                    onChange={(e) => setStudentScore(e.target.value)}
+                    className="w-full p-2 border rounded"
+                    placeholder="Enter score"
+                  />
+                  <button 
+                    onClick={handleAddScore}
+                    className="mt-2 w-full bg-blue-600 text-white p-2 rounded"
+                  >
+                    Submit Score
+                  </button>
+                </div>
+              </div>
+              <button 
+                onClick={() => setIsModalOpen(false)}
+                className="mt-4 w-full bg-gray-200 p-2 rounded"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        )}
+        </table>
+      </div>
     </div>
   );
 };

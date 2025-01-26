@@ -4,7 +4,7 @@ import * as XLSX from "xlsx";
 
 async function main() {
     
-    const contractAddress = "0x071215bd2c5bc7042b8C9151D4aC2Bc4DEF20d9C";
+    const contractAddress = "0x3Db767d0407e1fB7d82dA095702937502563910A";
     const contractABI = [
         "function registerStudent(string _firstname, string _lastname, string _twitter, string _linkedin, string _github, uint8 _track, uint8 _cohort, address _studentAddress) external"
     ];

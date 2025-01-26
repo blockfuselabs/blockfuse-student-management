@@ -12,7 +12,7 @@ import { Plus, Users, BookOpen, Search, AlertCircle } from 'lucide-react';
 import SMSAbi from '../../smart_contract/SMSAbi.json';
 
 // Contract Configuration
-const CONTRACT_ADDRESS = "0x071215bd2c5bc7042b8C9151D4aC2Bc4DEF20d9C" as `0x${string}`;
+const CONTRACT_ADDRESS = "0x3Db767d0407e1fB7d82dA095702937502563910A" as `0x${string}`;
 
 // Type Definitions
 interface Track {
@@ -417,9 +417,9 @@ useEffect(() => {
       <div key={cohort.id} className="bg-white rounded-lg shadow-md p-6">
         <h3 className="text-lg font-semibold mb-4">{cohort.name}</h3>
         <div className="space-y-2">
-          <div>
+          {/* <div>
             <strong>ID:</strong> {cohort.id}
-          </div>
+          </div> */}
           <div>
             <strong>Start Date:</strong> {cohort.startDate}
           </div>

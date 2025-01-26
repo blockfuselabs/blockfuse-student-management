@@ -2,6 +2,7 @@
 import { useReadContract } from 'wagmi';
 import { Abi, Address } from 'viem';
 import CONTRACT_ABI from '../ABI/smsAbi.json';
+import { writeContract } from 'viem/actions';
 
 const CONTRACT_ADDRESS = import.meta.env.VITE_PUBLIC_CONTRACT_ADDRESS as Address;
 
@@ -140,33 +141,26 @@ export function useAssessmentService() {
     };
   }
 
-  const useGetStudent = (address: Address) => {
+  const useGetStudentsByCohortAndTrack = (cohortId: number, track: number) => {
     const { 
-      data: studentData, 
+      data: studentsData, 
       isError, 
-      isLoading, 
+      isLoading,
+      isSuccess, 
       error
     } = useReadContract({
       abi: CONTRACT_ABI as Abi,
       address: CONTRACT_ADDRESS,
-      functionName: 'getStudent',
-      args: [address],
+      functionName: 'getStudentsByCohortAndTrack',
+      args: [cohortId, track],
     });
 
-    const student = {processedData: studentData};
+    const studentDetails = {processedData: studentsData};
 
-    // console.log(`Get Student:`, {
-    //   rawData: student,
-    //   processedData: studentData,
-    //   isLoading,
-    //   isError,
-    //   error
-    // });
-
-    // console.log(student)
+    console.log("error", isError, "loading", isLoading, "error",error, "success", isSuccess)
 
     return { 
-      student, 
+      studentDetails, 
       isError, 
       isLoading, 
       error
@@ -178,6 +172,6 @@ export function useAssessmentService() {
     useStudentFinalScore,
     useStudentScoreByIndex,
     useGetCohort,
-    useGetStudent,
+    useGetStudentsByCohortAndTrack,
   };
 }
