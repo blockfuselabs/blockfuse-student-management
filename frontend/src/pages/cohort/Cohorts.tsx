@@ -264,17 +264,15 @@ useEffect(() => {
     const groupedData: (bigint | number)[][] = Array.from({ length: numCohorts }, () => []);
 
     cohortData.forEach((item: (bigint | number)[]) => {
-      if (item[0] >= 2) {
-        item.forEach((value: bigint | number, index: number) => {
-          groupedData[index].push(value || 0n);
-        });
-      }
+      item.forEach((value: bigint | number, index: number) => {
+        groupedData[index].push(value || 0n);
+      });
     });
  
     console.log("Grouped Data:", groupedData);
 
     const transformedCohorts = groupedData.map((cohort, index) => {
-          console.log("========>>>>>",cohort, index)
+      console.log(cohort[5])
       if (Array.isArray(cohort)) {
 
         const id = cohort[0] || 0;
@@ -283,6 +281,7 @@ useEffect(() => {
         const endDateRaw = cohort[3] || 0; // end date is at index 3
         const durationRaw = cohort[4] || 0; // duration is at index 4
         const tracksRaw = cohort[5] || []; // tracks data is at index 5
+        console.log("Test", cohort)
 
         const startDate =
           startDateRaw && startDateRaw !== 0n
@@ -301,18 +300,15 @@ useEffect(() => {
 
         const tracks =
           Array.isArray(tracksRaw) && tracksRaw.length > 0
-            ? tracksRaw.map((track) => ({
-                id: track[0]?.toString() || "0",
-                name:
-                  TRACK_OPTIONS[Number(track[1])] &&
-                  TRACK_OPTIONS[Number(track[1])].label
-                  ? console.log("track------>",track)
-                    : console.log("Unknown", track),
-                    // ? TRACK_OPTIONS[Number(track[1])].label
-                    // : "Unknown",
-                trackNumber: Number(track[1]) || 0,
-              }))
-            : [];
+            ? tracksRaw.map((track) => {
+                const trackName = TRACK_OPTIONS[Number(track)] || "Unknown";
+                return {
+                  id: track?.toString() || "0",
+                  name: trackName.label,
+                  trackNumber: Number(track),
+                };
+              })
+            : [{ id: "0", name: "no track", trackNumber: 0 }];
 
         return {
           id,
@@ -440,7 +436,7 @@ useEffect(() => {
               {cohort.tracks.map((track) => (
                 <span
                   key={track.id}
-                  className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-sm"
+                  className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs"
                 >
                   {track.name}
                 </span>

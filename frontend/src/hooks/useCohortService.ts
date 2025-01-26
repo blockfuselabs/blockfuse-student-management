@@ -121,6 +121,8 @@ export const useCohortService = () => {
     return cohorts;
   };
 
+
+
   // Watch "CohortCreated" events
   useWatchContractEvent({
     abi: CONTRACT_ABI as Abi,
