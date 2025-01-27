@@ -2,7 +2,6 @@
 import { useReadContract } from 'wagmi';
 import { Abi, Address } from 'viem';
 import CONTRACT_ABI from '../ABI/smsAbi.json';
-import { writeContract } from 'viem/actions';
 
 const CONTRACT_ADDRESS = import.meta.env.VITE_PUBLIC_CONTRACT_ADDRESS as Address;
 

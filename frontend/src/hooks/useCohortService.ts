@@ -42,12 +42,12 @@ export const useCohortService = () => {
   });
 
   // Read contract data for cohorts
-  const { data: cohortData, refetch: refetchCohort } = useReadContract({
-    abi: CONTRACT_ABI as Abi,
-    address: CONTRACT_ADDRESS,
-    functionName: 'getCohort',
-    args: [BigInt(0)], // Default args for now
-  });
+  // const { data: cohortData, refetch: refetchCohort } = useReadContract({
+  //   abi: CONTRACT_ABI as Abi,
+  //   address: CONTRACT_ADDRESS,
+  //   functionName: 'getCohort',
+  //   args: [BigInt(0)], // Default args for now
+  // });
 
   // Setup for writing to the contract
   const { writeContract, data: writeData } = useWriteContract();
