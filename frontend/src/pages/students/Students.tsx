@@ -194,7 +194,7 @@ const Students: React.FC = () => {
                 onClick={() => setShowCreateModal(false)}
                 className="text-gray-500 hover:text-gray-700"
               >
-                <X size={24} />
+                {/* <X size={24} /> */}
               </button>
             </div>
             <form onSubmit={handleRegisterStudent} className="p-6">
