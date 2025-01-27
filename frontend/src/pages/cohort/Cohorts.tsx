@@ -20,11 +20,11 @@ interface Track {
 }
 
 interface Cohort {
-  id: number;
+  id: number|bigint;
   name: string;
-  startDate: number;
-  endDate: number;
-  duration: number;
+  startDate: string;
+  endDate: string;
+  duration: string;
   tracks: Track[];
   studentCount: number;
 }
@@ -205,54 +205,6 @@ const CohortPage: React.FC = () => {
 
   console.log('DATA NEW:', cohortData);
 
-  // Transform Contract Data
-// Transform Contract Data
-// useEffect(() => {
-//   console.log('Raw cohortData:', cohortData); // Debugging
-//   if (cohortData && Array.isArray(cohortData)) {
-//     console.log("startdate: ", cohortData)
-//     // console.log("startdate: ", cohortData[2], Number(cohortData[2]),  new Date(Number(cohortData[2]) * 1000).toLocaleDateString())
-//     // console.log("enddate: ", cohortData[3], Number(cohortData[3]),  new Date(Number(cohortData[3]) * 1000).toLocaleDateString())
-//     // console.log("duration: ", cohortData[4], Number(cohortData[4]),  new Date(Number(cohortData[4]) * 1000).toLocaleDateString())
-
-//     const transformedCohorts = cohortData.map((cohort) => {
-//       console.log(cohort)
-//       const startDate = cohort.startDate
-//         ? new Date(Number(cohort.startDate) * 1000).toLocaleDateString()
-//         : 'Invalid Date';
-//       const endDate = cohort.endDate
-//         ? new Date(Number(cohort.endDate) * 1000).toLocaleDateString()
-//         : 'Invalid Date';
-
-//       return {
-//         id: Number(cohort.id),
-//         name: `Cohort ${cohort.id}`,
-//         startDate,
-//         endDate,
-//         duration:
-//           cohort.startDate && cohort.endDate
-//             ? Math.round((Number(cohort.endDate) - Number(cohort.startDate)) / 86400)
-//             : 0,
-//         tracks: cohort.tracks
-//           ? cohort.tracks.map((track: any) => ({
-//               id: track.id.toString(),
-//               name: TRACK_OPTIONS[Number(track.trackNumber)]?.label || 'Unknown',
-//               trackNumber: Number(track.trackNumber),
-//             }))
-//           : [],
-//         studentCount: Number(cohort.studentCount || 0),
-//       };
-//     });
-
-//     setCohorts(transformedCohorts);
-//     setIsLoading(false);
-//   } else {
-//     setCohorts([]);
-//     setIsLoading(false);
-//   }
-// }, [cohortData]);
-
-
 useEffect(() => {
   console.log("Raw cohortData:", cohortData); // Debugging
 
@@ -269,64 +221,62 @@ useEffect(() => {
  
     console.log("Grouped Data:", groupedData);
 
-    const transformedCohorts = groupedData.map((cohort, index) => {
+    const transformedCohorts = groupedData.map((cohort, index): Cohort => {
       if (Array.isArray(cohort)) {
-
-        const id = cohort[0] || BigInt(0);
-        const totalStudents = cohort[1] || BigInt(0);
-        const startDateRaw = cohort[2] || BigInt(0); // start date is at index 2
-        const endDateRaw = cohort[3] || BigInt(0); // end date is at index 3
-        const durationRaw = cohort[4] || BigInt(0); // duration is at index 4
-        const tracksRaw = cohort[5] || []; // tracks data is at index 5
-        console.log("Test", cohort)
-
+        const id = Number(cohort[0] || 0);
+        const totalStudents = Number(cohort[1] || 0);
+        const startDateRaw = BigInt(cohort[2] || 0);
+        const endDateRaw = BigInt(cohort[3] || 0);
+        const durationRaw = BigInt(cohort[4] || 0);
+        const tracksRaw = cohort[5] || [];
+    
         const startDate =
           startDateRaw && startDateRaw !== BigInt(0)
             ? new Date(Number(startDateRaw) * 1000).toLocaleDateString()
             : "Invalid Date";
-
+    
         const endDate =
           endDateRaw && endDateRaw !== BigInt(0)
             ? new Date(Number(endDateRaw) * 1000).toLocaleDateString()
             : "Invalid Date";
-
+    
         const duration =
           durationRaw && durationRaw !== BigInt(0)
             ? new Date(Number(durationRaw) * 1000).toLocaleDateString()
             : "Invalid Date";
-
-        const tracks =
+    
+        const tracks: Track[] =
           Array.isArray(tracksRaw) && tracksRaw.length > 0
-            ? tracksRaw.map((track) => {
-                const trackName = TRACK_OPTIONS[Number(track)] || "Unknown";
+            ? tracksRaw.map((track): Track => {
+                const trackName = TRACK_OPTIONS[Number(track)] || { label: "Unknown" };
                 return {
                   id: track?.toString() || "0",
                   name: trackName.label,
-                  trackNumber: Number(track),
+                  trackNumber: Number(track)
                 };
               })
             : [{ id: "0", name: "no track", trackNumber: 0 }];
-
+    
         return {
           id,
-          name: `Cohort ${id}`,
+          name: `Cohort ${id.toString()}`,
           startDate,
           endDate,
           duration,
           tracks,
-          studentCount: totalStudents,
-        };
-      } else {
-        return {
-          id: index + 1,
-          name: `Cohort ${index + 1}`,
-          startDate: "Invalid Date",
-          endDate: "Invalid Date",
-          duration: 0,
-          tracks: [],
-          studentCount: 0,
+          studentCount: totalStudents
         };
       }
+    
+      return {
+        id: index + 1,
+        name: `Cohort ${index + 1}`,
+        startDate: "Invalid Date",
+        endDate: "Invalid Date",
+        duration: "Invalid Date", // Changed from 0 to match type
+        tracks: [],
+        studentCount: 0
+      };
     });
 
     console.log("Transformed Cohorts:", transformedCohorts); // Debugging transformed data
