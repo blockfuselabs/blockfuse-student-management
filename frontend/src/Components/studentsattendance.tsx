@@ -22,7 +22,7 @@ interface Assessment {
   weight: number;
 }
 
-const CONTRACT_ADDRESS = '0x3Db767d0407e1fB7d82dA095702937502563910A';
+const CONTRACT_ADDRESS = import.meta.env.VITE_PUBLIC_CONTRACT_ADDRESS as `0x${string}`;
 
 const StudentsAttendance: React.FC = () => {
   const { address, isConnected } = useAccount();

@@ -10,7 +10,10 @@ import { Plus, Users, Search, AlertCircle } from 'lucide-react';
 import SMSAbi from '../../smart_contract/SMSAbi.json';
 
 // Contract Configuration
-const CONTRACT_ADDRESS = import.meta.env.VITE_PUBLIC_CONTRACT_ADDRESS as `0x${string}`;;
+const CONTRACT_ADDRESS = import.meta.env.VITE_PUBLIC_CONTRACT_ADDRESS as `0x${string}`;
+const RPC_URL = `https://eth-sepolia.g.RPC_URL.com/v2/${import.meta.env.VITE_ALCHEMY_ID}`;
+
+console.log("RPC URL:", RPC_URL)
 
 // Type Definitions
 interface Track {
