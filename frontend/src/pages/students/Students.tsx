@@ -23,6 +23,21 @@ interface NewStudent {
   walletAddress: string;
 }
 
+interface StudentDetails {
+  studentAddress: `0x${string}`
+  firstname: string;
+  lastname: string;
+  twitter: string;
+  linkedin: string;
+  github: string;
+  track: number;
+  finalScore: string;
+}
+
+interface ProcessedData {
+  processedData: StudentDetails[];
+}
+
 const CONTRACT_ADDRESS = "0x3Db767d0407e1fB7d82dA095702937502563910A" as `0x${string}`;
 
 const Students: React.FC = () => {
@@ -34,14 +49,14 @@ const Students: React.FC = () => {
 
   // New Student State
   const [newStudent, setNewStudent] = useState<NewStudent>({
-    firstName: "string;",
-    lastName: "string;",
-    twitter: "string;",
-    linkedin: "string;",
-    github: "string;",
-    track: "string;",
-    cohort: "string;",
-    walletAddress: "string;",
+    firstName: "",
+    lastName: "",
+    twitter: "",
+    linkedin: "",
+    github: "",
+    track: "",
+    cohort: "",
+    walletAddress: "",
   });
 
   // Wagmi Hooks
@@ -57,11 +72,10 @@ const Students: React.FC = () => {
     hash: registrationError ? undefined : undefined,
   });
 
-  const { cohort } = assessmentService.useGetCohort(2); //todo:
-  console.log(cohort.processedData, typeof(cohort))
+  console.log(isTransactionConfirmed)
 
-  // const { student } = assessmentService.useGetStudent("0x7e9AABe5EaEe5A454217cFdD3f9f1ada36dD5bF0"); //todo:
-  // console.log(student.processedData)
+  const { cohort } = assessmentService.useGetCohort(2);
+  console.log(cohort.processedData, typeof(cohort));
 
   // Input Change Handler
   const handleInputChange = (
@@ -80,13 +94,11 @@ const Students: React.FC = () => {
   const handleRegisterStudent = (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validate inputs
     if (!newStudent.walletAddress) {
       setError("Wallet address is required");
       return;
     }
 
-    // Map track to track enum
     const trackMapping: {[key: string]: Track} = {
       "Web2": Track.WEB2,
       "Web3": Track.WEB3
@@ -109,7 +121,6 @@ const Students: React.FC = () => {
     });
   };
 
-  // Map track to track enum
   const trackMapping: {[key: string]: Track} = {
     "Web2": Track.WEB2,
     "Web3": Track.WEB3
@@ -123,29 +134,28 @@ const Students: React.FC = () => {
   }));
 
   const [selectedTab, setSelectedTab] = useState(tabs[0].id);
-  const [currentTrack, setCurrentTrack] = useState(Track.WEB2); 
+  const [currentTrack, setCurrentTrack] = useState(Track.WEB2);
 
-  const { studentDetails } = assessmentService.useGetStudentsByCohortAndTrack(2, currentTrack); //todo: change static
-  console.log("students:", studentDetails.processedData)
-
-
-  const [selectedStudent, setSelectedStudent] = useState(null);
+  const { studentDetails } = assessmentService.useGetStudentsByCohortAndTrack(2, currentTrack) as { studentDetails: ProcessedData };
+  
+  const [selectedStudent, setSelectedStudent] = useState<StudentDetails | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [studentScore, setStudentScore] = useState('');
 
-  const handleViewStudent = (student) => {
+  const handleViewStudent = (student: StudentDetails) => {
     setSelectedStudent(student);
     setIsModalOpen(true);
   };
   
   const handleAddScore = async () => {
     try {
-      // Implement score submission logic
-      await cohortService.recordStudentAssesment(
-        selectedStudent.studentAddress, 
-        Number(studentScore)
-      );
-      setIsModalOpen(false);
+      if (selectedStudent) {
+        await cohortService.recordStudentAssesment(
+          selectedStudent.studentAddress, 
+          Number(studentScore)
+        );
+        setIsModalOpen(false);
+      }
     } catch (error) {
       console.error('Failed to update score', error);
     }
@@ -159,7 +169,6 @@ const Students: React.FC = () => {
   
     if (isRegistrationSuccess) {
       setShowCreateModal(false);
-      // Reset form
       setNewStudent({
         firstName: "",
         lastName: "",
@@ -167,11 +176,12 @@ const Students: React.FC = () => {
         linkedin: "",
         github: "",
         track: "",
-        cohort: 0,
+        cohort: "",
         walletAddress: "",
       });
     }
   }, [registrationError, isRegistrationSuccess]);
+
 
   return (
     <div className="p-6 bg-white">

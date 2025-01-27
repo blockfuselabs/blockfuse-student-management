@@ -89,37 +89,37 @@ export const useCohortService = () => {
   };
 
   // Fetch specific cohort data
-  const fetchCohortData = async (cohortId: number): Promise<FormattedCohort | null> => {
-    const result = await refetchCohort({ args: [BigInt(cohortId)] });
-    if (!result.data) return null;
+  // const fetchCohortData = async (cohortId: number): Promise<FormattedCohort | null> => {
+  //   const result = await refetchCohort({ args: [BigInt(cohortId)] });
+  //   if (!result.data) return null;
 
-    const data = result.data as unknown as CohortData;
+  //   const data = result.data as unknown as CohortData;
 
-    return {
-      id: cohortId,
-      name: `Cohort ${cohortId}`,
-      tracks: data.tracks.map((track, idx) => ({ id: idx, name: track })),
-      students: data.students,
-      studentCount: Number(data.totalStudents),
-      startDate: Number(data.startDate),
-      endDate: Number(data.endDate),
-      duration: Number(data.duration),
-    };
-  };
+  //   return {
+  //     id: cohortId,
+  //     name: `Cohort ${cohortId}`,
+  //     tracks: data.tracks.map((track, idx) => ({ id: idx, name: track })),
+  //     students: data.students,
+  //     studentCount: Number(data.totalStudents),
+  //     startDate: Number(data.startDate),
+  //     endDate: Number(data.endDate),
+  //     duration: Number(data.duration),
+  //   };
+  // };
 
   // Fetch all cohorts
-  const fetchCohorts = async (): Promise<FormattedCohort[]> => {
-    if (!cohortCount) return [];
-    const count = Number(cohortCount);
-    const cohorts: FormattedCohort[] = [];
+  // const fetchCohorts = async (): Promise<FormattedCohort[]> => {
+  //   if (!cohortCount) return [];
+  //   const count = Number(cohortCount);
+  //   const cohorts: FormattedCohort[] = [];
 
-    for (let i = 1; i <= count; i++) {
-      const cohort = await fetchCohortData(i);
-      if (cohort) cohorts.push(cohort);
-    }
+  //   for (let i = 1; i <= count; i++) {
+  //     const cohort = await fetchCohortData(i);
+  //     if (cohort) cohorts.push(cohort);
+  //   }
 
-    return cohorts;
-  };
+  //   return cohorts;
+  // };
 
   const recordStudentAssesment = async (student: Address, score: number) => {
     if (!writeContract) throw new Error('Write contract is not initialized.');
@@ -144,11 +144,11 @@ export const useCohortService = () => {
 
   return {
     cohortCount: cohortCount ? Number(cohortCount) : 0,
-    fetchCohorts,
+    // fetchCohorts,
     createCohort,
     addTrackToCohort,
     addStudentToCohort,
-    fetchCohortData,
+    // fetchCohortData,
     writeData,
     recordStudentAssesment
   };

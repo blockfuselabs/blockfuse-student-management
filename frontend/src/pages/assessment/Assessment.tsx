@@ -28,17 +28,6 @@ const Assessment: React.FC = () => {
 const { cohort } = assessmentService.useGetCohort(2); //todo:
   console.log(cohort.processedData, typeof(cohort))
 
-const getStudentsByTrack = (trackIndex: number) => {
-  const addressesArray = cohort.processedData?.[6];
-  if (!addressesArray || !Array.isArray(addressesArray)) {
-    console.error("Invalid data structure or no track data available.");
-    return [];
-  }
-  return addressesArray[trackIndex] || [];
-};
-
-console.log(getStudentsByTrack(0))
-
   return (
     <div className="px-4 md:px-8 bg-white flex-grow min-w-0">
       <h1 className="text-2xl font-bold">Assessment Management</h1>

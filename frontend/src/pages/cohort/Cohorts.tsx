@@ -14,7 +14,7 @@ const CONTRACT_ADDRESS = "0x3Db767d0407e1fB7d82dA095702937502563910A" as `0x${st
 
 // Type Definitions
 interface Track {
-  id: string;
+  // id: string;
   name: string;
   trackNumber: number;
 }
@@ -250,12 +250,12 @@ useEffect(() => {
             ? tracksRaw.map((track): Track => {
                 const trackName = TRACK_OPTIONS[Number(track)] || { label: "Unknown" };
                 return {
-                  id: track?.toString() || "0",
+                  // id: track?.toString() || "0",
                   name: trackName.label,
                   trackNumber: Number(track)
                 };
               })
-            : [{ id: "0", name: "no track", trackNumber: 0 }];
+            : [{ name: "no track", trackNumber: 0 }];
     
         return {
           id,
@@ -382,7 +382,7 @@ useEffect(() => {
             <div className="flex gap-2 mt-2">
               {cohort.tracks.map((track) => (
                 <span
-                  key={track.id}
+                  key={track.name}
                   className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs"
                 >
                   {track.name}
