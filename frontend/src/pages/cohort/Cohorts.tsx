@@ -2,11 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { 
   useWriteContract, 
   useReadContract, 
-  useWaitForTransactionReceipt,
   useAccount 
 } from 'wagmi';
-import { parseEther } from 'viem';
-import { Plus, Users, BookOpen, Search, AlertCircle } from 'lucide-react';
+import { Plus, Users, Search, AlertCircle } from 'lucide-react';
 
 // Import ABI and contract details
 import SMSAbi from '../../smart_contract/SMSAbi.json';
@@ -171,7 +169,7 @@ const TrackModal: React.FC<TrackModalProps> = ({
 
 // Main Cohort Page Component
 const CohortPage: React.FC = () => {
-  const account = useAccount();
+  // const account = useAccount();
   const [cohorts, setCohorts] = useState<Cohort[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -265,14 +263,13 @@ useEffect(() => {
 
     cohortData.forEach((item: (bigint | number)[]) => {
       item.forEach((value: bigint | number, index: number) => {
-        groupedData[index].push(value || 0n);
+        groupedData[index].push(value || BigInt(0));
       });
     });
  
     console.log("Grouped Data:", groupedData);
 
     const transformedCohorts = groupedData.map((cohort, index) => {
-      console.log(cohort[5])
       if (Array.isArray(cohort)) {
 
         const id = cohort[0] || BigInt(0);

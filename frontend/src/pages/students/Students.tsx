@@ -3,32 +3,15 @@ import {
   useWriteContract, 
   useWaitForTransactionReceipt 
 } from "wagmi";
-import { ChevronDown, X } from "lucide-react";
-
-// Import your ABI from the JSON file
 import CONTRACT_ABI from '../../smart_contract/SMSAbi.json';
 import { useAssessmentService } from "../../hooks/useStudentsAssesmentService";
-import { Address } from "viem";
 import { useCohortService } from "../../hooks/useCohortService";
 
-// Enum for Track (based on contract)
 enum Track {
   WEB2,
   WEB3
 }
 
-enum Gender {
-  MALE,
-  FEMALE
-}
-
-type Tab = {
-  id: "ALL" | "WEB2" | "WEB3";
-  label: string;
-  count: number;
-};
-
-// Interfaces
 interface NewStudent {
   firstName: string;
   lastName: string;
@@ -51,13 +34,14 @@ const Students: React.FC = () => {
 
   // New Student State
   const [newStudent, setNewStudent] = useState<NewStudent>({
-    firstName: "",
-    lastName: "",
-    email: "",
-    gender: "",
-    track: "",
-    address: "",
-    walletAddress: "",
+    firstName: "string;",
+    lastName: "string;",
+    twitter: "string;",
+    linkedin: "string;",
+    github: "string;",
+    track: "string;",
+    cohort: "string;",
+    walletAddress: "string;",
   });
 
   // Wagmi Hooks
