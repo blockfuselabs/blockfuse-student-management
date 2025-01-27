@@ -275,26 +275,26 @@ useEffect(() => {
       console.log(cohort[5])
       if (Array.isArray(cohort)) {
 
-        const id = cohort[0] || 0;
-        const totalStudents = cohort[1] || 0;
-        const startDateRaw = cohort[2] || 0; // start date is at index 2
-        const endDateRaw = cohort[3] || 0; // end date is at index 3
-        const durationRaw = cohort[4] || 0; // duration is at index 4
+        const id = cohort[0] || BigInt(0);
+        const totalStudents = cohort[1] || BigInt(0);
+        const startDateRaw = cohort[2] || BigInt(0); // start date is at index 2
+        const endDateRaw = cohort[3] || BigInt(0); // end date is at index 3
+        const durationRaw = cohort[4] || BigInt(0); // duration is at index 4
         const tracksRaw = cohort[5] || []; // tracks data is at index 5
         console.log("Test", cohort)
 
         const startDate =
-          startDateRaw && startDateRaw !== 0n
+          startDateRaw && startDateRaw !== BigInt(0)
             ? new Date(Number(startDateRaw) * 1000).toLocaleDateString()
             : "Invalid Date";
 
         const endDate =
-          endDateRaw && endDateRaw !== 0n
+          endDateRaw && endDateRaw !== BigInt(0)
             ? new Date(Number(endDateRaw) * 1000).toLocaleDateString()
             : "Invalid Date";
 
         const duration =
-          durationRaw && durationRaw !== 0n
+          durationRaw && durationRaw !== BigInt(0)
             ? new Date(Number(durationRaw) * 1000).toLocaleDateString()
             : "Invalid Date";
 
