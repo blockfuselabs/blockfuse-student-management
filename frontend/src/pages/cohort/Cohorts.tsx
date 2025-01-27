@@ -10,7 +10,7 @@ import { Plus, Users, Search, AlertCircle } from 'lucide-react';
 import SMSAbi from '../../smart_contract/SMSAbi.json';
 
 // Contract Configuration
-const CONTRACT_ADDRESS = "0x3Db767d0407e1fB7d82dA095702937502563910A" as `0x${string}`;
+const CONTRACT_ADDRESS = import.meta.env.VITE_PUBLIC_CONTRACT_ADDRESS as `0x${string}`;;
 
 // Type Definitions
 interface Track {

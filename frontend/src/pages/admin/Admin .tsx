@@ -22,7 +22,7 @@ interface Admin {
   dateAdded: string;
 }
 
-const CONTRACT_ADDRESS = "0x3Db767d0407e1fB7d82dA095702937502563910A" as `0x${string}`;
+const CONTRACT_ADDRESS = import.meta.env.VITE_PUBLIC_CONTRACT_ADDRESS as `0x${string}`;
 
 const Admin: React.FC = () => {
   const { address: userAddress, isConnected } = useAccount();
