@@ -1,41 +1,23 @@
-import { WagmiProvider, createConfig, http } from "wagmi";
-import { mainnet } from "wagmi/chains";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { ConnectKitProvider, getDefaultConfig } from "connectkit";
-import { ReactNode } from "react";
+'use client'
+import { WagmiProvider } from 'wagmi'
+import '@rainbow-me/rainbowkit/styles.css'
+import { getDefaultConfig, RainbowKitProvider } from '@rainbow-me/rainbowkit'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { mainnet, sepolia } from 'wagmi/chains'
 
-const config = createConfig(
-  getDefaultConfig({
-    // Your dApps chains
-    chains: [mainnet],
-    transports: {
-      // RPC URL for each chain
-      [mainnet.id]: http(
-        `https://eth-mainnet.g.alchemy.com/v2/${process.env.NEXT_PUBLIC_ALCHEMY_ID}`,
-      ),
-    },
+const queryClient = new QueryClient()
+const config = getDefaultConfig({
+  appName: 'My RainbowKit App',
+  projectId: 'YOUR_PROJECT_ID',
+  chains: [mainnet, sepolia],
+})
 
-    // Required API Keys
-    walletConnectProjectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID ?? (() => { throw new Error("NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID is not set"); })(),
-
-    // Required App Info
-    appName: "Your App Name",
-
-    // Optional App Info
-    appDescription: "Your App Description",
-    appUrl: "https://family.co", // your app's url
-    appIcon: "https://family.co/logo.png", // your app's icon, no bigger than 1024x1024px (max. 1MB)
-  }),
-);
-
-const queryClient = new QueryClient();
-
-export const Web3Provider = ({ children } : {children:ReactNode} ) => {
+export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
-        <ConnectKitProvider>{children}</ConnectKitProvider>
+        <RainbowKitProvider>{children}</RainbowKitProvider>
       </QueryClientProvider>
     </WagmiProvider>
-  );
-};
+  )
+}
