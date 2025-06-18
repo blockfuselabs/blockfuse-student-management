@@ -7,13 +7,11 @@ import { useAccount} from "wagmi";
 import { useRouter } from "next/navigation";
 
 const LoginPage = () => {
-  const [isConnecting, setIsConnecting] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const router = useRouter();
   const { isConnected, isConnecting: wagmiIsConnecting } = useAccount();
 
   useEffect(() => {
-    setIsConnecting(wagmiIsConnecting);
     if (isConnected) {
       router.push("/student");
     }
@@ -33,14 +31,8 @@ const LoginPage = () => {
           <div className="absolute inset-0 flex flex-col justify-center items-center text-white p-12 z-10">
             <div className="text-center max-w-md">
               <div className="mb-8">
-                <div className="w-20 h-20 mx-auto mb-6 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
-                  <svg
-                    className="w-10 h-10"
-                    fill="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path d="M12 2L2 7v10c0 5.55 3.84 9.739 9 11 5.16-1.261 9-5.45 9-11V7l-10-5z" />
-                  </svg>
+                <div className="w-20 h-20 mx-auto mb-6 bg-white backdrop-blur-sm rounded-full flex items-center justify-center">
+                 <Image src="/images/logo-two.svg" alt="" height={60} width={60} />
                 </div>
                 <h2 className="text-4xl font-bold mb-4 bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent">
                   BlockFuse SMS
@@ -103,20 +95,20 @@ const LoginPage = () => {
       <div className="w-full md:w-1/2 h-full flex items-center justify-center bg-gradient-to-br from-gray-50 to-white relative overflow-hidden">
         <div className="relative z-10 w-full max-w-md px-8">
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-600 to-purple-700 rounded-2xl mb-6 shadow-lg">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-[#800895] to-[#a015b9] rounded-2xl mb-6 shadow-lg">
               <Wallet className="w-8 h-8 text-white" />
             </div>
             <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent mb-2">
               Welcome Back
             </h1>
             <p className="text-gray-600 text-lg">
-              Connect your wallet to access your student portal
+              Connect your wallet to access portal
             </p>
           </div>
           <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-2xl p-8 border border-white/20">
             <div className="mb-6">
               <div className="flex items-center flex-col gap-3 mb-4">
-                <div className="w-10 h-10 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center">
+                <div className="w-10 h-10 bg-gradient-to-r from-[#800895] to-[#a015b9] rounded-full flex items-center justify-center">
                   <Shield className="w-6 h-6 text-white" />
                 </div>
                 <div className="text-center">
@@ -137,25 +129,25 @@ const LoginPage = () => {
                   <button
                     onMouseEnter={() => setIsHovered(true)}
                     onMouseLeave={() => setIsHovered(false)}
-                    disabled={isConnecting}
+                    disabled={wagmiIsConnecting}
                     onClick={connected ? openAccountModal : openConnectModal}
                     className={`
                       w-full py-4 px-6 rounded-2xl font-semibold text-lg transition-all duration-300 transform
                       ${
-                        isConnecting
+                        wagmiIsConnecting
                           ? "bg-gray-400 cursor-not-allowed"
-                          : "bg-gradient-to-r from-blue-600 to-purple-700 hover:from-blue-700 hover:to-purple-800 hover:scale-105 hover:shadow-xl active:scale-95"
+                          : "bg-gradient-to-r  from-[#DE24FF] to-[#DE24FF] hover:from-[#800895] hover:to-[#a015b9]hover:scale-105 hover:shadow-xl active:scale-95"
                       }
                       text-white shadow-lg
                       ${
-                        isHovered && !isConnecting
+                        isHovered && !wagmiIsConnecting
                           ? "shadow-2xl shadow-blue-500/25"
                           : ""
                       }
                     `}
                   >
                     <div className="flex items-center justify-center gap-3">
-                      {isConnecting ? (
+                      {wagmiIsConnecting ? (
                         <>
                           <Loader2 className="w-5 h-5 text-white animate-spin" />
                           <span>Connecting...</span>
@@ -175,9 +167,9 @@ const LoginPage = () => {
                 Supported Wallets
               </p>
               <div className="flex justify-center gap-4">
-                <div className="w-12 h-12 bg-blue-100 rounded-xl overflow-hidden flex items-center justify-center hover:bg-blue-200 transition-colors cursor-pointer">
+                <div className="w-12 h-12 border border-gray-300 p-1 rounded-xl overflow-hidden flex items-center justify-center hover:bg-blue-200 transition-colors cursor-pointer">
                   <Image
-                    src="/metamask.jpg"
+                    src="/metamask.png"
                     alt="MetaMask"
                     width={50}
                     height={50}
