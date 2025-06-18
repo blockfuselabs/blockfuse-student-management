@@ -15,7 +15,7 @@ const LoginPage = () => {
   useEffect(() => {
     setIsConnecting(wagmiIsConnecting);
     if (isConnected) {
-      router.push("/admin");
+      router.push("/student");
     }
   }, [isConnected, wagmiIsConnecting, router]);
 
