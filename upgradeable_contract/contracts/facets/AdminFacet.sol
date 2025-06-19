@@ -13,47 +13,47 @@ contract AdminFacet {
         _;
     }
 
-    modifier onlyAdmin{
+    modifier onlyAdmin() {
         require(layout.admins[msg.sender] || msg.sender == layout.superAdmin, Error.UNAUTHORIZED_ACCESS());
         _;
     }
 
-    modifier onlySuperAdmin{
-         require(msg.sender == layout.superAdmin, Error.UNAUTHORIZED_ACCESS());
-         _;
-    }
-
-    modifier studentExist(address _studentWalletAddress){
-        require(_studentWalletAddress != address(0) && layout.student[_studentWalletAddress].isActive == true, Error.STUDENT_DOES_NOT_EXIST());
+    modifier onlySuperAdmin() {
+        require(msg.sender == layout.superAdmin, Error.UNAUTHORIZED_ACCESS());
         _;
     }
 
-    function addAdmin( address adminAddress) external onlySuperAdmin returns(bool) {
+    modifier studentExist(address _studentWalletAddress) {
+        require(
+            _studentWalletAddress != address(0) && layout.student[_studentWalletAddress].isActive == true,
+            Error.STUDENT_DOES_NOT_EXIST()
+        );
+        _;
+    }
+
+    function addAdmin(address adminAddress) external onlySuperAdmin returns (bool) {
         layout.admins[adminAddress] = true;
         emit Event.AdminAdded(adminAddress);
         return true;
     }
 
-    function  removeAdmin(address adminAddress) external onlySuperAdmin returns (bool){
+    function removeAdmin(address adminAddress) external onlySuperAdmin returns (bool) {
         layout.admins[adminAddress] = false;
         emit Event.AdminRemoved(adminAddress);
         return true;
-        
     }
 
-    function recordStudentAssesment(
-        address _studentWalletAddress,
-        int _studentScore
-        ) external 
-            onlyAdmin studentExist(_studentWalletAddress) 
-            returns(bool)
-        {
+    function recordStudentAssesment(address _studentWalletAddress, int256 _studentScore)
+        external
+        onlyAdmin
+        studentExist(_studentWalletAddress)
+        returns (bool)
+    {
         layout.studentScore[_studentWalletAddress].push(_studentScore);
         layout.student[_studentWalletAddress].finalScore += _studentScore;
-        int score = layout.student[_studentWalletAddress].finalScore;
-        emit Event.AssessmentRecorded(_studentWalletAddress, _studentScore,score,block.timestamp , msg.sender);
+        int256 score = layout.student[_studentWalletAddress].finalScore;
+        emit Event.AssessmentRecorded(_studentWalletAddress, _studentScore, score, block.timestamp, msg.sender);
         return true;
-
     }
 
     function registerStudent(
@@ -66,7 +66,6 @@ contract AdminFacet {
         uint8 _cohort,
         address _studentAddress
     ) external onlyAdmin {
-
         string memory usernameConstruct = string(abi.encodePacked(_firstname, " ", _lastname));
 
         LibAppStorage.studentDetails memory newStudent;
@@ -85,19 +84,13 @@ contract AdminFacet {
         layout.student[_studentAddress] = newStudent;
         layout.usernames[_studentAddress] = usernameConstruct;
 
-        // Onboard student to a particular cohort 
+        // Onboard student to a particular cohort
         addStudentToCohort(_cohort, _studentAddress, _track);
 
         emit Event.StudentAddedToCohort(_studentAddress, _cohort);
-
     }
 
-
-    function addStudentToCohort(
-        uint8 _cohortId, 
-        address _student, 
-        LibAppStorage.Track _track
-    ) public onlyAdmin {
+    function addStudentToCohort(uint8 _cohortId, address _student, LibAppStorage.Track _track) public onlyAdmin {
         require(_cohortId > 0 && _cohortId <= layout.cohortCount, Error.INVALID_COHORT_ID());
         LibAppStorage.Cohort storage cohort = layout.cohorts[_cohortId];
 
@@ -124,5 +117,16 @@ contract AdminFacet {
 
     function enableStudent(address _studentAddress) public onlyAdmin {
         layout.student[_studentAddress].isActive = true;
+    }
+
+    function replaceStudentWallet(address oldAddress, address newAddress) external onlyAdmin {
+        require(oldAddress != address(0) && newAddress != address(0), Error.INVALID_ADDRESS());
+        require(layout.student[oldAddress].isActive == true, Error.STUDENT_DOES_NOT_EXIST());
+        require(layout.student[newAddress].isActive == false, Error.STUDENT_DOES_NOT_EXIST());
+
+        layout.student[oldAddress].isActive = false;
+        layout.student[newAddress].isActive = true;
+
+        emit Event.StudentWalletReplaced(oldAddress, newAddress);
     }
 }

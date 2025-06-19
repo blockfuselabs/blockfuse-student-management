@@ -28,9 +28,7 @@ contract DiamondDeployer is Test, IDiamondCut {
     address otherAddr = mkaddr("otherAddr");
 
     function mkaddr(string memory name) public returns (address) {
-        address addr = address(
-            uint160(uint256(keccak256(abi.encodePacked(name))))
-        );
+        address addr = address(uint160(uint256(keccak256(abi.encodePacked(name)))));
         vm.label(addr, name);
         return addr;
     }
@@ -105,13 +103,38 @@ contract DiamondDeployer is Test, IDiamondCut {
     }
 
     function testDeployerOfTheContractIsSuperAdmin() public {
-    //    vm.startPrank(superAdmin);
+        //    vm.startPrank(superAdmin);
         console.log("superAdmin address in test: ", boundCohortFacet.getSuperAdmin());
     }
 
-    function generateSelectors(
-        string memory _facetName
-    ) internal returns (bytes4[] memory selectors) {
+    function testReplaceStudentWallet() public {
+        // Setup: Register a student
+        address studentOld = mkaddr("studentOld");
+        address studentNew = mkaddr("studentNew");
+        string memory firstname = "John";
+        string memory lastname = "Doe";
+        string memory twitter = "@johndoe";
+        string memory linkedin = "johndoe";
+        string memory github = "johndoe";
+        LibAppStorage.Track track = LibAppStorage.Track.web2;
+        uint8 cohort = 1;
+
+        vm.startPrank(superAdmin);
+        // Register the student with the old address
+        AdminFacet(address(diamond)).registerStudent(
+            firstname, lastname, twitter, linkedin, github, track, cohort, studentOld
+        );
+        // Replace the wallet address
+        AdminFacet(address(diamond)).replaceStudentWallet(studentOld, studentNew);
+        // Check that the new address is active and the old one is not
+        (bool isActiveNew) = AdminFacet(address(diamond)).layout().student[studentNew].isActive;
+        (bool isActiveOld) = AdminFacet(address(diamond)).layout().student[studentOld].isActive;
+        assertTrue(isActiveNew, "New student address should be active");
+        assertTrue(!isActiveOld, "Old student address should be inactive");
+        vm.stopPrank();
+    }
+
+    function generateSelectors(string memory _facetName) internal returns (bytes4[] memory selectors) {
         string[] memory cmd = new string[](3);
         cmd[0] = "node";
         cmd[1] = "scripts/genSelectors.js";
@@ -120,9 +143,5 @@ contract DiamondDeployer is Test, IDiamondCut {
         selectors = abi.decode(res, (bytes4[]));
     }
 
-    function diamondCut(
-        FacetCut[] calldata _diamondCut,
-        address _init,
-        bytes calldata _calldata
-    ) external override {}
+    function diamondCut(FacetCut[] calldata _diamondCut, address _init, bytes calldata _calldata) external override {}
 }
