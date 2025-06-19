@@ -102,7 +102,7 @@ contract DiamondDeployer is Test, IDiamondCut {
         vm.stopPrank();
     }
 
-    function testDeployerOfTheContractIsSuperAdmin() public {
+    function testDeployerOfTheContractIsSuperAdmin() public view {
         //    vm.startPrank(superAdmin);
         console.log("superAdmin address in test: ", boundCohortFacet.getSuperAdmin());
     }
@@ -111,26 +111,31 @@ contract DiamondDeployer is Test, IDiamondCut {
         // Setup: Register a student
         address studentOld = mkaddr("studentOld");
         address studentNew = mkaddr("studentNew");
-        string memory firstname = "John";
-        string memory lastname = "Doe";
-        string memory twitter = "@johndoe";
-        string memory linkedin = "johndoe";
-        string memory github = "johndoe";
         LibAppStorage.Track track = LibAppStorage.Track.web2;
-        uint8 cohort = 1;
-
         vm.startPrank(superAdmin);
+        // Create a cohort and add the track before registering the student
+        uint256 startDate = block.timestamp;
+        uint256 endDate = block.timestamp + 30 days;
+        CohortFacet(address(diamond)).createCohort(startDate, endDate);
+        uint8 cohortId = CohortFacet(address(diamond)).getCohortCount();
+        CohortFacet(address(diamond)).addTrackToCohort(cohortId, track);
+        LibAppStorage.studentDetails memory student;
+        student.firstname = "John";
+        student.lastname = "Doe";
+        student.username = "John Doe";
+        student.twitter = "@johndoe";
+        student.linkedin = "johndoe";
+        student.github = "johndoe";
+        student.track = LibAppStorage.Track.web2;
+        student.cohort = cohortId;
+        student.studentAddress = studentOld;
         // Register the student with the old address
-        AdminFacet(address(diamond)).registerStudent(
-            firstname, lastname, twitter, linkedin, github, track, cohort, studentOld
-        );
+        AdminFacet(address(diamond)).registerStudent(student);
         // Replace the wallet address
         AdminFacet(address(diamond)).replaceStudentWallet(studentOld, studentNew);
         // Check that the new address is active and the old one is not
-        (bool isActiveNew) = AdminFacet(address(diamond)).layout().student[studentNew].isActive;
-        (bool isActiveOld) = AdminFacet(address(diamond)).layout().student[studentOld].isActive;
-        assertTrue(isActiveNew, "New student address should be active");
-        assertTrue(!isActiveOld, "Old student address should be inactive");
+        assertTrue(AdminFacet(address(diamond)).isStudentActive(studentNew), "New student address should be active");
+        assertTrue(!AdminFacet(address(diamond)).isStudentActive(studentOld), "Old student address should be inactive");
         vm.stopPrank();
     }
 

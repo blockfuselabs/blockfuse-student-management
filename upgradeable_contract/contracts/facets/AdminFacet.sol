@@ -56,38 +56,20 @@ contract AdminFacet {
         return true;
     }
 
-    function registerStudent(
-        string memory _firstname,
-        string memory _lastname,
-        string memory _twitter,
-        string memory _linkedin,
-        string memory _github,
-        LibAppStorage.Track _track,
-        uint8 _cohort,
-        address _studentAddress
-    ) external onlyAdmin {
-        string memory usernameConstruct = string(abi.encodePacked(_firstname, " ", _lastname));
+    function registerStudent(LibAppStorage.studentDetails calldata newStudent) external onlyAdmin {
+        string memory usernameConstruct = newStudent.username;
 
-        LibAppStorage.studentDetails memory newStudent;
-        newStudent.firstname = _firstname;
-        newStudent.lastname = _lastname;
-        newStudent.username = usernameConstruct;
-        newStudent.twitter = _twitter;
-        newStudent.linkedin = _linkedin;
-        newStudent.github = _github;
-        newStudent.track = _track;
-        newStudent.cohort = _cohort;
-        newStudent.isActive = true;
-        newStudent.finalScore = 0;
-        newStudent.studentAddress = _studentAddress;
+        LibAppStorage.studentDetails memory studentCopy = newStudent;
+        studentCopy.isActive = true;
+        studentCopy.finalScore = 0;
 
-        layout.student[_studentAddress] = newStudent;
-        layout.usernames[_studentAddress] = usernameConstruct;
+        layout.student[newStudent.studentAddress] = studentCopy;
+        layout.usernames[newStudent.studentAddress] = usernameConstruct;
 
         // Onboard student to a particular cohort
-        addStudentToCohort(_cohort, _studentAddress, _track);
+        addStudentToCohort(newStudent.cohort, newStudent.studentAddress, newStudent.track);
 
-        emit Event.StudentAddedToCohort(_studentAddress, _cohort);
+        emit Event.StudentAddedToCohort(newStudent.studentAddress, newStudent.cohort);
     }
 
     function addStudentToCohort(uint8 _cohortId, address _student, LibAppStorage.Track _track) public onlyAdmin {
@@ -128,5 +110,9 @@ contract AdminFacet {
         layout.student[newAddress].isActive = true;
 
         emit Event.StudentWalletReplaced(oldAddress, newAddress);
+    }
+
+    function isStudentActive(address student) public view returns (bool) {
+        return layout.student[student].isActive;
     }
 }

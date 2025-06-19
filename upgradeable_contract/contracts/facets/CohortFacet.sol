@@ -13,19 +13,17 @@ contract CohortFacet {
         _;
     }
 
-    modifier onlySuperAdmin{
-         require(msg.sender == layout.superAdmin, Error.UNAUTHORIZED_ACCESS());
-         _;
+    modifier onlySuperAdmin() {
+        require(msg.sender == layout.superAdmin, Error.UNAUTHORIZED_ACCESS());
+        _;
     }
 
-    function getSuperAdmin() public view returns(address) {
+    function getSuperAdmin() public view returns (address) {
         return layout.superAdmin;
     }
 
-    function createCohort(
-        uint256 _startDate, 
-        uint256 _endDate
-    ) public 
+    function createCohort(uint256 _startDate, uint256 _endDate)
+        public
         validDates(_startDate, _endDate)
         onlySuperAdmin
     {
@@ -43,24 +41,24 @@ contract CohortFacet {
 
     function addTrackToCohort(uint8 _cohortId, LibAppStorage.Track _track) public onlySuperAdmin {
         require(layout.cohorts[_cohortId].cohortId != 0, Error.COHORT_DOES_NOT_EXIST());
-        
+
         layout.cohorts[_cohortId].cohortTracks.push(_track);
 
         emit Event.CohortTrackAdded(_cohortId, LibAppStorage.trackToString(_track));
     }
 
-    function getCohort(uint8 _cohortId) 
-    public 
-    view 
-    returns (
-        uint256 id,
-        string[] memory tracks,
-        uint256 totalStudents,
-        uint256 startDate,
-        uint256 endDate,
-        uint256 duration,
-        address[][] memory studentsByTrack
-    ) 
+    function getCohort(uint8 _cohortId)
+        public
+        view
+        returns (
+            uint256 id,
+            string[] memory tracks,
+            uint256 totalStudents,
+            uint256 startDate,
+            uint256 endDate,
+            uint256 duration,
+            address[][] memory studentsByTrack
+        )
     {
         require(_cohortId > 0 && _cohortId <= layout.cohortCount, Error.COHORT_DOES_NOT_EXIST());
 
@@ -87,8 +85,11 @@ contract CohortFacet {
         );
     }
 
-
     function getCohortTracks(uint8 _cohortId) public view returns (LibAppStorage.Track[] memory) {
         return layout.cohorts[_cohortId].cohortTracks;
+    }
+
+    function getCohortCount() public view returns (uint8) {
+        return layout.cohortCount;
     }
 }
