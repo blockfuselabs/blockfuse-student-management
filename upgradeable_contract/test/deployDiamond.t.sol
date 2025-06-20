@@ -136,6 +136,17 @@ contract DiamondDeployer is Test, IDiamondCut {
         // Check that the new address is active and the old one is not
         assertTrue(AdminFacet(address(diamond)).isStudentActive(studentNew), "New student address should be active");
         assertTrue(!AdminFacet(address(diamond)).isStudentActive(studentOld), "Old student address should be inactive");
+        // check all records are copied from old address to new student address
+        LibAppStorage.studentDetails memory oldStudent = StudentFacet(address(diamond)).getStudent(studentOld);
+        LibAppStorage.studentDetails memory newStudent = StudentFacet(address(diamond)).getStudent(studentNew);
+        assertEq(newStudent.isActive, true, "New address should be active");
+        assertEq(oldStudent.isActive, false, "Old address should be inactive");
+        assertEq(newStudent.studentAddress, studentNew, "Student address should be updated");
+        // Optionally, check other fields are equal (except for studentAddress and isActive)
+        assertEq(oldStudent.finalScore, newStudent.finalScore, "Final score should be copied");
+        assertEq(oldStudent.cohort, newStudent.cohort, "Cohort should be copied");
+        assertEq(uint256(oldStudent.track), uint256(newStudent.track), "Track should be copied");
+        // Add more field checks as needed
         vm.stopPrank();
     }
 
