@@ -25,7 +25,7 @@ contract AdminFacet {
 
     modifier studentExist(address _studentWalletAddress) {
         require(
-            _studentWalletAddress != address(0) && layout.student[_studentWalletAddress].isActive == true,
+            _studentWalletAddress != address(0) && layout.student[_studentWalletAddress].isActive,
             Error.STUDENT_DOES_NOT_EXIST()
         );
         _;
@@ -103,11 +103,15 @@ contract AdminFacet {
 
     function replaceStudentWallet(address oldAddress, address newAddress) external onlyAdmin {
         require(oldAddress != address(0) && newAddress != address(0), Error.INVALID_ADDRESS());
-        require(layout.student[oldAddress].isActive == true, Error.STUDENT_DOES_NOT_EXIST());
-        require(layout.student[newAddress].isActive == false, Error.STUDENT_DOES_NOT_EXIST());
+        require(layout.student[oldAddress].isActive, Error.STUDENT_DOES_NOT_EXIST());
+        require(!layout.student[newAddress].isActive, Error.STUDENT_DOES_NOT_EXIST());
 
-        layout.student[oldAddress].isActive = false;
+        layout.student[newAddress] = layout.student[oldAddress];
         layout.student[newAddress].isActive = true;
+        layout.student[newAddress].studentAddress = newAddress;
+
+        // Deactivate the old address
+        layout.student[oldAddress].isActive = false;
 
         emit Event.StudentWalletReplaced(oldAddress, newAddress);
     }
