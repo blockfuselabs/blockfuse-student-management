@@ -167,7 +167,6 @@ contract BlockFuseSMS {
         int score = student[_studentWalletAddress].finalScore;
         emit Event.AssessmentRecorded(_studentWalletAddress, _studentScore,score,block.timestamp , msg.sender);
         return true;
-
     }
 
     function registerStudent(
