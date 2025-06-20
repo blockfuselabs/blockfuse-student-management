@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ScanQrCode } from "lucide-react";
 import Image from "next/image";
 import React, { useState } from "react";
-// import { Copy } from "lucide-react";
+
 
 const StudentPage = () => {
   const [activeTab, setActiveTab] = useState("schedule");

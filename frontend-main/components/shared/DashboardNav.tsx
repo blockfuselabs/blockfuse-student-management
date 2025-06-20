@@ -13,13 +13,22 @@ import {
 import { ChevronDown, Copy, LogOut, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { useAccount } from "wagmi";
 
-const walletAddress = "0x1234...5678";
 
 const DashboardNav = () => {
+  const { address } = useAccount();
+  const truncateAddress = (addr?: string) => {
+    if (!addr) return "";
+    return addr.slice(0, 6) + "..." + addr.slice(-4);
+  };
   const copyToClipboard = () => {
-    navigator.clipboard.writeText(walletAddress);
-    toast.success("Wallet address copied to clipboard!");
+    if (address) {
+      navigator.clipboard.writeText(address);
+      toast.success("Wallet address copied to clipboard!");
+    } else {
+      toast.error("No wallet address to copy.");
+    }
   };
 
   return (
@@ -42,7 +51,7 @@ const DashboardNav = () => {
                   className="object-cover"
                 />
               </div>
-              <p className="text-gray-500">{walletAddress}</p>
+              <p className="text-gray-500">{truncateAddress(address)}</p>
               <ChevronDown className="text-gray-600 text-sm"  />
             </Button>
           </DropdownMenuTrigger>
@@ -51,7 +60,7 @@ const DashboardNav = () => {
               <div className="flex flex-col space-y-1">
                 <p className="text-sm font-medium leading-none">Profile</p>
                 <p className="text-xs leading-none text-muted-foreground">
-                  {walletAddress}
+                {truncateAddress(address)}
                 </p>
               </div>
             </DropdownMenuLabel>

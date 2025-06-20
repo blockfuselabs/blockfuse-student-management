@@ -3,7 +3,8 @@
 import { Button } from "@/components/ui/button";
 import React, { useState } from "react";
 import { Table } from "@/components/shared/Table";
-import { AddCohorModal } from "@/components/modals/AddCohortModal";
+// import { AddCohorModal } from "@/components/modals/AddCohortModal";
+import { AddCohortModal } from "@/components/modals/AddCohortModal";
 import { Cohort, cohortcolumns } from "@/components/tables/CohortsColums";
 
 // Sample data
@@ -67,7 +68,7 @@ const CohortsPage = () => {
         />
       </div>
 
-      <AddCohorModal
+      <AddCohortModal
         isOpen={addCohortModalOpen}
         setIsOpen={setAddCohortModal}
       />
