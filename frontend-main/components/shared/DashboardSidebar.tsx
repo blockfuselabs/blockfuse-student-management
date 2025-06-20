@@ -10,7 +10,7 @@ const DashboardSidebar = () => {
   const pathname = usePathname();
 
   return (
-    <div className="w-[18%] px-5 py-6 h-full bg-[#0F0F0F] border-r border-black/10 flex flex-col">
+    <div className="w-[16%] px-5 py-6 h-full bg-[#121113] border-r border-black/10 flex flex-col">
       {/* Logo and Title Section */}
       <div className="flex items-center gap-2 mb-8">
         <Image src="/images/logo-two.svg" alt="" height={60} width={60} />

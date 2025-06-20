@@ -20,7 +20,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${outfit.variable} font-sans antialiased`}>
+      <body className={`${outfit.className} font-sans antialiased`}>
         <Providers>{children}</Providers>
       </body>
     </html>
