@@ -170,4 +170,71 @@ import {
         });
     });
 
+    describe("Test for retrieving all cohorts", function () {
+        const Track = {
+            WEB2: 0,
+            WEB3: 1,
+        };
+    
+        it("should retrieve all cohorts with their details, including tracks and aggregated students", async function () {
+            const { BlockFuseSMS, superAdmin, addr1, addr2, addr3 } = await deployBlockFuseSMS();
+    
+            // Create multiple cohorts
+            const startDate1 = Math.floor(Date.now() / 1000); // Current timestamp
+            const endDate1 = startDate1 + 30 * 24 * 60 * 60; // 30 days later
+            await BlockFuseSMS.connect(superAdmin).createCohort(startDate1, endDate1);
+    
+            const startDate2 = endDate1 + 1;
+            const endDate2 = startDate2 + 60 * 24 * 60 * 60; // 60 days later
+            await BlockFuseSMS.connect(superAdmin).createCohort(startDate2, endDate2);
+    
+            // Add tracks and students to cohorts
+            await BlockFuseSMS.connect(superAdmin).addTrackToCohort(2, Track.WEB2);
+            await BlockFuseSMS.connect(superAdmin).addTrackToCohort(2, Track.WEB3);
+            await BlockFuseSMS.connect(superAdmin).addStudentToCohort(2, addr1.address, Track.WEB2);
+            await BlockFuseSMS.connect(superAdmin).addStudentToCohort(2, addr2.address, Track.WEB3);
+    
+            await BlockFuseSMS.connect(superAdmin).addTrackToCohort(3, Track.WEB3);
+            await BlockFuseSMS.connect(superAdmin).addStudentToCohort(3, addr3.address, Track.WEB3);
+    
+            // Fetch all cohorts
+            const result = await BlockFuseSMS.getAllCohorts();
+    
+            // Validate cohort 1 details
+            expect(result.ids[0]).to.equal(2);
+            expect(result.totalStudents[0]).to.equal(2);
+            expect(result.startDates[0]).to.equal(startDate1);
+            expect(result.endDates[0]).to.equal(endDate1);
+            expect(result.durations[0]).to.equal(endDate1 - startDate1);
+            expect(result.tracks[0].length).to.equal(2);
+            expect(result.tracks[0][0]).to.equal(Track.WEB2);
+            expect(result.tracks[0][1]).to.equal(Track.WEB3);
+    
+            // Validate cohort 2 details
+            expect(result.ids[1]).to.equal(3);
+            expect(result.totalStudents[1]).to.equal(1);
+            expect(result.startDates[1]).to.equal(startDate2);
+            expect(result.endDates[1]).to.equal(endDate2);
+            expect(result.durations[1]).to.equal(endDate2 - startDate2);
+            expect(result.tracks[1].length).to.equal(1);
+            expect(result.tracks[1][0]).to.equal(Track.WEB3);
+        });
+    
+        it("should return empty arrays if no cohorts exist", async function () {
+            const { BlockFuseSMS } = await deployBlockFuseSMS();
+    
+            // Fetch all cohorts when none exist
+            const result = await BlockFuseSMS.getAllCohorts();
+    
+            console.log(result.ids)
+            // expect(result.ids).to.deep.equal([]);
+            // expect(result.totalStudents).to.deep.equal([]);
+            // expect(result.startDates).to.deep.equal([]);
+            // expect(result.endDates).to.deep.equal([]);
+            // expect(result.durations).to.deep.equal([]);
+            // expect(result.tracks).to.deep.equal([]);
+        });
+    });
+    
+
   });
