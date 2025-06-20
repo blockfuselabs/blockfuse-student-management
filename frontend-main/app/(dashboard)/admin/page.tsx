@@ -1,4 +1,5 @@
 "use client";
+import AdminStats from "@/components/admin/AdminStats";
 import React from "react";
 // import { GraduationCap, BookOpen, UserCog } from "lucide-react";
 
@@ -34,9 +35,9 @@ const AdminDashboard = () => {
       </p>
       </div>
 
-      {/* <div className="w-full">
+      <div className="w-full">
         <AdminStats />
-      </div>   */}
+      </div>  
 
       {/* <div className="flex w-full gap-4">
         <div className="h-[400px] w-1/3 bg-white rounded-xl"></div>
