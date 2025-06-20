@@ -116,7 +116,7 @@ contract AdminFacet {
         emit Event.StudentWalletReplaced(oldAddress, newAddress);
     }
 
-    function isStudentActive(address student) public view returns (bool) {
+    function isStudentActive(address student) external view returns (bool) {
         return layout.student[student].isActive;
     }
 }
