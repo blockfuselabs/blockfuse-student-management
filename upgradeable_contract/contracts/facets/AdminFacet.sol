@@ -106,10 +106,24 @@ contract AdminFacet {
         require(layout.student[oldAddress].isActive, Error.STUDENT_DOES_NOT_EXIST());
         require(!layout.student[newAddress].isActive, Error.STUDENT_DOES_NOT_EXIST());
 
+        uint8 cohortId = layout.student[oldAddress].cohort;
+        LibAppStorage.Track track = layout.student[oldAddress].track;
+
+        address[] storage students = layout.cohorts[cohortId].studentsByTrack[track];
+        uint256 idx = students.length; // default to not found
+        for (uint256 i = 0; i < students.length; i++) {
+            if (students[i] == oldAddress) {
+                idx = i;
+                break;
+            }
+        }
+        if (idx < students.length) {
+            students[idx] = newAddress;
+        }
+
         layout.student[newAddress] = layout.student[oldAddress];
         layout.student[newAddress].isActive = true;
         layout.student[newAddress].studentAddress = newAddress;
-
         // Deactivate the old address
         layout.student[oldAddress].isActive = false;
 
