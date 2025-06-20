@@ -24,10 +24,10 @@ const LoginPage = () => {
         <div
           className="w-full h-full bg-cover bg-center relative"
           style={{
-            backgroundImage: "url('/icons8-team-FcLyt7lW5wg-unsplash.jpg')",
+            backgroundImage: "url('/auth-bg.jpeg')",
           }}
         >
-          <div className="absolute inset-0 bg-gradient-to-br from-purple-900/80 via-blue-900/70 to-indigo-800/80"></div>
+          <div className="absolute inset-0 bg-gradient-to-br from-[#000000] via-blue-900/70 to-indigo-800/80"></div>
           <div className="absolute inset-0 flex flex-col justify-center items-center text-white p-12 z-10">
             <div className="text-center max-w-md">
               <div className="mb-8">
@@ -76,7 +76,7 @@ const LoginPage = () => {
                   <span>Track Attendance & Performance</span>
                 </div>
                 <div className="flex items-center gap-3 bg-white/10 backdrop-blur-sm rounded-lg p-3">
-                  <div className="w-8 h-8 bg-purple-400 rounded-full flex items-center justify-center">
+                  <div className="w-8 h-8 bg-[#9537EA] rounded-full flex items-center justify-center">
                     <svg
                       className="w-4 h-4 text-white"
                       fill="currentColor"
@@ -98,7 +98,7 @@ const LoginPage = () => {
             <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-[#800895] to-[#a015b9] rounded-2xl mb-6 shadow-lg">
               <Wallet className="w-8 h-8 text-white" />
             </div>
-            <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent mb-2">
+            <h1 className="text-2xl md:text-3xl font-semibold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent mb-2">
               Welcome Back
             </h1>
             <p className="text-gray-600 text-lg">
@@ -132,11 +132,11 @@ const LoginPage = () => {
                     disabled={wagmiIsConnecting}
                     onClick={connected ? openAccountModal : openConnectModal}
                     className={`
-                      w-full py-4 px-6 rounded-2xl font-semibold text-lg transition-all duration-300 transform
+                      w-full py-3 px-6 rounded-2xl font-semibold text-lg transition-all duration-300 transform
                       ${
                         wagmiIsConnecting
                           ? "bg-gray-400 cursor-not-allowed"
-                          : "bg-gradient-to-r  from-[#DE24FF] to-[#DE24FF] hover:from-[#800895] hover:to-[#a015b9]hover:scale-105 hover:shadow-xl active:scale-95"
+                          : "bg-gradient-to-r  from-[#9537EA] to-[#9537EA] hover:from-[#800895] hover:to-[#a015b9]hover:scale-105 hover:shadow-xl active:scale-95"
                       }
                       text-white shadow-lg
                       ${
