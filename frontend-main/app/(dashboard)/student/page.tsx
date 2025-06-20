@@ -1,7 +1,8 @@
-'use client'
+"use client";
+import AttendanceSection from "@/components/student/AttendanceSection";
 import StudentHeader from "@/components/student/StudentHeader";
 import { Button } from "@/components/ui/button";
-import { ScanQrCode } from "lucide-react";
+// import { ArrowRight, ScanQrCode } from "lucide-react";
 import Image from "next/image";
 import React, { useState } from "react";
 // import { Copy } from "lucide-react";
@@ -12,10 +13,12 @@ const StudentPage = () => {
     <div className="">
       <div className="flex items-center justify-between mb-6 px-2">
         <div className="flex items-center gap-2">
-          <Image src="/images/logo-two.svg" alt="" height={50} width={50} />
+          <Image src="/images/logo-two.svg" alt="" height={45} width={45} />
           <div className="">
-            <h4 className="text-[#9434EA]">BlockfuseLabs</h4>
-            <p className="text-xs py-0.5 px-1 text-center bg-[#9434EA]/20 rounded-xl text-[#9434EA]">Student Portal</p>
+            <h4 className="text-[#9434EA] font-medium">BlockfuseLabs</h4>
+            <p className="text-[10px] py-0.5 px-1 text-center bg-[#9434EA]/20 rounded-xl text-[#9434EA]">
+              Student Portal
+            </p>
           </div>
         </div>
 
@@ -25,9 +28,13 @@ const StudentPage = () => {
       <StudentHeader />
 
       <div className="mt-20 flex items-center gap-2 mb-6 border-b border-gray-200">
-      <button
+        <button
           className={`px-4 py-2 text-sm font-medium transition-colors focus:outline-none rounded-t-lg
-            ${activeTab === "attendance" ? "bg-[#9434EA] text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"}
+            ${
+              activeTab === "attendance"
+                ? "bg-[#9434EA] text-white"
+                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+            }
           `}
           onClick={() => setActiveTab("attendance")}
         >
@@ -35,24 +42,22 @@ const StudentPage = () => {
         </button>
         <button
           className={`px-4 py-2 text-sm font-medium transition-colors focus:outline-none rounded-t-lg
-            ${activeTab === "schedule" ? "bg-[#9434EA] text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"}
+            ${
+              activeTab === "schedule"
+                ? "bg-[#9434EA] text-white"
+                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+            }
           `}
           onClick={() => setActiveTab("schedule")}
         >
           Class Schedule
         </button>
-       
       </div>
 
       <div className="mt-8 flex flex-col gap-6">
-        {activeTab === "schedule" && (
-         <div className="">
-         </div>
-        )}
+        {activeTab === "schedule" && <div className=""></div>}
         {activeTab === "attendance" && (
-         <div className="">
-          <ScanQrCode />
-         </div>
+         <AttendanceSection />
         )}
       </div>
     </div>
