@@ -3,20 +3,43 @@ import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { Wallet, Shield, Loader2 } from "lucide-react";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { useAccount} from "wagmi";
+import { useUserRole } from "@/lib/hooks/useUserRole";
+import { useAccount } from "wagmi";
 import { useRouter } from "next/navigation";
 
 const LoginPage = () => {
   const [isHovered, setIsHovered] = useState(false);
+  const [isRoleChecking, setIsRoleChecking] = useState(false);
+  const { isAdmin, isStudent, isSuperAdmin, isLoading: roleLoading } = useUserRole();
   const router = useRouter();
-  const { isConnected, isConnecting: wagmiIsConnecting } = useAccount();
-
+  const { isConnected, isConnecting: wagmiIsConnecting, address } = useAccount();
+  console.log(isAdmin,isStudent,isSuperAdmin,roleLoading)
   useEffect(() => {
-    if (isConnected) {
-      router.push("/student");
-    }
-  }, [isConnected, wagmiIsConnecting, router]);
+    if (isConnected && !roleLoading && !isRoleChecking) {
+      setIsRoleChecking(true);// Simulate blockchain role checking delay
+      const checkRoleAndRedirect = async () => {
+        try {// Role checking is handled by useUserRole hook
+          if (!isSuperAdmin || !isAdmin) {
+            router.push("/admin");
+          } else if (isStudent) {
+            router.push("/student");
+          } else {// Handle case where user has no valid role
+            router.push("/unauthorized");
+          }
+        } catch (error) {
+          console.error("Error checking role:", error);
+          router.push("/error");
+        } finally {
+          setIsRoleChecking(false);
+        }
+      };
 
+      checkRoleAndRedirect();
+    }
+  }, [isConnected, roleLoading, isAdmin, isStudent, isSuperAdmin, router]);
+
+  // Combine loading states
+  const isLoading = wagmiIsConnecting || roleLoading || isRoleChecking;
   return (
     <div className="w-full flex flex-row h-screen min-h-screen overflow-hidden">
       {/* Left Side - Image with Overlay */}
@@ -92,6 +115,8 @@ const LoginPage = () => {
           </div>
         </div>
       </div>
+     
+
       <div className="w-full md:w-1/2 h-full flex items-center justify-center bg-gradient-to-br from-gray-50 to-white relative overflow-hidden">
         <div className="relative z-10 w-full max-w-md px-8">
           <div className="text-center mb-8">
@@ -129,28 +154,33 @@ const LoginPage = () => {
                   <button
                     onMouseEnter={() => setIsHovered(true)}
                     onMouseLeave={() => setIsHovered(false)}
-                    disabled={wagmiIsConnecting}
+                    disabled={isLoading}
                     onClick={connected ? openAccountModal : openConnectModal}
                     className={`
                       w-full py-3 px-6 rounded-2xl font-semibold text-lg transition-all duration-300 transform
                       ${
-                        wagmiIsConnecting
+                        isLoading
                           ? "bg-gray-400 cursor-not-allowed"
+
                           : "bg-gradient-to-r  from-[#9537EA] to-[#9537EA] hover:from-[#800895] hover:to-[#a015b9]hover:scale-105 hover:shadow-xl active:scale-95"
                       }
                       text-white shadow-lg
                       ${
-                        isHovered && !wagmiIsConnecting
+                        isHovered && !isLoading
                           ? "shadow-2xl shadow-blue-500/25"
                           : ""
                       }
                     `}
                   >
                     <div className="flex items-center justify-center gap-3">
-                      {wagmiIsConnecting ? (
+                      {isLoading ? (
                         <>
                           <Loader2 className="w-5 h-5 text-white animate-spin" />
-                          <span>Connecting...</span>
+                          <span>
+                            {wagmiIsConnecting
+                              ? "Connecting..."
+                              : "Checking Role..."}
+                          </span>
                         </>
                       ) : connected ? (
                         <span>{account.displayName}</span>
@@ -180,7 +210,7 @@ const LoginPage = () => {
           </div>
           <div className="text-center mt-8">
             <p className="text-sm text-gray-500">
-              Don&#39;t have a wallet?
+              Don't have a wallet?
               <a
                 href="#"
                 className="text-blue-600 hover:text-blue-800 font-medium ml-1"
