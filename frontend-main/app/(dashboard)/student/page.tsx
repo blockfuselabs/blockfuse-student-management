@@ -1,30 +1,64 @@
 "use client";
 import AttendanceSection from "@/components/student/AttendanceSection";
 import StudentHeader from "@/components/student/StudentHeader";
-import { Button } from "@/components/ui/button";
-// import { ArrowRight, ScanQrCode } from "lucide-react";
-import Image from "next/image";
 import React, { useState } from "react";
-// import { Copy } from "lucide-react";
+import { Table } from "@/components/shared/Table";
 
 const StudentPage = () => {
   const [activeTab, setActiveTab] = useState("schedule");
+
+  const classScheduleColumns = [
+    { header: "Day", accessor: "day" as const },
+    { header: "Time", accessor: "time" as const },
+    { header: "Instructor", accessor: "instructor" as const },
+    { header: "Location", accessor: "location" as const },
+  ];
+
+  const classScheduleData = [
+    {
+      id: 1,
+      day: "Monday",
+      time: "9:00 AM - 11:00 AM",
+      subject: "Mathematics",
+      instructor: "Mr. Smith",
+      location: "Room 101",
+    },
+    {
+      id: 2,
+      day: "Tuesday",
+      time: "11:30 AM - 1:30 PM",
+      subject: "Physics",
+      instructor: "Ms. Johnson",
+      location: "Room 102",
+    },
+    {
+      id: 3,
+      day: "Wednesday",
+      time: "2:00 PM - 4:00 PM",
+      subject: "Chemistry",
+      instructor: "Dr. Lee",
+      location: "Room 103",
+    },
+    {
+      id: 4,
+      day: "Thursday",
+      time: "10:00 AM - 12:00 PM",
+      subject: "English",
+      instructor: "Mrs. Brown",
+      location: "Room 104",
+    },
+    {
+      id: 5,
+      day: "Friday",
+      time: "1:00 PM - 3:00 PM",
+      subject: "Biology",
+      instructor: "Mr. Green",
+      location: "Room 105",
+    },
+  ];
+
   return (
     <div className="">
-      <div className="flex items-center justify-between mb-6 px-2">
-        <div className="flex items-center gap-2">
-          <Image src="/images/logo-two.svg" alt="" height={45} width={45} />
-          <div className="">
-            <h4 className="text-[#9434EA] font-medium">BlockfuseLabs</h4>
-            <p className="text-[10px] py-0.5 px-1 text-center bg-[#9434EA]/20 rounded-xl text-[#9434EA]">
-              Student Portal
-            </p>
-          </div>
-        </div>
-
-        <Button>Disconnect wallet</Button>
-      </div>
-
       <StudentHeader />
 
       <div className="mt-20 flex items-center gap-2 mb-6 border-b border-gray-200">
@@ -55,10 +89,24 @@ const StudentPage = () => {
       </div>
 
       <div className="mt-8 flex flex-col gap-6">
-        {activeTab === "schedule" && <div className=""></div>}
-        {activeTab === "attendance" && (
-         <AttendanceSection />
+        {activeTab === "schedule" && (
+          <div className="bg-white rounded-xl text-gray-900">
+            <h3 className="font-semibold text-lg">Your class Schedule</h3>
+            <p className="text-gray-400 mb-4">
+              Stay organized and never miss a class! Here&apos;s your up-to-date
+              schedule with all your upcoming sessions, instructors, and
+              locations.
+            </p>
+            <Table
+              data={classScheduleData}
+              columns={classScheduleColumns}
+              title=""
+              searchable={false}
+              exportable={false}
+            />
+          </div>
         )}
+        {activeTab === "attendance" && <AttendanceSection />}
       </div>
     </div>
   );

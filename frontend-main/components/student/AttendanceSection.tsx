@@ -1,7 +1,11 @@
+'use client'
 import { ArrowRight, ScanQrCode } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 import React from 'react'
 
 const AttendanceSection = () => {
+  const router = useRouter();
+
   return (
     <div className="w-full">
     <div className="">
@@ -10,7 +14,7 @@ const AttendanceSection = () => {
           <ScanQrCode size={45} className="text-gray-700" />
           <div className="">
             <h3 className="text-lg text-gray-600 font-semibold">
-              Hey Hackher, Complete your Attendance
+              Hey Hacker, Complete your Attendance
             </h3>
             <p className="text-sm text-gray-400 font-medium">
               Our attendance system uses a QR code that’s securely
@@ -40,8 +44,9 @@ const AttendanceSection = () => {
             </li>
           </ol>
           <button
-            className="mt-6 bg-[#9434EA] text-white px-6 py-2 rounded-md flex items-center gap-2 text-sm hover:bg-[#7c2bc4] transition"
+            className="mt-6 bg-[#131315] text-white px-6 py-2 rounded-md flex items-center gap-2 text-sm hover:bg-[#7c2bc4] transition"
             type="button"
+            onClick={() => router.push('/student/scanqr')}
           >
             Get Started 
 
