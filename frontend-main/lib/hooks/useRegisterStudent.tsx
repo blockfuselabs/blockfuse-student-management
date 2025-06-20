@@ -1,13 +1,31 @@
 "use client";
-
 import { useCallback, useState, useEffect } from "react";
 import { useWriteContract, useWaitForTransactionReceipt } from "wagmi";
 import { CONTRACT_ADDRESS } from '@/lib/contract/address';
 import ABI from "@/lib/contract/ABI.json";
-import { RegisterStudentParams,RegisterStudentState } from "../types";
-import { Track } from "../types";
 
+export interface RegisterStudentParams {
+  firstname: string;
+  lastname: string;
+  twitter?: string;
+  linkedin?: string;
+  github?: string;
+  track: number;
+  cohort: number;
+  studentAddress: string;
+}
 
+export interface RegisterStudentState {
+  isLoading: boolean;
+  isSuccess: boolean;
+  error: string | null;
+  transactionHash?: string;
+}
+
+export enum Track {
+  WEB3 = 0,
+  WEB2 = 1,
+}
 
 export const useRegisterStudent = () => {
   const [state, setState] = useState<RegisterStudentState>({
@@ -52,20 +70,36 @@ export const useRegisterStudent = () => {
     }
   }, [isConfirmed]);
 
-  // Handle errors from write or receipt
   useEffect(() => {
     const error = writeError || receiptError;
     if (error) {
+      let userFriendlyMessage = "Registration failed. Please try again.";
+      
+      // Parse common error messages for better UX
+      const errorMessage = error.message?.toLowerCase() || "";
+      
+      if (errorMessage.includes("user rejected")) {
+        userFriendlyMessage = "Transaction was cancelled by user.";
+      } else if (errorMessage.includes("insufficient funds")) {
+        userFriendlyMessage = "Insufficient funds for transaction fees.";
+      } else if (errorMessage.includes("already registered")) {
+        userFriendlyMessage = "This student is already registered.";
+      } else if (errorMessage.includes("invalid address")) {
+        userFriendlyMessage = "Invalid wallet address provided.";
+      } else if (errorMessage.includes("network")) {
+        userFriendlyMessage = "Network error. Please check your connection.";
+      }
+      
       setState(prev => ({ 
         ...prev, 
-        error: error.message, 
+        error: userFriendlyMessage, 
         isLoading: false,
         isSuccess: false 
       }));
     }
   }, [writeError, receiptError]);
 
-  // Update loading state
+ 
   useEffect(() => {
     const isLoading = isWritePending || isConfirming;
     setState(prev => ({ ...prev, isLoading }));
@@ -94,15 +128,15 @@ export const useRegisterStudent = () => {
 
     // Social media URL validation (optional but should be valid if provided)
     const urlRegex = /^https?:\/\/.+/;
-    
+
     if (params.twitter && !urlRegex.test(params.twitter) && !params.twitter.startsWith('@')) {
       errors.push("Twitter should be a valid URL or handle starting with @");
     }
-    
+
     if (params.linkedin && !urlRegex.test(params.linkedin)) {
       errors.push("LinkedIn should be a valid URL");
     }
-    
+
     if (params.github && !urlRegex.test(params.github) && !params.github.includes('github.com')) {
       errors.push("GitHub should be a valid URL or username");
     }
@@ -212,17 +246,11 @@ export const useRegisterStudent = () => {
   };
 };
 
-
 export const getTrackName = (track: Track): string => {
   const trackNames = {
-    [Track.FRONTEND]: "Frontend",
-    [Track.BACKEND]: "Backend",
-    [Track.BLOCKCHAIN]: "Blockchain",
-    [Track.MOBILE]: "Mobile",
-    [Track.DESIGN]: "Design",
-    [Track.DATA_SCIENCE]: "Data Science",
-    [Track.DEVOPS]: "DevOps",
-    [Track.FULLSTACK]: "Full Stack",
+    [Track.WEB3]: "WEB3",
+    [Track.WEB2]: "WEB2",
+   
   };
   return trackNames[track] || "Unknown";
 };

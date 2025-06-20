@@ -1,5 +1,4 @@
 "use client";
-
 import * as React from "react";
 import {
   Dialog,
@@ -9,9 +8,9 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
-import { useRegisterStudent, getTrackOptions} from "@/lib/hooks/useRegisterStudent";
-import { toast } from "sonner"; // or your preferred toast library
+import { AlertCircle, Loader2, CheckCircle2 } from "lucide-react";
+import { useRegisterStudent, getTrackOptions, Track } from "@/lib/hooks/useRegisterStudent";
+import { toast } from "sonner";
 
 type Props = {
   isOpen: boolean;
@@ -25,23 +24,14 @@ export function AddStudentModal({ isOpen, setIsOpen }: Props) {
   const [twitter, setTwitter] = React.useState("");
   const [linkedin, setLinkedin] = React.useState("");
   const [github, setGithub] = React.useState("");
- 
-  type Track = number; // Or use an enum or union type if needed
-  
-    const [track, setTrack] = React.useState<Track | "">("");
+  const [track, setTrack] = React.useState<Track | "">("");
   const [cohort, setCohort] = React.useState<number | "">("");
   const [studentAddress, setStudentAddress] = React.useState("");
-
-  // Define TrackOption type
-  type TrackOption = {
-    value: number;
-    label: string;
-  };
 
   // Get track options
   const trackOptions = getTrackOptions();
 
-  // Cohort options - you might want to fetch these dynamically from your contract
+  // Cohort options
   const cohortOptions = [
     { value: 1, label: "Cohort 1 - Web Development 2024" },
     { value: 2, label: "Cohort 2 - Mobile Development 2024" },
@@ -54,7 +44,8 @@ export function AddStudentModal({ isOpen, setIsOpen }: Props) {
     isSuccess,
     error,
     reset,
-    transactionHash
+    transactionHash,
+    isConfirming
   } = useRegisterStudent();
 
   // Handle successful registration
@@ -70,7 +61,7 @@ export function AddStudentModal({ isOpen, setIsOpen }: Props) {
   // Handle errors
   React.useEffect(() => {
     if (error) {
-      toast.error("Failed to register student", {
+      toast.error("Registration failed", {
         description: error
       });
     }
@@ -93,7 +84,7 @@ export function AddStudentModal({ isOpen, setIsOpen }: Props) {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    
+
     // Validate required fields
     if (!firstname.trim() || !lastname.trim() || !studentAddress.trim() || track === "" || cohort === "") {
       toast.error("Please fill in all required fields");
@@ -112,7 +103,6 @@ export function AddStudentModal({ isOpen, setIsOpen }: Props) {
         studentAddress: studentAddress.trim(),
       });
     } catch (err) {
-      // Error is already handled by the hook and useEffect
       console.error("Error in handleSubmit:", err);
     }
   };
@@ -124,6 +114,12 @@ export function AddStudentModal({ isOpen, setIsOpen }: Props) {
     track !== "" && 
     cohort !== "";
 
+  const getLoadingText = () => {
+    if (isConfirming) return "Confirming...";
+    if (isLoading) return "Registering...";
+    return "Register Student";
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="max-w-md rounded-xl p-6 bg-white border border-gray-200 shadow-xl max-h-[90vh] overflow-y-auto">
@@ -132,11 +128,11 @@ export function AddStudentModal({ isOpen, setIsOpen }: Props) {
             Register New Student
           </DialogTitle>
         </DialogHeader>
-        
+
         <form onSubmit={handleSubmit} className="flex flex-col gap-4 mt-2">
           {/* First Name */}
           <div>
-            <label className="block text-sm font-medium mb-1">
+            <label className="block text-sm font-medium mb-1 text-gray-700">
               First Name <span className="text-red-500">*</span>
             </label>
             <Input
@@ -144,7 +140,7 @@ export function AddStudentModal({ isOpen, setIsOpen }: Props) {
               placeholder="Enter first name"
               value={firstname}
               onChange={(e) => setFirstname(e.target.value)}
-              className="rounded-md border-gray-300 text-gray-900 w-full"
+              className="w-full"
               disabled={isLoading}
               required
             />
@@ -152,7 +148,7 @@ export function AddStudentModal({ isOpen, setIsOpen }: Props) {
 
           {/* Last Name */}
           <div>
-            <label className="block text-sm font-medium mb-1">
+            <label className="block text-sm font-medium mb-1 text-gray-700">
               Last Name <span className="text-red-500">*</span>
             </label>
             <Input
@@ -160,7 +156,7 @@ export function AddStudentModal({ isOpen, setIsOpen }: Props) {
               placeholder="Enter last name"
               value={lastname}
               onChange={(e) => setLastname(e.target.value)}
-              className="rounded-md border-gray-300 text-gray-900 w-full"
+              className="w-full"
               disabled={isLoading}
               required
             />
@@ -168,7 +164,7 @@ export function AddStudentModal({ isOpen, setIsOpen }: Props) {
 
           {/* Student Address */}
           <div>
-            <label className="block text-sm font-medium mb-1">
+            <label className="block text-sm font-medium mb-1 text-gray-700">
               Student Wallet Address <span className="text-red-500">*</span>
             </label>
             <Input
@@ -176,7 +172,7 @@ export function AddStudentModal({ isOpen, setIsOpen }: Props) {
               placeholder="0x..."
               value={studentAddress}
               onChange={(e) => setStudentAddress(e.target.value)}
-              className="rounded-md border-gray-300 text-gray-900 w-full font-mono text-sm"
+              className="w-full font-mono text-sm"
               disabled={isLoading}
               required
             />
@@ -184,34 +180,34 @@ export function AddStudentModal({ isOpen, setIsOpen }: Props) {
 
           {/* Track Selection */}
           <div>
-            <label className="block text-sm font-medium mb-1">
+            <label className="block text-sm font-medium mb-1 text-gray-700">
               Track <span className="text-red-500">*</span>
             </label>
             <select
               value={track}
               onChange={(e) => setTrack(e.target.value === "" ? "" : Number(e.target.value) as Track)}
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
               disabled={isLoading}
               required
             >
               <option value="" disabled>Select Track</option>
-                {trackOptions.map((option: TrackOption) => (
+              {trackOptions.map((option) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
                 </option>
-                ))}
+              ))}
             </select>
           </div>
 
           {/* Cohort Selection */}
           <div>
-            <label className="block text-sm font-medium mb-1">
+            <label className="block text-sm font-medium mb-1 text-gray-700">
               Cohort <span className="text-red-500">*</span>
             </label>
             <select
               value={cohort}
               onChange={(e) => setCohort(e.target.value === "" ? "" : Number(e.target.value))}
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
               disabled={isLoading}
               required
             >
@@ -226,14 +222,14 @@ export function AddStudentModal({ isOpen, setIsOpen }: Props) {
 
           {/* Social Media Fields */}
           <div className="space-y-3">
-            <h3 className="text-sm font-medium text-gray-700">Social Media </h3>
+            <h3 className="text-sm font-medium text-gray-700">Social Media (Optional)</h3>
             
             <Input
               type="text"
               placeholder="Twitter handle (@username) or URL"
               value={twitter}
               onChange={(e) => setTwitter(e.target.value)}
-              className="rounded-md border-gray-300 text-gray-900 w-full"
+              className="w-full"
               disabled={isLoading}
             />
             
@@ -242,7 +238,7 @@ export function AddStudentModal({ isOpen, setIsOpen }: Props) {
               placeholder="LinkedIn profile URL"
               value={linkedin}
               onChange={(e) => setLinkedin(e.target.value)}
-              className="rounded-md border-gray-300 text-gray-900 w-full"
+              className="w-full"
               disabled={isLoading}
             />
             
@@ -251,16 +247,29 @@ export function AddStudentModal({ isOpen, setIsOpen }: Props) {
               placeholder="GitHub username or URL"
               value={github}
               onChange={(e) => setGithub(e.target.value)}
-              className="rounded-md border-gray-300 text-gray-900 w-full"
+              className="w-full"
               disabled={isLoading}
             />
           </div>
 
           {/* Error Display */}
           {error && (
-            <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-md">
-              <AlertCircle className="h-4 w-4 text-red-500 flex-shrink-0" />
-              <span className="text-sm text-red-700">{error}</span>
+            <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-md">
+              <AlertCircle className="h-4 w-4 text-red-500 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <p className="text-sm font-medium text-red-800">Registration Error</p>
+                <p className="text-sm text-red-700 mt-1">{error}</p>
+              </div>
+            </div>
+          )}
+
+          {/* Transaction Status */}
+          {isLoading && !error && (
+            <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-md">
+              <Loader2 className="h-4 w-4 text-blue-500 animate-spin flex-shrink-0" />
+              <span className="text-sm text-blue-700">
+                {isConfirming ? "Confirming transaction..." : "Processing registration..."}
+              </span>
             </div>
           )}
 
@@ -273,7 +282,7 @@ export function AddStudentModal({ isOpen, setIsOpen }: Props) {
           )}
 
           {/* Submit Buttons */}
-          <div className="flex gap-3 pt-2">
+          <div className="flex gap-3 pt-4">
             <Button
               type="button"
               variant="outline"
@@ -285,13 +294,13 @@ export function AddStudentModal({ isOpen, setIsOpen }: Props) {
             </Button>
             <Button
               type="submit"
-              className="flex-1 bg-black text-white hover:bg-gray-800 transition"
+              className="flex-1 bg-black text-white hover:bg-gray-800 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
               disabled={!isFormValid || isLoading}
             >
               {isLoading ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Registering...
+                  {getLoadingText()}
                 </>
               ) : (
                 "Register Student"
