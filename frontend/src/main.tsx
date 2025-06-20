@@ -1,8 +1,8 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { Web3Provider } from "../src/Components/Web3Provider.tsx";
+import { Web3Provider } from "./Components/Web3Provider";
 import './index.css';
-import App from './app/App.tsx';
+import App from '../src/app/App';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

@@ -11,10 +11,9 @@ const config = createConfig(
         [mainnet.id]: http(
           `https://eth-mainnet.g.alchemy.com/v2/${import.meta.env.VITE_ALCHEMY_ID}`,
         ),
-        [sepolia.id]: http(
-          `https://eth-sepolia.g.alchemy.com/v2/${import.meta.env.VITE_ALCHEMY_ID}`,
-        ),
-      },
+        [sepolia.id]: http(`https://eth-sepolia.g.alchemy.com/v2/${import.meta.env.VITE_PUBLIC_ALCHEMY_API_KEY}`)
+
+         },
       walletConnectProjectId: import.meta.env.VITE_WALLETCONNECT_PROJECT_ID,
       appName: "School Management System",
       appDescription: "Your App Description",

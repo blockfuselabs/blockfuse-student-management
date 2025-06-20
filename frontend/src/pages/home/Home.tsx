@@ -1,8 +1,9 @@
-import React from 'react';
+
 import AttendanceChart from '../../Components/AttendanceChart';
 import icon1 from "../../assets/student.png";
 import icon2 from "../../assets/training-class.png";
 import icon3 from "../../assets/alphabetical-variant.png";
+import React from 'react';
 
 type StatsCardProps = {
   title: string;
