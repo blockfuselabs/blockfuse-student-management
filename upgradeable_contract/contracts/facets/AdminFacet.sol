@@ -32,13 +32,29 @@ contract AdminFacet {
     }
 
     function addAdmin(address adminAddress) external onlySuperAdmin returns (bool) {
+        require(adminAddress != address(0), Error.INVALID_ADDRESS());
+        require(!layout.admins[adminAddress], "Admin already exists");
+        
         layout.admins[adminAddress] = true;
+        layout.adminList.push(adminAddress);
         emit Event.AdminAdded(adminAddress);
         return true;
     }
 
     function removeAdmin(address adminAddress) external onlySuperAdmin returns (bool) {
+        require(layout.admins[adminAddress], "Admin does not exist");
+        
         layout.admins[adminAddress] = false;
+        
+        // Remove from adminList array
+        for (uint256 i = 0; i < layout.adminList.length; i++) {
+            if (layout.adminList[i] == adminAddress) {
+                layout.adminList[i] = layout.adminList[layout.adminList.length - 1];
+                layout.adminList.pop();
+                break;
+            }
+        }
+        
         emit Event.AdminRemoved(adminAddress);
         return true;
     }
@@ -132,5 +148,9 @@ contract AdminFacet {
 
     function isStudentActive(address student) external view returns (bool) {
         return layout.student[student].isActive;
+    }
+
+    function getAllAdmins() external view returns (address[] memory) {
+        return layout.adminList;
     }
 }

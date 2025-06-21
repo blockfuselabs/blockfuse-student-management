@@ -362,6 +362,90 @@ contract AdminFacetTest is Test, IDiamondCut {
         AdminFacet(address(diamond)).replaceStudentWallet(newStudentAddress, student2);
     }
     
+    // Test Case 6: Test getAllAdmins functionality
+    function testGetAllAdmins() public {
+        // Test initial state - should return empty array
+        address[] memory admins = AdminFacet(address(diamond)).getAllAdmins();
+        assertEq(admins.length, 0);
+        
+        // Add first admin
+        vm.prank(superAdmin);
+        AdminFacet(address(diamond)).addAdmin(admin1);
+        
+        // Test single admin
+        admins = AdminFacet(address(diamond)).getAllAdmins();
+        assertEq(admins.length, 1);
+        assertEq(admins[0], admin1);
+        
+        // Add second admin
+        vm.prank(superAdmin);
+        AdminFacet(address(diamond)).addAdmin(admin2);
+        
+        // Test multiple admins
+        admins = AdminFacet(address(diamond)).getAllAdmins();
+        assertEq(admins.length, 2);
+        
+        // Check both admins are present (order might vary)
+        bool admin1Found = false;
+        bool admin2Found = false;
+        for (uint256 i = 0; i < admins.length; i++) {
+            if (admins[i] == admin1) {
+                admin1Found = true;
+            } else if (admins[i] == admin2) {
+                admin2Found = true;
+            }
+        }
+        assertTrue(admin1Found);
+        assertTrue(admin2Found);
+        
+        // Remove first admin
+        vm.prank(superAdmin);
+        AdminFacet(address(diamond)).removeAdmin(admin1);
+        
+        // Test after removal
+        admins = AdminFacet(address(diamond)).getAllAdmins();
+        assertEq(admins.length, 1);
+        assertEq(admins[0], admin2);
+        
+        // Remove last admin
+        vm.prank(superAdmin);
+        AdminFacet(address(diamond)).removeAdmin(admin2);
+        
+        // Test empty state again
+        admins = AdminFacet(address(diamond)).getAllAdmins();
+        assertEq(admins.length, 0);
+    }
+    
+    // Test Case 7: Test edge cases for admin management with getAllAdmins
+    function testAdminManagementEdgeCases() public {
+        // Test adding duplicate admin (should revert)
+        vm.prank(superAdmin);
+        AdminFacet(address(diamond)).addAdmin(admin1);
+        
+        vm.prank(superAdmin);
+        vm.expectRevert("Admin already exists");
+        AdminFacet(address(diamond)).addAdmin(admin1);
+        
+        // Verify only one instance exists
+        address[] memory admins = AdminFacet(address(diamond)).getAllAdmins();
+        assertEq(admins.length, 1);
+        
+        // Test adding zero address (should revert)
+        vm.prank(superAdmin);
+        vm.expectRevert(Error.INVALID_ADDRESS.selector);
+        AdminFacet(address(diamond)).addAdmin(address(0));
+        
+        // Test removing non-existent admin (should revert)
+        vm.prank(superAdmin);
+        vm.expectRevert("Admin does not exist");
+        AdminFacet(address(diamond)).removeAdmin(admin2);
+        
+        // Verify admin count unchanged
+        admins = AdminFacet(address(diamond)).getAllAdmins();
+        assertEq(admins.length, 1);
+        assertEq(admins[0], admin1);
+    }
+    
     function generateSelectors(string memory _facetName) internal returns (bytes4[] memory selectors) {
         string[] memory cmd = new string[](3);
         cmd[0] = "node";
