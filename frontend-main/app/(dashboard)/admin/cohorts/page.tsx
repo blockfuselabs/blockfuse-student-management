@@ -115,7 +115,7 @@ const CohortsPage = () => {
   return (
     <div className="p-6 h-screen bg-white rounded-xl">
       <div className="flex w-full justify-between items-center">
-        <div className="">
+        <div>
           <h1 className="text-xl font-semibold text-gray-900 mb-1">
             Cohorts Management
           </h1>

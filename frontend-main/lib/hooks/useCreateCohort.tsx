@@ -78,7 +78,7 @@ export const useCreateCohort = () => {
         }
       }
     },
-    [writeContract, publicClient]
+    [writeContract, publicClient, hash]
   );
 
   return {

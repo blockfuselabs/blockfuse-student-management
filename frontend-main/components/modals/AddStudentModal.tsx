@@ -1,5 +1,4 @@
 "use client";
-
 import * as React from "react";
 import {
   Dialog,
@@ -12,9 +11,7 @@ import { Input } from "@/components/ui/input";
 import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 import { useRegisterStudent } from "@/lib/hooks/useRegisterStudent";
 import { useGetCohorts } from "@/lib/hooks/useGetCohorts";
-import { toast } from "sonner"; // or your preferred toast library
-import CohortFacetABI from "@/lib/contract/CohortFacet.json";
-import { usePublicClient } from "wagmi";
+import { toast } from "sonner"; 
 
 type Props = {
   isOpen: boolean;
@@ -37,13 +34,7 @@ export function AddStudentModal({ isOpen, setIsOpen }: Props) {
   const [cohort, setCohort] = React.useState<number | "">("");
   const [studentAddress, setStudentAddress] = React.useState("");
 
-  // Define TrackOption type
-  type TrackOption = {
-    value: number;
-    label: string;
-  };
 
-  const publicClient = usePublicClient();
   const [trackOptions, setTrackOptions] = React.useState<{ value: number; label: string }[]>([]);
 
   // Get real cohort data and filter out completed cohorts
@@ -65,7 +56,8 @@ export function AddStudentModal({ isOpen, setIsOpen }: Props) {
     isSuccess,
     error,
     reset,
-    transactionHash
+    transactionHash,
+    isConfirming
   } = useRegisterStudent();
 
   // Set track options from cohorts array when cohort changes
@@ -94,12 +86,12 @@ export function AddStudentModal({ isOpen, setIsOpen }: Props) {
       });
       handleClose();
     }
-  }, [isSuccess, transactionHash]);
+  }, [handleClose, isSuccess, transactionHash]);
 
   // Handle errors
   React.useEffect(() => {
     if (error) {
-      toast.error("Failed to register student", {
+      toast.error("Registration failed", {
         description: error
       });
     }
@@ -122,7 +114,7 @@ export function AddStudentModal({ isOpen, setIsOpen }: Props) {
     console.log('-------------------------');
   }, [cohort, cohorts, cohortOptions]);
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     setIsOpen(false);
     // Reset form state
     setFirstname("");
@@ -135,7 +127,7 @@ export function AddStudentModal({ isOpen, setIsOpen }: Props) {
     setStudentAddress("");
     // Reset hook state
     reset();
-  };
+  });
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -158,7 +150,6 @@ export function AddStudentModal({ isOpen, setIsOpen }: Props) {
         studentAddress: studentAddress.trim(),
       });
     } catch (err) {
-      // Error is already handled by the hook and useEffect
       console.error("Error in handleSubmit:", err);
     }
   };
@@ -171,6 +162,11 @@ export function AddStudentModal({ isOpen, setIsOpen }: Props) {
     cohort !== "";
 
   const isSubmitting = isLoading || isLoadingCohorts;
+  const getLoadingText = () => {
+    if (isConfirming) return "Confirming...";
+    if (isLoading) return "Registering...";
+    return "Register Student";
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
@@ -184,7 +180,7 @@ export function AddStudentModal({ isOpen, setIsOpen }: Props) {
         <form onSubmit={handleSubmit} className="flex flex-col gap-4 mt-2">
           {/* First Name */}
           <div>
-            <label className="block text-sm font-medium mb-1">
+            <label className="block text-sm font-medium mb-1 text-gray-700">
               First Name <span className="text-red-500">*</span>
             </label>
             <Input
@@ -200,7 +196,7 @@ export function AddStudentModal({ isOpen, setIsOpen }: Props) {
 
           {/* Last Name */}
           <div>
-            <label className="block text-sm font-medium mb-1">
+            <label className="block text-sm font-medium mb-1 text-gray-700">
               Last Name <span className="text-red-500">*</span>
             </label>
             <Input
@@ -216,7 +212,7 @@ export function AddStudentModal({ isOpen, setIsOpen }: Props) {
 
           {/* Student Address */}
           <div>
-            <label className="block text-sm font-medium mb-1">
+            <label className="block text-sm font-medium mb-1 text-gray-700">
               Student Wallet Address <span className="text-red-500">*</span>
             </label>
             <Input
@@ -232,7 +228,7 @@ export function AddStudentModal({ isOpen, setIsOpen }: Props) {
 
           {/* Cohort Selection */}
           <div>
-            <label className="block text-sm font-medium mb-1">
+            <label className="block text-sm font-medium mb-1 text-gray-700">
               Cohort <span className="text-red-500">*</span>
             </label>
             <select
@@ -317,9 +313,22 @@ export function AddStudentModal({ isOpen, setIsOpen }: Props) {
 
           {/* Error Display */}
           {error && (
-            <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-md">
-              <AlertCircle className="h-4 w-4 text-red-500 flex-shrink-0" />
-              <span className="text-sm text-red-700">{error}</span>
+            <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-md">
+              <AlertCircle className="h-4 w-4 text-red-500 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <p className="text-sm font-medium text-red-800">Registration Error</p>
+                <p className="text-sm text-red-700 mt-1">{error}</p>
+              </div>
+            </div>
+          )}
+
+          {/* Transaction Status */}
+          {isLoading && !error && (
+            <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-md">
+              <Loader2 className="h-4 w-4 text-blue-500 animate-spin flex-shrink-0" />
+              <span className="text-sm text-blue-700">
+                {isConfirming ? "Confirming transaction..." : "Processing registration..."}
+              </span>
             </div>
           )}
 
@@ -332,7 +341,7 @@ export function AddStudentModal({ isOpen, setIsOpen }: Props) {
           )}
 
           {/* Submit Buttons */}
-          <div className="flex gap-3 pt-2">
+          <div className="flex gap-3 pt-4">
             <Button
               type="button"
               variant="outline"
@@ -350,7 +359,7 @@ export function AddStudentModal({ isOpen, setIsOpen }: Props) {
               {isSubmitting ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  {isLoading ? "Registering..." : "Loading..."}
+                  {getLoadingText()}
                 </>
               ) : (
                 <>

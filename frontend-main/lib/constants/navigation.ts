@@ -48,6 +48,11 @@ export const adminRoutes = {
   ],
   management: [
     {
+      title: "Attendance",
+      href: "/admin/attendance",
+      icon: CheckCircle,
+    },
+    {
       title: "Courses",
       href: "/admin/courses",
       icon: BookOpen,

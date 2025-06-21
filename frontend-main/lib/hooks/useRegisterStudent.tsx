@@ -1,6 +1,8 @@
 /* eslint-disable prefer-const */
 "use client";
-
+import { useState, useEffect } from "react";
+import { useWriteContract, useTransaction } from "wagmi";
+import { CONTRACT_ADDRESS } from "@/lib/contract/address";
 import { useCallback, useState, useEffect } from "react";
 import { useWriteContract, useWaitForTransactionReceipt } from "wagmi";
 import { CONTRACT_ADDRESS } from '@/lib/contract/address';
@@ -11,19 +13,14 @@ import { Track } from "../types";
 
 
 export const useRegisterStudent = () => {
-  const [state, setState] = useState<RegisterStudentState>({
-    isLoading: false,
-    isSuccess: false,
-    error: null,
-    transactionHash: undefined,
-  });
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const {
     writeContract,
     data: hash,
     isPending: isWritePending,
     error: writeError,
-    reset: resetWrite
   } = useWriteContract();
 
   const {
@@ -34,14 +31,14 @@ export const useRegisterStudent = () => {
     hash,
   });
 
-  // Update state when transaction hash changes
+  // Handle transaction success
   useEffect(() => {
-    if (hash) {
-      setState(prev => ({ ...prev, transactionHash: hash }));
+    if (isSuccess) {
+      console.log("Student registered successfully!");
     }
-  }, [hash]);
+  }, [isSuccess]);
 
-  // Update state when transaction is confirmed
+  // Handle transaction errors
   useEffect(() => {
     if (isConfirmed) {
       setState(prev => ({
@@ -51,7 +48,7 @@ export const useRegisterStudent = () => {
         error: null
       }));
     }
-  }, [isConfirmed]);
+  }, [isWriteError, isTransactionError, writeError]);
 
   // Handle errors from write or receipt
   useEffect(() => {
@@ -66,11 +63,7 @@ export const useRegisterStudent = () => {
     }
   }, [writeError, receiptError]);
 
-  // Update loading state
-  useEffect(() => {
-    const isLoading = isWritePending || isConfirming;
-    setState(prev => ({ ...prev, isLoading }));
-  }, [isWritePending, isConfirming]);
+      console.log("Registering student with details:", studentDetails);
 
   // Validation function
   const validateStudentData = (params: RegisterStudentParams) => {
@@ -194,30 +187,30 @@ export const useRegisterStudent = () => {
         }));
         console.error("Error registering student:", error);
       }
-    },
-    [writeContract]
-  );
 
-  const reset = useCallback(() => {
-    setState({
-      isLoading: false,
-      isSuccess: false,
-      error: null,
-      transactionHash: undefined,
-    });
-    resetWrite();
-  }, [resetWrite]);
+      // Call the contract function
+      await writeContract({
+        address: CONTRACT_ADDRESS as `0x${string}`,
+        abi: DiamondABI.abi,
+        functionName: "registerStudent",
+        args: [studentDetails],
+      });
+    } catch (err) {
+      console.error("Error registering student:", err);
+      setError(
+        err instanceof Error ? err.message : "Failed to register student"
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return {
     registerStudent,
-    reset,
-    isLoading: state.isLoading,
-    isSuccess: state.isSuccess,
-    error: state.error,
-    transactionHash: state.transactionHash,
-    isPending: isWritePending,
-    isConfirming,
-    isConfirmed,
+    isLoading: isLoading || isTransactionLoading,
+    isSuccess,
+    error,
+    resetError: () => setError(null),
   };
 };
 

@@ -14,12 +14,11 @@ import { ChevronDown, Copy, LogOut, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useAccount } from "wagmi";
-import { useRouter } from "next/navigation";
-
+import { useIsMounted } from "@/lib/hooks/useIsMounted";
 
 const DashboardNav = () => {
+  const isMounted = useIsMounted();
   const { address } = useAccount();
-  const router = useRouter();
 
   const truncateAddress = (addr?: string) => {
     if (!addr) return "";
@@ -38,6 +37,8 @@ const DashboardNav = () => {
   const handleLogout = () => {
     router.push("/admin/logout");
   };
+  // Don't render address until mounted to prevent hydration mismatch
+  const displayAddress = isMounted ? truncateAddress(address) : "Loading...";
 
   return (
     <nav className="w-full sticky top-0 py-3.5 border-b border-black/10 bg-white px-8 flex items-center justify-between">
@@ -59,7 +60,7 @@ const DashboardNav = () => {
                   className="object-cover"
                 />
               </div>
-              <p className="text-gray-500">{truncateAddress(address)}</p>
+              <p className="text-gray-500">{displayAddress}</p>
               <ChevronDown className="text-gray-600 text-sm" />
             </Button>
           </DropdownMenuTrigger>
@@ -68,7 +69,7 @@ const DashboardNav = () => {
               <div className="flex flex-col space-y-1">
                 <p className="text-sm font-medium leading-none">Profile</p>
                 <p className="text-xs leading-none text-muted-foreground">
-                  {truncateAddress(address)}
+                  {displayAddress}
                 </p>
               </div>
             </DropdownMenuLabel>
