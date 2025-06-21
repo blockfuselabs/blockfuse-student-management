@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useReadContract } from "wagmi";
 import { CONTRACT_ADDRESS } from "@/lib/contract/address";
-import ABI from "@/lib/contract/ABI.json";
+import AdminFacetABI from "@/lib/contract/AdminFacet.json";
 
 export interface AdminData {
   address: string;
@@ -22,30 +22,30 @@ export const useGetAdmins = (refreshKey: number = 0) => {
     error: null,
   });
 
-  // Get the super admin address
+  // Get all admins using the new getAllAdmins function
   const {
-    data: superAdminAddress,
-    isLoading: superAdminLoading,
-    error: superAdminError,
+    data: adminAddresses,
+    isLoading: adminsLoading,
+    error: adminsError,
   } = useReadContract({
     address: CONTRACT_ADDRESS as `0x${string}`,
-    abi: ABI,
-    functionName: "superAdmin",
+    abi: AdminFacetABI.abi,
+    functionName: "getAllAdmins",
   });
 
   useEffect(() => {
     console.log("=== useGetAdmins Debug ===");
-    console.log("Super Admin Address:", superAdminAddress);
+    console.log("Admin Addresses:", adminAddresses);
 
-    if (superAdminLoading) {
-      console.log("Loading super admin data...");
+    if (adminsLoading) {
+      console.log("Loading admin data...");
       setState((prev) => ({ ...prev, isLoading: true }));
       return;
     }
 
-    if (superAdminError) {
-      console.error("Error getting super admin data:", superAdminError);
-      const errorMessage = superAdminError?.message || "Unknown error";
+    if (adminsError) {
+      console.error("Error getting admin data:", adminsError);
+      const errorMessage = adminsError?.message || "Unknown error";
       setState({
         admins: [],
         isLoading: false,
@@ -56,24 +56,21 @@ export const useGetAdmins = (refreshKey: number = 0) => {
 
     const admins: AdminData[] = [];
 
-    // Add super admin if exists
-    if (
-      superAdminAddress &&
-      superAdminAddress !== "0x0000000000000000000000000000000000000000"
-    ) {
-      admins.push({
-        address: superAdminAddress as string,
-        isActive: true,
+    // Process all admin addresses from the contract
+    if (adminAddresses && Array.isArray(adminAddresses)) {
+      adminAddresses.forEach((address: string) => {
+        if (
+          address &&
+          address !== "0x0000000000000000000000000000000000000000"
+        ) {
+          admins.push({
+            address: address,
+            isActive: true,
+          });
+          console.log("Admin found:", address);
+        }
       });
-      console.log("Super Admin:", superAdminAddress);
     }
-
-    // Note: For now, we're only showing the super admin
-    // The adminList function was causing issues, so we're using a simplified approach
-    // To get all admins, you would need to:
-    // 1. Fix the smart contract to properly handle adminList access
-    // 2. Or implement a different approach using events
-    // 3. Or create a custom function in the contract to return all admins
 
     console.log("Final admins list:", admins);
 
@@ -82,7 +79,7 @@ export const useGetAdmins = (refreshKey: number = 0) => {
       isLoading: false,
       error: null,
     });
-  }, [refreshKey, superAdminAddress, superAdminLoading, superAdminError]);
+  }, [refreshKey, adminAddresses, adminsLoading, adminsError]);
 
   const refetch = useCallback(() => {
     // The hook will automatically refetch when refreshKey changes
