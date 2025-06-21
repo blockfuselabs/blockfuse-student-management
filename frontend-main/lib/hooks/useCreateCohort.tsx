@@ -2,7 +2,7 @@
 import { useCallback, useState } from "react";
 import { useWriteContract, useWaitForTransactionReceipt } from "wagmi";
 import { CONTRACT_ADDRESS } from '@/lib/contract/address';
-import ABI from "@/lib/contract/ABI.json"
+import CohortFacetABI from "@/lib/contract/CohortFacet.json"
 
 export const useCreateCohort = () => {
   const [error, setError] = useState<string | null>(null);
@@ -29,18 +29,17 @@ export const useCreateCohort = () => {
         setError(null);
         setIsSuccess(false);
 
-        
+
         if (!startDate || !endDate || startDate >= endDate) {
           throw new Error("Invalid date range: startDate must be before endDate");
         }
 
         const startTimestamp: number = Math.floor(new Date(startDate).getTime() / 1000);
         const endTimestamp: number = Math.floor(new Date(endDate).getTime() / 1000);
-        console.log(startTimestamp)
-        console.log(endTimestamp)
+
         await writeContract({
           address: CONTRACT_ADDRESS,
-          abi: ABI.abi,
+          abi: CohortFacetABI.abi,
           functionName: "createCohort",
           args: [startTimestamp, endTimestamp],
         });
@@ -64,9 +63,9 @@ export const useCreateCohort = () => {
   return {
     createCohort,
     isPending,
-    isConfirming, 
+    isConfirming,
     isSuccess: isSuccess && isConfirmed,
-    error: error || writeError?.message, 
-    transactionHash: hash, 
+    error: error || writeError?.message,
+    transactionHash: hash,
   };
 };

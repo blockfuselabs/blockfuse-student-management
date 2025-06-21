@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
-import { useAccount, useReadContract} from 'wagmi';
+import { useAccount, useReadContract } from 'wagmi';
 import { CONTRACT_ADDRESS } from '@/lib/contract/address';
-import ABI from "@/lib/contract/ABI.json"
+import AdminFacetABI from "@/lib/contract/AdminFacet.json";
+import CohortFacetABI from "@/lib/contract/CohortFacet.json";
+import StudentFacetABI from "@/lib/contract/StudentFacet.json";
 
 // Types based on your ABI
 interface StudentDetails {
@@ -41,37 +43,37 @@ export const useUserRole = (): UserRoleData => {
   });
 
   // Check if user is admin
-  const { 
-    data: isAdminData, 
-    isLoading: isAdminLoading, 
-    error: adminError 
+  const {
+    data: isAdminData,
+    isLoading: isAdminLoading,
+    error: adminError
   } = useReadContract({
     address: CONTRACT_ADDRESS,
-    abi:ABI.abi,
+    abi: AdminFacetABI.abi,
     functionName: 'admins',
     args: userAddress ? [userAddress] : undefined,
   });
 
 
   // Get super admin address
-  const { 
-    data: superAdminAddress, 
-    isLoading: isSuperAdminLoading, 
-    error: superAdminError 
+  const {
+    data: superAdminAddress,
+    isLoading: isSuperAdminLoading,
+    error: superAdminError
   } = useReadContract({
     address: CONTRACT_ADDRESS,
-    abi:ABI.abi,
-    functionName: 'superAdmin',
+    abi: CohortFacetABI.abi,
+    functionName: 'getSuperAdmin',
   });
 
   // Get student data
-  const { 
-    data: studentData, 
-    isLoading: isStudentLoading, 
-    error: studentError 
+  const {
+    data: studentData,
+    isLoading: isStudentLoading,
+    error: studentError
   } = useReadContract({
     address: CONTRACT_ADDRESS,
-    abi:ABI.abi,
+    abi: StudentFacetABI.abi,
     functionName: 'getStudent',
     args: userAddress ? [userAddress] : undefined,
   });
@@ -100,14 +102,14 @@ export const useUserRole = (): UserRoleData => {
 
     // Check if user is regular admin
     const isRegularAdmin = Boolean(isAdminData);
-    
+
     // Check if user is admin (super admin or regular admin)
     const isAdmin = isSuperAdmin || isRegularAdmin;
 
     // Check if user is student
     const isStudent = Boolean(
-      studentData && 
-      studentData.studentAddress && 
+      studentData &&
+      studentData.studentAddress &&
       studentData.studentAddress.toLowerCase() !== '0x0000000000000000000000000000000000000000' &&
       studentData.studentAddress.toLowerCase() === userAddress.toLowerCase()
     );

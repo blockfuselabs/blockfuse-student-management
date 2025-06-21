@@ -1,42 +1,98 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Table } from "@/components/shared/Table";
 // import { AddCohorModal } from "@/components/modals/AddCohortModal";
 import { AddCohortModal } from "@/components/modals/AddCohortModal";
 import { Cohort, cohortcolumns } from "@/components/tables/CohortsColums";
-
-// Sample data
-const data: Cohort[] = [
-  {
-    id: "1",
-    name: "Web Development 2024",
-    startDate: "2024-01-15",
-    endDate: "2024-07-15",
-    students: 25,
-    status: "active",
-  },
-  {
-    id: "2",
-    name: "Mobile Development 2024",
-    startDate: "2024-02-01",
-    endDate: "2024-08-01",
-    students: 20,
-    status: "upcoming",
-  },
-  {
-    id: "3",
-    name: "Data Science 2024",
-    startDate: "2024-03-01",
-    endDate: "2024-09-01",
-    students: 15,
-    status: "upcoming",
-  },
-];
+import { useGetCohorts } from "@/lib/hooks/useGetCohorts";
+import { useChainId } from "wagmi";
 
 const CohortsPage = () => {
   const [addCohortModalOpen, setAddCohortModal] = useState(false);
+  const { cohorts, isLoading, cohortCount, error, isConnected, isCorrectNetwork, address } = useGetCohorts();
+  const chainId = useChainId();
+
+  // Debug network status (console only)
+  useEffect(() => {
+    console.log("🌐 Network Debug:", {
+      chainId,
+      expectedChainId: 11155111, // Sepolia
+      isCorrectNetwork: chainId === 11155111,
+      hasError: !!error,
+      errorMessage: error?.message,
+      isConnected,
+      address
+    });
+  }, [chainId, error, isConnected, address]);
+
+  // Refresh data when modal is closed (indicating a new cohort might have been created)
+  const handleModalClose = () => {
+    setAddCohortModal(false);
+    // The useGetCohorts hook will automatically refetch when cohortCount changes
+  };
+
+  // Render different content based on connection status
+  const renderContent = () => {
+    if (!isConnected) {
+      return (
+        <div className="flex items-center justify-center h-32">
+          <div className="text-center">
+            <div className="text-gray-500 mb-2">Wallet not connected</div>
+            <div className="text-sm text-gray-400">Please connect your wallet to view cohorts</div>
+          </div>
+        </div>
+      );
+    }
+
+    if (!isCorrectNetwork) {
+      return (
+        <div className="flex items-center justify-center h-32">
+          <div className="text-center">
+            <div className="text-gray-500 mb-2">Wrong network</div>
+            <div className="text-sm text-gray-400">Please switch to Sepolia testnet</div>
+          </div>
+        </div>
+      );
+    }
+
+    if (isLoading) {
+      return (
+        <div className="flex items-center justify-center h-32">
+          <div className="text-gray-500">Loading cohorts...</div>
+        </div>
+      );
+    }
+
+    if (cohorts.length === 0) {
+      return (
+        <div className="flex items-center justify-center h-32">
+          <div className="text-gray-500">
+            {error ? (
+              <div>
+                <div>Error loading cohorts: {error.message}</div>
+                <div className="text-sm mt-2">Please check your network connection</div>
+              </div>
+            ) : (
+              "No cohorts found. Create your first cohort!"
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <Table
+        data={cohorts}
+        columns={cohortcolumns}
+        title=""
+        searchable={false}
+        exportable={false}
+      />
+    );
+  };
+
   return (
     <div className="p-6 h-screen bg-white rounded-xl">
       <div className="flex w-full justify-between items-center">
@@ -53,24 +109,19 @@ const CohortsPage = () => {
           size="lg"
           className="flex text-base h-[44px] w-[130px] gap-1 items-center"
           onClick={() => setAddCohortModal(true)}
+          disabled={!isConnected || !isCorrectNetwork}
         >
           Add new
         </Button>
       </div>
 
       <div className="mt-7 w-full">
-        <Table
-          data={data}
-          columns={cohortcolumns}
-          title=""
-          searchable={false}
-          exportable={false}
-        />
+        {renderContent()}
       </div>
 
       <AddCohortModal
         isOpen={addCohortModalOpen}
-        setIsOpen={setAddCohortModal}
+        setIsOpen={handleModalClose}
       />
     </div>
   );

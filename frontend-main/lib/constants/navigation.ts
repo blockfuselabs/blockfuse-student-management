@@ -1,16 +1,16 @@
-import { 
-  LayoutDashboard, 
-  Users, 
-  GraduationCap, 
-  UserCog, 
-  Settings, 
-  Shield, 
+import {
+  LayoutDashboard,
+  Users,
+  GraduationCap,
+  UserCog,
+  Settings,
+  Shield,
   BookOpen,
   Calendar,
   FileText,
   BarChart3,
   User,
-  LogOut
+  LogOut,
 } from "lucide-react";
 
 export const adminRoutes = {
@@ -89,13 +89,13 @@ export const studentRoutes = {
   bottom: [
     {
       title: "Profile",
-      href: "/admin/profile",
+      href: "/student/profile",
       icon: User,
     },
     {
       title: "Logout",
-      href: "/admin/logout",
+      href: "/student/logout",
       icon: LogOut,
     },
   ],
-}; 
+};

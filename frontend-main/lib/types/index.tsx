@@ -1,14 +1,9 @@
 // Enum for Track - matches your smart contract enum
 export enum Track {
-  FRONTEND = 0,
-  BACKEND = 1,
-  BLOCKCHAIN = 2,
-  MOBILE = 3,
-  DESIGN = 4,
-  DATA_SCIENCE = 5,
-  DEVOPS = 6,
-  FULLSTACK = 7
+  WEB2 = 0,
+  WEB3 = 1
 }
+
 export interface RegisterStudentParams {
   firstname: string;
   lastname: string;

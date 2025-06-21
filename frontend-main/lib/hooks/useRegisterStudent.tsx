@@ -3,8 +3,8 @@
 import { useCallback, useState, useEffect } from "react";
 import { useWriteContract, useWaitForTransactionReceipt } from "wagmi";
 import { CONTRACT_ADDRESS } from '@/lib/contract/address';
-import ABI from "@/lib/contract/ABI.json";
-import { RegisterStudentParams,RegisterStudentState } from "../types";
+import AdminFacetABI from "@/lib/contract/AdminFacet.json";
+import { RegisterStudentParams, RegisterStudentState } from "../types";
 import { Track } from "../types";
 
 
@@ -17,18 +17,18 @@ export const useRegisterStudent = () => {
     transactionHash: undefined,
   });
 
-  const { 
-    writeContract, 
-    data: hash, 
-    isPending: isWritePending, 
+  const {
+    writeContract,
+    data: hash,
+    isPending: isWritePending,
     error: writeError,
     reset: resetWrite
   } = useWriteContract();
 
-  const { 
-    isLoading: isConfirming, 
+  const {
+    isLoading: isConfirming,
     isSuccess: isConfirmed,
-    error: receiptError 
+    error: receiptError
   } = useWaitForTransactionReceipt({
     hash,
   });
@@ -43,11 +43,11 @@ export const useRegisterStudent = () => {
   // Update state when transaction is confirmed
   useEffect(() => {
     if (isConfirmed) {
-      setState(prev => ({ 
-        ...prev, 
-        isSuccess: true, 
+      setState(prev => ({
+        ...prev,
+        isSuccess: true,
         isLoading: false,
-        error: null 
+        error: null
       }));
     }
   }, [isConfirmed]);
@@ -56,11 +56,11 @@ export const useRegisterStudent = () => {
   useEffect(() => {
     const error = writeError || receiptError;
     if (error) {
-      setState(prev => ({ 
-        ...prev, 
-        error: error.message, 
+      setState(prev => ({
+        ...prev,
+        error: error.message,
         isLoading: false,
-        isSuccess: false 
+        isSuccess: false
       }));
     }
   }, [writeError, receiptError]);
@@ -94,22 +94,22 @@ export const useRegisterStudent = () => {
 
     // Social media URL validation (optional but should be valid if provided)
     const urlRegex = /^https?:\/\/.+/;
-    
+
     if (params.twitter && !urlRegex.test(params.twitter) && !params.twitter.startsWith('@')) {
       errors.push("Twitter should be a valid URL or handle starting with @");
     }
-    
+
     if (params.linkedin && !urlRegex.test(params.linkedin)) {
       errors.push("LinkedIn should be a valid URL");
     }
-    
+
     if (params.github && !urlRegex.test(params.github) && !params.github.includes('github.com')) {
       errors.push("GitHub should be a valid URL or username");
     }
 
-    // Track validation
-    if (params.track < 0 || params.track > 7) {
-      errors.push("Invalid track selected");
+    // Track validation - updated for new track structure
+    if (params.track < 0 || params.track > 1) {
+      errors.push("Invalid track selected (must be 0 for web2 or 1 for web3)");
     }
 
     // Cohort validation
@@ -143,11 +143,11 @@ export const useRegisterStudent = () => {
     async (params: RegisterStudentParams) => {
       try {
         // Reset previous state
-        setState(prev => ({ 
-          ...prev, 
-          error: null, 
-          isSuccess: false, 
-          isLoading: true 
+        setState(prev => ({
+          ...prev,
+          error: null,
+          isSuccess: false,
+          isLoading: true
         }));
 
         validateStudentData(params);
@@ -155,33 +155,39 @@ export const useRegisterStudent = () => {
         // Format social media inputs
         const formattedParams = formatSocialInputs(params);
 
-        // Prepare contract arguments
-        const args = [
-          formattedParams.firstname.trim(),
-          formattedParams.lastname.trim(),
-          formattedParams.twitter || "",
-          formattedParams.linkedin || "",
-          formattedParams.github || "",
-          formattedParams.track,
-          formattedParams.cohort,
-          formattedParams.studentAddress as `0x${string}`,
-        ];
+        // Create username from firstname and lastname
+        const username = `${formattedParams.firstname.toLowerCase()}_${formattedParams.lastname.toLowerCase()}`;
 
-        // Write to contract
+        // Prepare contract arguments for the new structure
+        const studentDetails = {
+          firstname: formattedParams.firstname.trim(),
+          lastname: formattedParams.lastname.trim(),
+          username: username,
+          twitter: formattedParams.twitter || "",
+          linkedin: formattedParams.linkedin || "",
+          github: formattedParams.github || "",
+          track: formattedParams.track,
+          cohort: formattedParams.cohort,
+          isActive: true,
+          finalScore: 0,
+          studentAddress: formattedParams.studentAddress as `0x${string}`,
+        };
+
+        // Write to contract using the new registerStudent function
         writeContract({
           address: CONTRACT_ADDRESS as `0x${string}`,
-          abi: ABI.abi,
+          abi: AdminFacetABI.abi,
           functionName: "registerStudent",
-          args,
+          args: [studentDetails],
         });
 
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : "Failed to register student";
-        setState(prev => ({ 
-          ...prev, 
-          error: errorMessage, 
+        setState(prev => ({
+          ...prev,
+          error: errorMessage,
           isLoading: false,
-          isSuccess: false 
+          isSuccess: false
         }));
         console.error("Error registering student:", error);
       }
@@ -215,14 +221,8 @@ export const useRegisterStudent = () => {
 
 export const getTrackName = (track: Track): string => {
   const trackNames = {
-    [Track.FRONTEND]: "Frontend",
-    [Track.BACKEND]: "Backend",
-    [Track.BLOCKCHAIN]: "Blockchain",
-    [Track.MOBILE]: "Mobile",
-    [Track.DESIGN]: "Design",
-    [Track.DATA_SCIENCE]: "Data Science",
-    [Track.DEVOPS]: "DevOps",
-    [Track.FULLSTACK]: "Full Stack",
+    [Track.WEB2]: "Web2",
+    [Track.WEB3]: "Web3",
   };
   return trackNames[track] || "Unknown";
 };

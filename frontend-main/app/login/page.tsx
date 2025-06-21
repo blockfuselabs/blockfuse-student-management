@@ -12,7 +12,7 @@ const LoginPage = () => {
   const [isRoleChecking, setIsRoleChecking] = useState(false);
   const { isAdmin, isStudent, isSuperAdmin, isLoading: roleLoading } = useUserRole();
   const router = useRouter();
-  const { isConnected, isConnecting: wagmiIsConnecting, address } = useAccount();
+  const { isConnected, isConnecting: wagmiIsConnecting } = useAccount();
   console.log(isAdmin,isStudent,isSuperAdmin,roleLoading)
   useEffect(() => {
     if (isConnected && !roleLoading && !isRoleChecking) {
@@ -210,7 +210,7 @@ const LoginPage = () => {
           </div>
           <div className="text-center mt-8">
             <p className="text-sm text-gray-500">
-              Don't have a wallet?
+              Don&apos;t have a wallet?
               <a
                 href="#"
                 className="text-blue-600 hover:text-blue-800 font-medium ml-1"

@@ -6,6 +6,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -34,7 +35,6 @@ export function AddCohortModal({ isOpen, setIsOpen }: Props) {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (startDate && endDate) {
-      console.log("Submitting cohort with dates:", startDate, endDate); // Debug log
       await createCohort(startDate, endDate);
       if (isSuccess) {
         setIsOpen(false); // Close modal on success
@@ -49,6 +49,9 @@ export function AddCohortModal({ isOpen, setIsOpen }: Props) {
           <DialogTitle className="text-lg font-semibold text-gray-900">
             Add New Cohort
           </DialogTitle>
+          <DialogDescription className="text-sm text-gray-600">
+            Create a new cohort by selecting start and end dates.
+          </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4 mt-2">
           {/* Start Date Picker */}
