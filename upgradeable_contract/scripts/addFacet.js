@@ -2,8 +2,8 @@ const { ethers } = require("hardhat");
 const { getSelectors, FacetCutAction } = require("./libraries/diamond.js");
 
 async function addFacet() {
-  const diamondAddress = "0x1a65Cb45a38Ce9C545CCe4088Ff431325d4Cc775"; 
-  const NewFacet = await ethers.getContractFactory("StudentFacet"); 
+  const diamondAddress = "0x706F5EAC71a871144731E5231E122694BE76e4F3";
+  const NewFacet = await ethers.getContractFactory("StudentFacet");
   const newFacet = await NewFacet.deploy();
   await newFacet.deployed();
   console.log("NewFacet deployed:", newFacet.address);
@@ -31,9 +31,15 @@ async function addFacet() {
   console.log("Facet added successfully!");
 }
 
-addFacet()
-  .then(() => process.exit(0))
-  .catch((error) => {
-    console.error(error);
-    process.exit(1);
-  });
+// We recommend this pattern to be able to use async/await everywhere
+// and properly handle errors.
+if (require.main === module) {
+  addFacet()
+    .then(() => process.exit(0))
+    .catch((error) => {
+      console.error(error);
+      process.exit(1);
+    });
+}
+
+exports.addFacet = addFacet;
