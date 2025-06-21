@@ -7,7 +7,6 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "verify-contract": "node scripts/verify-contract.js",
     "verify-contract:ts": "tsx scripts/verify-contract.ts"
   },
   "dependencies": {

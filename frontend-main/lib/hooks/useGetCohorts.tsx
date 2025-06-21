@@ -84,7 +84,8 @@ export const useGetCohorts = () => {
      });
 
      if (cohortData) {
-      const [totalStudents, startDate, endDate] = cohortData;
+      // Correct order: [id, tracks, totalStudents, startDate, endDate, duration, studentsByTrack]
+      const [id, , totalStudents, startDate, endDate] = cohortData;
 
       // Check if this is a valid cohort (has non-zero dates)
       if (Number(startDate) === 0 || Number(endDate) === 0) {
@@ -107,8 +108,8 @@ export const useGetCohorts = () => {
       }
 
       const cohort: Cohort = {
-       id: i.toString(), // Use the loop index as ID since contract returns 0
-       name: `Cohort ${i}`,
+       id: id?.toString() || i.toString(),
+       name: `Cohort ${id?.toString() || i}`,
        startDate: startDateObj.toISOString().split('T')[0],
        endDate: endDateObj.toISOString().split('T')[0],
        students: Number(totalStudents),
