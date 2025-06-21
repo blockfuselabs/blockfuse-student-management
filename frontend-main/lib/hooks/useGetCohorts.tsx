@@ -84,7 +84,7 @@ export const useGetCohorts = () => {
      });
 
      if (cohortData) {
-      const [id, tracks, totalStudents, startDate, endDate, duration, studentsByTrack] = cohortData;
+      const [totalStudents, startDate, endDate] = cohortData;
 
       // Check if this is a valid cohort (has non-zero dates)
       if (Number(startDate) === 0 || Number(endDate) === 0) {

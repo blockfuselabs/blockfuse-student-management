@@ -124,7 +124,7 @@ export const useRegisterStudent = () => {
 
   // Format social media inputs
   const formatSocialInputs = (params: RegisterStudentParams) => {
-    let { twitter, linkedin, github } = params;
+    let { twitter, github } = params;
 
     // Format Twitter handle
     if (twitter && twitter.startsWith('@')) {
