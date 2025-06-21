@@ -1,84 +1,80 @@
 "use client";
-import { useCallback, useState } from "react";
-import { useWriteContract, useWaitForTransactionReceipt } from "wagmi";
+import { useState, useEffect } from "react";
+import { useWriteContract, useTransaction } from "wagmi";
 import { CONTRACT_ADDRESS } from "@/lib/contract/address";
-import ABI from "@/lib/contract/ABI.json";
+import DiamondABI from "@/lib/contract/DiamondABI.json";
+
+export interface CreateCohortParams {
+  startDate: number;
+  endDate: number;
+}
 
 export const useCreateCohort = () => {
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isSuccess, setIsSuccess] = useState(false);
 
   const {
     writeContract,
-    data: hash,
-    isPending,
+    data: writeData,
+    isError: isWriteError,
     error: writeError,
   } = useWriteContract();
 
-  const { isLoading: isConfirming, isSuccess: isConfirmed } =
-    useWaitForTransactionReceipt({
-      hash,
-    });
+  const {
+    isLoading: isTransactionLoading,
+    isSuccess,
+    isError: isTransactionError,
+  } = useTransaction({
+    hash: writeData,
+  });
 
-  interface CreateCohortParams {
-    startDate: string | number | Date;
-    endDate: string | number | Date;
-  }
+  // Handle transaction success
+  useEffect(() => {
+    if (isSuccess) {
+      console.log("Cohort created successfully!");
+    }
+  }, [isSuccess]);
 
-  type CreateCohortFunction = (
-    startDate: CreateCohortParams["startDate"],
-    endDate: CreateCohortParams["endDate"]
-  ) => Promise<void>;
+  // Handle transaction errors
+  useEffect(() => {
+    if (isWriteError || isTransactionError) {
+      const errorMessage = writeError?.message || "Transaction failed";
+      console.error("Transaction error:", errorMessage);
+      setError(errorMessage);
+    }
+  }, [isWriteError, isTransactionError, writeError]);
 
-  const createCohort: CreateCohortFunction = useCallback(
-    async (startDate, endDate) => {
-      try {
-        setError(null);
-        setIsSuccess(false);
+  const createCohort = async (params: CreateCohortParams) => {
+    try {
+      setIsLoading(true);
+      setError(null);
 
-        if (!startDate || !endDate || startDate >= endDate) {
-          throw new Error(
-            "Invalid date range: startDate must be before endDate"
-          );
-        }
+      console.log("Creating cohort with params:", params);
 
-        const startTimestamp: number = Math.floor(
-          new Date(startDate).getTime() / 1000
-        );
-        const endTimestamp: number = Math.floor(
-          new Date(endDate).getTime() / 1000
-        );
-        console.log(startTimestamp);
-        console.log(endTimestamp);
-        await writeContract({
-          address: CONTRACT_ADDRESS,
-          abi: ABI,
-          functionName: "createCohort",
-          args: [startTimestamp, endTimestamp],
-        });
-
-        if (hash) {
-          setIsSuccess(true);
-        }
-      } catch (err: unknown) {
-        if (err instanceof Error) {
-          setError(err.message);
-          console.error("Error creating cohort:", err);
-        } else {
-          setError("Failed to create cohort");
-          console.error("Error creating cohort:", err);
-        }
+      if (!writeContract) {
+        throw new Error("Contract write function not available");
       }
-    },
-    [writeContract]
-  );
+
+      // Call the contract function
+      await writeContract({
+        address: CONTRACT_ADDRESS as `0x${string}`,
+        abi: DiamondABI.abi,
+        functionName: "createCohort",
+        args: [params.startDate, params.endDate],
+      });
+    } catch (err) {
+      console.error("Error creating cohort:", err);
+      setError(err instanceof Error ? err.message : "Failed to create cohort");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return {
     createCohort,
-    isPending,
-    isConfirming,
-    isSuccess: isSuccess && isConfirmed,
-    error: error || writeError?.message,
-    transactionHash: hash,
+    isLoading: isLoading || isTransactionLoading,
+    isSuccess,
+    error,
+    resetError: () => setError(null),
   };
 };

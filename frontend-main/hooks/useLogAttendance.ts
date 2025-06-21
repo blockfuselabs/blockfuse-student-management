@@ -1,24 +1,15 @@
-"use client";
 import { useState, useEffect } from "react";
 import { useWriteContract, useTransaction } from "wagmi";
-import { CONTRACT_ADDRESS } from "@/lib/contract/address";
 import DiamondABI from "@/lib/contract/DiamondABI.json";
+import { CONTRACT_ADDRESS } from "@/lib/contract/address";
 
-export interface StudentDetails {
-  firstname: string;
-  lastname: string;
-  username: string;
-  twitter: string;
-  linkedin: string;
-  github: string;
-  track: number; // 0 = Web2, 1 = Web3
-  cohort: number;
-  isActive: boolean;
-  finalScore: number;
+export interface LogAttendanceParams {
   studentAddress: string;
+  cohortId: number;
+  track: number; // 0 = Web2, 1 = Web3
 }
 
-export const useRegisterStudent = () => {
+export const useLogAttendance = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -40,7 +31,7 @@ export const useRegisterStudent = () => {
   // Handle transaction success
   useEffect(() => {
     if (isSuccess) {
-      console.log("Student registered successfully!");
+      console.log("Attendance logged successfully!");
     }
   }, [isSuccess]);
 
@@ -48,17 +39,17 @@ export const useRegisterStudent = () => {
   useEffect(() => {
     if (isWriteError || isTransactionError) {
       const errorMessage = writeError?.message || "Transaction failed";
-      console.error("Transaction error:", errorMessage);
+      console.log("Transaction error:", errorMessage);
       setError(errorMessage);
     }
   }, [isWriteError, isTransactionError, writeError]);
 
-  const registerStudent = async (studentDetails: StudentDetails) => {
+  const logAttendance = async (params: LogAttendanceParams) => {
     try {
       setIsLoading(true);
       setError(null);
 
-      console.log("Registering student with details:", studentDetails);
+      console.log("Logging attendance with params:", params);
 
       if (!writeContract) {
         throw new Error("Contract write function not available");
@@ -68,21 +59,19 @@ export const useRegisterStudent = () => {
       await writeContract({
         address: CONTRACT_ADDRESS as `0x${string}`,
         abi: DiamondABI.abi,
-        functionName: "registerStudent",
-        args: [studentDetails],
+        functionName: "logAttendance",
+        args: [params.studentAddress, params.cohortId, params.track],
       });
     } catch (err) {
-      console.error("Error registering student:", err);
-      setError(
-        err instanceof Error ? err.message : "Failed to register student"
-      );
+      console.log("Error logging attendance:", err);
+      setError(err instanceof Error ? err.message : "Failed to log attendance");
     } finally {
       setIsLoading(false);
     }
   };
 
   return {
-    registerStudent,
+    logAttendance,
     isLoading: isLoading || isTransactionLoading,
     isSuccess,
     error,

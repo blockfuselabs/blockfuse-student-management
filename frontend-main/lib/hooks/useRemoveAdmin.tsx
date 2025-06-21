@@ -4,21 +4,11 @@ import { useWriteContract, useTransaction } from "wagmi";
 import { CONTRACT_ADDRESS } from "@/lib/contract/address";
 import DiamondABI from "@/lib/contract/DiamondABI.json";
 
-export interface StudentDetails {
-  firstname: string;
-  lastname: string;
-  username: string;
-  twitter: string;
-  linkedin: string;
-  github: string;
-  track: number; // 0 = Web2, 1 = Web3
-  cohort: number;
-  isActive: boolean;
-  finalScore: number;
-  studentAddress: string;
+export interface RemoveAdminParams {
+  adminAddress: string;
 }
 
-export const useRegisterStudent = () => {
+export const useRemoveAdmin = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -40,7 +30,7 @@ export const useRegisterStudent = () => {
   // Handle transaction success
   useEffect(() => {
     if (isSuccess) {
-      console.log("Student registered successfully!");
+      console.log("Admin removed successfully!");
     }
   }, [isSuccess]);
 
@@ -53,36 +43,40 @@ export const useRegisterStudent = () => {
     }
   }, [isWriteError, isTransactionError, writeError]);
 
-  const registerStudent = async (studentDetails: StudentDetails) => {
+  const removeAdmin = async (params: RemoveAdminParams) => {
     try {
       setIsLoading(true);
       setError(null);
 
-      console.log("Registering student with details:", studentDetails);
+      console.log("Removing admin with params:", params);
 
       if (!writeContract) {
         throw new Error("Contract write function not available");
+      }
+
+      // Validate admin address
+      const addressRegex = /^0x[a-fA-F0-9]{40}$/;
+      if (!addressRegex.test(params.adminAddress)) {
+        throw new Error("Invalid Ethereum address format");
       }
 
       // Call the contract function
       await writeContract({
         address: CONTRACT_ADDRESS as `0x${string}`,
         abi: DiamondABI.abi,
-        functionName: "registerStudent",
-        args: [studentDetails],
+        functionName: "removeAdmin",
+        args: [params.adminAddress],
       });
     } catch (err) {
-      console.error("Error registering student:", err);
-      setError(
-        err instanceof Error ? err.message : "Failed to register student"
-      );
+      console.error("Error removing admin:", err);
+      setError(err instanceof Error ? err.message : "Failed to remove admin");
     } finally {
       setIsLoading(false);
     }
   };
 
   return {
-    registerStudent,
+    removeAdmin,
     isLoading: isLoading || isTransactionLoading,
     isSuccess,
     error,

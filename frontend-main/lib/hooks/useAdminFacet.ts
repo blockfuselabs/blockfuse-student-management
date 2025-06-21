@@ -1,75 +1,75 @@
-import { useContractWrite, useContractRead } from "wagmi";
-import AdminFacetAbi from "@/lib/contract/AdminFacet.json";
+import { useWriteContract, useReadContract } from "wagmi";
+import DiamondABI from "@/lib/contract/DiamondABI.json";
 import { CONTRACT_ADDRESS } from "@/lib/contract/address";
 
 export function useAddAdmin() {
-  return useContractWrite({
-    address: CONTRACT_ADDRESS,
-    abi: AdminFacetAbi.abi ?? AdminFacetAbi,
+  return useWriteContract({
+    address: CONTRACT_ADDRESS as `0x${string}`,
+    abi: DiamondABI.abi,
     functionName: "addAdmin",
   });
 }
 
 export function useRemoveAdmin() {
-  return useContractWrite({
-    address: CONTRACT_ADDRESS,
-    abi: AdminFacetAbi.abi ?? AdminFacetAbi,
+  return useWriteContract({
+    address: CONTRACT_ADDRESS as `0x${string}`,
+    abi: DiamondABI.abi,
     functionName: "removeAdmin",
   });
 }
 
 export function useRecordStudentAssessment() {
-  return useContractWrite({
-    address: CONTRACT_ADDRESS,
-    abi: AdminFacetAbi.abi ?? AdminFacetAbi,
+  return useWriteContract({
+    address: CONTRACT_ADDRESS as `0x${string}`,
+    abi: DiamondABI.abi,
     functionName: "recordStudentAssesment",
   });
 }
 
 export function useRegisterStudent() {
-  return useContractWrite({
-    address: CONTRACT_ADDRESS,
-    abi: AdminFacetAbi.abi ?? AdminFacetAbi,
+  return useWriteContract({
+    address: CONTRACT_ADDRESS as `0x${string}`,
+    abi: DiamondABI.abi,
     functionName: "registerStudent",
   });
 }
 
 export function useAddStudentToCohort() {
-  return useContractWrite({
-    address: CONTRACT_ADDRESS,
-    abi: AdminFacetAbi.abi ?? AdminFacetAbi,
+  return useWriteContract({
+    address: CONTRACT_ADDRESS as `0x${string}`,
+    abi: DiamondABI.abi,
     functionName: "addStudentToCohort",
   });
 }
 
 export function useDisableStudent() {
-  return useContractWrite({
-    address: CONTRACT_ADDRESS,
-    abi: AdminFacetAbi.abi ?? AdminFacetAbi,
+  return useWriteContract({
+    address: CONTRACT_ADDRESS as `0x${string}`,
+    abi: DiamondABI.abi,
     functionName: "disableStudent",
   });
 }
 
 export function useEnableStudent() {
-  return useContractWrite({
-    address: CONTRACT_ADDRESS,
-    abi: AdminFacetAbi.abi ?? AdminFacetAbi,
+  return useWriteContract({
+    address: CONTRACT_ADDRESS as `0x${string}`,
+    abi: DiamondABI.abi,
     functionName: "enableStudent",
   });
 }
 
 export function useReplaceStudentWallet() {
-  return useContractWrite({
-    address: CONTRACT_ADDRESS,
-    abi: AdminFacetAbi.abi ?? AdminFacetAbi,
+  return useWriteContract({
+    address: CONTRACT_ADDRESS as `0x${string}`,
+    abi: DiamondABI.abi,
     functionName: "replaceStudentWallet",
   });
 }
 
 export function useIsStudentActive(student: string) {
-  return useContractRead({
-    address: CONTRACT_ADDRESS,
-    abi: AdminFacetAbi.abi ?? AdminFacetAbi,
+  return useReadContract({
+    address: CONTRACT_ADDRESS as `0x${string}`,
+    abi: DiamondABI.abi,
     functionName: "isStudentActive",
     args: [student],
   });

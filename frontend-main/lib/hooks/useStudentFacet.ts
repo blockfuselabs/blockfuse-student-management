@@ -1,28 +1,28 @@
-import { useContractRead, useContractWrite } from "wagmi";
-import StudentFacetAbi from "@/lib/contract/StudentFacet.json";
+import { useReadContract, useWriteContract } from "wagmi";
+import DiamondABI from "@/lib/contract/DiamondABI.json";
 import { CONTRACT_ADDRESS } from "@/lib/contract/address";
 
 export function useLogAttendance() {
-  return useContractWrite({
-    address: CONTRACT_ADDRESS,
-    abi: StudentFacetAbi.abi ?? StudentFacetAbi,
+  return useWriteContract({
+    address: CONTRACT_ADDRESS as `0x${string}`,
+    abi: DiamondABI.abi,
     functionName: "logAttendance",
   });
 }
 
 export function useGetStudentAssessments(studentAddress: string) {
-  return useContractRead({
-    address: CONTRACT_ADDRESS,
-    abi: StudentFacetAbi.abi ?? StudentFacetAbi,
+  return useReadContract({
+    address: CONTRACT_ADDRESS as `0x${string}`,
+    abi: DiamondABI.abi,
     functionName: "getStudentAssesments",
     args: [studentAddress],
   });
 }
 
 export function useGetStudentFinalScore(studentAddress: string) {
-  return useContractRead({
-    address: CONTRACT_ADDRESS,
-    abi: StudentFacetAbi.abi ?? StudentFacetAbi,
+  return useReadContract({
+    address: CONTRACT_ADDRESS as `0x${string}`,
+    abi: DiamondABI.abi,
     functionName: "getStudentFinalScore",
     args: [studentAddress],
   });
@@ -32,9 +32,9 @@ export function useGetStudentScoreByIndex(
   studentAddress: string,
   index: number
 ) {
-  return useContractRead({
-    address: CONTRACT_ADDRESS,
-    abi: StudentFacetAbi.abi ?? StudentFacetAbi,
+  return useReadContract({
+    address: CONTRACT_ADDRESS as `0x${string}`,
+    abi: DiamondABI.abi,
     functionName: "getStudentScoreByIndex",
     args: [studentAddress, index],
   });
@@ -44,9 +44,9 @@ export function useGetAttendanceByCohortAndTrack(
   cohortId: number,
   track: number
 ) {
-  return useContractRead({
-    address: CONTRACT_ADDRESS,
-    abi: StudentFacetAbi.abi ?? StudentFacetAbi,
+  return useReadContract({
+    address: CONTRACT_ADDRESS as `0x${string}`,
+    abi: DiamondABI.abi,
     functionName: "getAttendanceByCohortAndTrack",
     args: [cohortId, track],
   });
@@ -58,18 +58,18 @@ export function useHasAttendance(
   track: number,
   day: number
 ) {
-  return useContractRead({
-    address: CONTRACT_ADDRESS,
-    abi: StudentFacetAbi.abi ?? StudentFacetAbi,
+  return useReadContract({
+    address: CONTRACT_ADDRESS as `0x${string}`,
+    abi: DiamondABI.abi,
     functionName: "hasAttendance",
     args: [studentAddress, cohortId, track, day],
   });
 }
 
 export function useGetStudent(studentAddress: string) {
-  return useContractRead({
-    address: CONTRACT_ADDRESS,
-    abi: StudentFacetAbi.abi ?? StudentFacetAbi,
+  return useReadContract({
+    address: CONTRACT_ADDRESS as `0x${string}`,
+    abi: DiamondABI.abi,
     functionName: "getStudent",
     args: [studentAddress],
   });

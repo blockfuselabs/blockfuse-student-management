@@ -1,22 +1,46 @@
-import { useContractRead, useContractWrite } from "wagmi";
-import CohortFacetAbi from "@/lib/contract/CohortFacet.json";
+import { useReadContract, useWriteContract } from "wagmi";
+import DiamondABI from "@/lib/contract/DiamondABI.json";
 import { CONTRACT_ADDRESS } from "@/lib/contract/address";
 
 // Example: Add hooks for CohortFacet functions
 export function useGetCohort(cohortId: number) {
-  return useContractRead({
-    address: CONTRACT_ADDRESS,
-    abi: CohortFacetAbi.abi ?? CohortFacetAbi,
+  return useReadContract({
+    address: CONTRACT_ADDRESS as `0x${string}`,
+    abi: DiamondABI.abi,
     functionName: "getCohort",
     args: [cohortId],
   });
 }
 
-export function useAddCohort() {
-  return useContractWrite({
-    address: CONTRACT_ADDRESS,
-    abi: CohortFacetAbi.abi ?? CohortFacetAbi,
-    functionName: "addCohort",
+export function useCreateCohort() {
+  return useWriteContract({
+    address: CONTRACT_ADDRESS as `0x${string}`,
+    abi: DiamondABI.abi,
+    functionName: "createCohort",
   });
 }
-// Add more hooks for other CohortFacet functions as needed
+
+export function useAddTrackToCohort() {
+  return useWriteContract({
+    address: CONTRACT_ADDRESS as `0x${string}`,
+    abi: DiamondABI.abi,
+    functionName: "addTrackToCohort",
+  });
+}
+
+export function useGetCohortCount() {
+  return useReadContract({
+    address: CONTRACT_ADDRESS as `0x${string}`,
+    abi: DiamondABI.abi,
+    functionName: "getCohortCount",
+  });
+}
+
+export function useGetCohortTracks(cohortId: number) {
+  return useReadContract({
+    address: CONTRACT_ADDRESS as `0x${string}`,
+    abi: DiamondABI.abi,
+    functionName: "getCohortTracks",
+    args: [cohortId],
+  });
+}

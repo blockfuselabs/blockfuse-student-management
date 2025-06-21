@@ -19,15 +19,15 @@ type Props = {
 
 export function AddAdminModal({ isOpen, setIsOpen, onAdminAdded }: Props) {
   const [address, setAddress] = React.useState("");
-  const { addAdmin, isLoading, isSuccess, error, reset } = useAddAdmin();
+  const { addAdmin, isLoading, isSuccess, error, resetError } = useAddAdmin();
 
   // Reset form and hook state when modal opens/closes
   React.useEffect(() => {
     if (!isOpen) {
       setAddress("");
-      reset();
+      resetError();
     }
-  }, [isOpen, reset]);
+  }, [isOpen, resetError]);
 
   // Close modal and refresh list on success
   React.useEffect(() => {
