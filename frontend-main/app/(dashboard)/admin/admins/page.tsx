@@ -7,8 +7,6 @@ import { AddAdminModal } from "@/components/modals/AddAdminModal";
 import { Admin, adminColumns } from "@/components/tables/StudentColumns";
 import { useGetAdmins } from "@/lib/hooks/useGetAdmins";
 import { RefreshCw } from "lucide-react";
-import { ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
 
 const statusTabs = [
   { label: "All", value: "all" },
@@ -65,11 +63,6 @@ const AdminsPage = () => {
     handleRefresh();
   }, [handleRefresh]);
 
-  // Handle admin removed
-  const handleAdminRemoved = useCallback(() => {
-    handleRefresh();
-  }, [handleRefresh]);
-
   if (error) {
     return (
       <div className="p-6 h-screen bg-white rounded-xl">
@@ -90,18 +83,6 @@ const AdminsPage = () => {
 
   return (
     <div className="p-6 h-screen bg-white rounded-xl">
-      <ToastContainer
-        position="top-right"
-        autoClose={5000}
-        hideProgressBar={false}
-        newestOnTop
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-      />
-
       <div className="flex w-full justify-between items-center">
         <div>
           <h1 className="text-xl font-semibold text-gray-900 mb-1">
@@ -172,7 +153,7 @@ const AdminsPage = () => {
         ) : (
           <Table
             data={filteredAdmins}
-            columns={adminColumns(handleAdminRemoved)}
+            columns={adminColumns}
             title=""
             searchable={false}
             exportable={false}

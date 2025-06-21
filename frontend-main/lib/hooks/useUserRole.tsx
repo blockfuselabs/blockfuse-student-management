@@ -1,9 +1,7 @@
-"use client";
 import { useState, useEffect } from "react";
 import { useAccount, useReadContract } from "wagmi";
 import { CONTRACT_ADDRESS } from "@/lib/contract/address";
-import DiamondABI from "@/lib/contract/DiamondABI.json";
-import { useIsMounted } from "./useIsMounted";
+import ABI from "@/lib/contract/ABI.json";
 
 // Types based on your ABI - updated to match contract structure
 interface StudentDetails {
@@ -25,7 +23,7 @@ interface UserRoleData {
   isSuperAdmin: boolean;
   isStudent: boolean;
   userType: "admin" | "super_admin" | "student" | "unknown";
-  studentData?: StudentDetails | null;
+  studentData?: StudentDetails;
   isLoading: boolean;
   error?: string;
 }
@@ -33,7 +31,6 @@ interface UserRoleData {
 // Your contract configuration
 
 export const useUserRole = (): UserRoleData => {
-  const isMounted = useIsMounted();
   const { address: userAddress, isConnected } = useAccount();
   const [userRole, setUserRole] = useState<UserRoleData>({
     isAdmin: false,
@@ -43,15 +40,16 @@ export const useUserRole = (): UserRoleData => {
     isLoading: true,
   });
 
-  // Check if user is admin using getAllAdmins function
+  // Check if user is admin
   const {
-    data: adminAddresses,
+    data: isAdminData,
     isLoading: isAdminLoading,
     error: adminError,
   } = useReadContract({
     address: CONTRACT_ADDRESS,
-    abi: DiamondABI.abi,
-    functionName: "getAllAdmins",
+    abi: ABI, 
+    functionName: "admins",
+    args: userAddress ? [userAddress] : undefined,
   });
 
   // Get super admin address
@@ -61,34 +59,27 @@ export const useUserRole = (): UserRoleData => {
     error: superAdminError,
   } = useReadContract({
     address: CONTRACT_ADDRESS,
-    abi: DiamondABI.abi,
-    functionName: "getSuperAdmin",
+    abi: ABI,
+    functionName: "superAdmin",
   });
 
-  // Get student data using StudentFacet - only call if we have a user address
+  // Get student data
   const {
     data: studentData,
     isLoading: isStudentLoading,
     error: studentError,
   } = useReadContract({
     address: CONTRACT_ADDRESS,
-    abi: DiamondABI.abi,
+    abi: ABI,
     functionName: "getStudent",
     args: userAddress ? [userAddress] : undefined,
   });
 
   useEffect(() => {
-    // Don't process anything until mounted to prevent hydration issues
-    if (!isMounted) {
-      return;
-    }
-
     console.log("=== useUserRole Debug ===");
-    console.log("Is Mounted:", isMounted);
     console.log("User Address:", userAddress);
     console.log("Is Connected:", isConnected);
-    console.log("Contract Address:", CONTRACT_ADDRESS);
-    console.log("Admin Addresses:", adminAddresses);
+    console.log("Admin Data:", isAdminData);
     console.log("Super Admin Address:", superAdminAddress);
     console.log("Student Data:", studentData);
     console.log("Admin Error:", adminError);
@@ -125,42 +116,32 @@ export const useUserRole = (): UserRoleData => {
       typeof superAdminAddress === "string" &&
       superAdminAddress.toLowerCase() === userAddress.toLowerCase();
     console.log("Is Super Admin:", isSuperAdmin);
-    console.log("Super Admin Address from contract:", superAdminAddress);
-    console.log("User Address:", userAddress);
 
-    // Check if user is regular admin by checking if their address is in the admin list
-    const isRegularAdmin =
-      Array.isArray(adminAddresses) &&
-      adminAddresses.some(
-        (adminAddr: string) =>
-          adminAddr.toLowerCase() === userAddress.toLowerCase()
-      );
+    // Check if user is regular admin
+    const isRegularAdmin = Boolean(isAdminData);
     console.log("Is Regular Admin:", isRegularAdmin);
-    console.log("Admin Addresses from contract:", adminAddresses);
-    console.log("User Address:", userAddress);
 
     // Check if user is admin (super admin or regular admin)
     const isAdmin = isSuperAdmin || isRegularAdmin;
     console.log("Is Admin (any type):", isAdmin);
 
-    // Check if user is student - improved logic with proper typing
-    const studentDetails = studentData as StudentDetails | null;
+    // Check if user is student - improved logic
     const isStudent = Boolean(
-      studentDetails &&
-        studentDetails.studentAddress &&
-        studentDetails.studentAddress.toLowerCase() !==
+      studentData &&
+        studentData.studentAddress &&
+        studentData.studentAddress.toLowerCase() !==
           "0x0000000000000000000000000000000000000000" &&
-        studentDetails.studentAddress.toLowerCase() ===
+        studentData.studentAddress.toLowerCase() ===
           userAddress.toLowerCase() &&
-        studentDetails.isActive // Make sure student is active
+        studentData.isActive // Make sure student is active
     );
     console.log("Is Student:", isStudent);
     console.log("Student Data Details:", {
-      hasStudentData: Boolean(studentDetails),
-      studentAddress: studentDetails?.studentAddress,
-      isActive: studentDetails?.isActive,
+      hasStudentData: Boolean(studentData),
+      studentAddress: studentData?.studentAddress,
+      isActive: studentData?.isActive,
       addressMatch:
-        studentDetails?.studentAddress?.toLowerCase() ===
+        studentData?.studentAddress?.toLowerCase() ===
         userAddress?.toLowerCase(),
     });
 
@@ -187,41 +168,17 @@ export const useUserRole = (): UserRoleData => {
       isSuperAdmin,
       isStudent,
       userType,
-      studentData: studentDetails || undefined,
+      studentData: studentData as StudentDetails,
       isLoading: false,
       error,
     };
 
     console.log("Final Role State:", finalRole);
     setUserRole(finalRole);
-
-    // Log any contract errors in detail
-    if (adminError) {
-      console.error("Admin contract call error:", {
-        message: adminError.message,
-        name: adminError.name,
-        cause: adminError.cause,
-      });
-    }
-    if (superAdminError) {
-      console.error("Super Admin contract call error:", {
-        message: superAdminError.message,
-        name: superAdminError.name,
-        cause: superAdminError.cause,
-      });
-    }
-    if (studentError) {
-      console.error("Student contract call error:", {
-        message: studentError.message,
-        name: studentError.name,
-        cause: studentError.cause,
-      });
-    }
   }, [
-    isMounted,
     userAddress,
     isConnected,
-    adminAddresses,
+    isAdminData,
     superAdminAddress,
     studentData,
     isAdminLoading,
@@ -234,3 +191,5 @@ export const useUserRole = (): UserRoleData => {
 
   return userRole;
 };
+
+

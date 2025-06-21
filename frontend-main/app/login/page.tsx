@@ -4,14 +4,12 @@ import Image from "next/image";
 import { Wallet, Shield, Loader2 } from "lucide-react";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useUserRole } from "@/lib/hooks/useUserRole";
-import { useIsMounted } from "@/lib/hooks/useIsMounted";
 import { useAccount } from "wagmi";
 import { useRouter } from "next/navigation";
 
 const LoginPage = () => {
   const [isHovered, setIsHovered] = useState(false);
   const [isRoleChecking, setIsRoleChecking] = useState(false);
-  const isMounted = useIsMounted();
   const {
     isAdmin,
     isStudent,
@@ -20,7 +18,6 @@ const LoginPage = () => {
   } = useUserRole();
   const router = useRouter();
   const { isConnected, isConnecting: wagmiIsConnecting } = useAccount();
-
   console.log(isAdmin, isStudent, isSuperAdmin, roleLoading);
   useEffect(() => {
     if (isConnected && !roleLoading && !isRoleChecking) {
@@ -49,53 +46,6 @@ const LoginPage = () => {
 
   // Combine loading states
   const isLoading = wagmiIsConnecting || roleLoading || isRoleChecking;
-
-  // Don't render until mounted to prevent hydration mismatch
-  if (!isMounted) {
-    return (
-      <div className="w-full flex flex-row h-screen min-h-screen overflow-hidden">
-        <div className="w-full md:w-1/2 h-full flex items-center justify-center bg-gradient-to-br from-gray-50 to-white relative overflow-hidden">
-          <div className="relative z-10 w-full max-w-md px-8">
-            <div className="text-center mb-8">
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-[#800895] to-[#a015b9] rounded-2xl mb-6 shadow-lg">
-                <Wallet className="w-8 h-8 text-white" />
-              </div>
-              <h1 className="text-2xl md:text-3xl font-semibold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent mb-2">
-                Welcome Back
-              </h1>
-              <p className="text-gray-600 text-lg">
-                Connect your wallet to access portal
-              </p>
-            </div>
-            <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-2xl p-8 border border-white/20">
-              <div className="mb-6">
-                <div className="flex items-center flex-col gap-3 mb-4">
-                  <div className="w-10 h-10 bg-gradient-to-r from-[#800895] to-[#a015b9] rounded-full flex items-center justify-center">
-                    <Shield className="w-6 h-6 text-white" />
-                  </div>
-                  <div className="text-center">
-                    <h3 className="font-semibold text-gray-900">
-                      Wallet Authentication
-                    </h3>
-                    <p className="text-sm text-gray-600">
-                      Secure login with your crypto wallet
-                    </p>
-                  </div>
-                </div>
-              </div>
-              <div className="w-full py-3 px-6 rounded-2xl font-semibold text-lg bg-gradient-to-r from-[#9537EA] to-[#9537EA] text-white shadow-lg">
-                <div className="flex items-center justify-center gap-3">
-                  <Loader2 className="w-5 h-5 text-white animate-spin" />
-                  <span>Loading...</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="w-full flex flex-row h-screen min-h-screen overflow-hidden">
       {/* Left Side - Image with Overlay */}

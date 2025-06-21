@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useReadContract } from "wagmi";
 import { CONTRACT_ADDRESS } from "@/lib/contract/address";
-import DiamondABI from "@/lib/contract/DiamondABI.json";
+import ABI from "@/lib/contract/ABI.json";
 
 export interface CohortData {
   id: number;
@@ -59,17 +59,6 @@ export const useGetCohorts = (refreshKey: number = 0) => {
     error: null,
   });
 
-  // Get cohort count first
-  const {
-    data: cohortCount,
-    isLoading: countLoading,
-    error: countError,
-  } = useReadContract({
-    address: CONTRACT_ADDRESS as `0x${string}`,
-    abi: DiamondABI.abi,
-    functionName: "getCohortCount",
-  });
-
   // Get all cohorts from the contract
   const {
     data: cohortsData,
@@ -77,39 +66,27 @@ export const useGetCohorts = (refreshKey: number = 0) => {
     error: cohortsError,
   } = useReadContract({
     address: CONTRACT_ADDRESS as `0x${string}`,
-    abi: DiamondABI.abi,
+    abi: ABI,
     functionName: "getAllCohorts",
   });
 
   useEffect(() => {
     console.log("=== useGetCohorts Debug ===");
-    console.log("Cohort Count:", cohortCount);
     console.log("Cohorts Data:", cohortsData);
 
-    if (countLoading || cohortsLoading) {
+    if (cohortsLoading) {
       console.log("Loading cohorts data...");
       setState((prev) => ({ ...prev, isLoading: true }));
       return;
     }
 
-    if (countError || cohortsError) {
-      console.error("Error getting cohorts data:", countError || cohortsError);
-      const errorMessage =
-        (countError || cohortsError)?.message || "Unknown error";
+    if (cohortsError) {
+      console.error("Error getting cohorts data:", cohortsError);
+      const errorMessage = cohortsError?.message || "Unknown error";
       setState({
         cohorts: [],
         isLoading: false,
         error: `Failed to get cohorts data: ${errorMessage}`,
-      });
-      return;
-    }
-
-    if (!cohortCount || Number(cohortCount) === 0) {
-      console.log("No cohorts found");
-      setState({
-        cohorts: [],
-        isLoading: false,
-        error: null,
       });
       return;
     }
@@ -173,15 +150,7 @@ export const useGetCohorts = (refreshKey: number = 0) => {
       isLoading: false,
       error: null,
     });
-  }, [
-    refreshKey,
-    cohortCount,
-    cohortsData,
-    countLoading,
-    cohortsLoading,
-    countError,
-    cohortsError,
-  ]);
+  }, [refreshKey, cohortsData, cohortsLoading, cohortsError]);
 
   const refetch = useCallback(() => {
     // The hook will automatically refetch when refreshKey changes
