@@ -1,5 +1,6 @@
 const { ethers } = require("hardhat");
 const { getSelectors, FacetCutAction } = require("./libraries/diamond.js");
+const path = require("path");
 
 async function addFacet() {
   const diamondAddress = "0x706F5EAC71a871144731E5231E122694BE76e4F3";

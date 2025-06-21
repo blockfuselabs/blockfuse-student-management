@@ -5,12 +5,15 @@ import React, { useState, useEffect } from "react";
 import { Table } from "@/components/shared/Table";
 // import { AddCohorModal } from "@/components/modals/AddCohortModal";
 import { AddCohortModal } from "@/components/modals/AddCohortModal";
-import { Cohort, cohortcolumns } from "@/components/tables/CohortsColums";
+import { AddTrackToCohortModal } from "@/components/modals/AddTrackToCohortModal";
+import { Cohort, createCohortColumns } from "@/components/tables/CohortsColums";
 import { useGetCohorts } from "@/lib/hooks/useGetCohorts";
 import { useChainId } from "wagmi";
 
 const CohortsPage = () => {
   const [addCohortModalOpen, setAddCohortModal] = useState(false);
+  const [addTrackModalOpen, setAddTrackModalOpen] = useState(false);
+  const [selectedCohort, setSelectedCohort] = useState<Cohort | null>(null);
   const { cohorts, isLoading, cohortCount, error, isConnected, isCorrectNetwork, address } = useGetCohorts();
   const chainId = useChainId();
 
@@ -23,15 +26,31 @@ const CohortsPage = () => {
       hasError: !!error,
       errorMessage: error?.message,
       isConnected,
-      address
+      address,
+      cohortCount
     });
-  }, [chainId, error, isConnected, address]);
+  }, [chainId, error, isConnected, address, cohortCount]);
 
   // Refresh data when modal is closed (indicating a new cohort might have been created)
   const handleModalClose = () => {
     setAddCohortModal(false);
     // The useGetCohorts hook will automatically refetch when cohortCount changes
   };
+
+  // Handle add track modal close
+  const handleAddTrackModalClose = () => {
+    setAddTrackModalOpen(false);
+    setSelectedCohort(null);
+  };
+
+  // Handle add track action from table
+  const handleAddTrack = (cohort: Cohort) => {
+    setSelectedCohort(cohort);
+    setAddTrackModalOpen(true);
+  };
+
+  // Create columns with the add track callback
+  const cohortcolumns = createCohortColumns(handleAddTrack);
 
   // Render different content based on connection status
   const renderContent = () => {
@@ -123,6 +142,16 @@ const CohortsPage = () => {
         isOpen={addCohortModalOpen}
         setIsOpen={handleModalClose}
       />
+
+      {selectedCohort && (
+        <AddTrackToCohortModal
+          isOpen={addTrackModalOpen}
+          setIsOpen={handleAddTrackModalClose}
+          cohortId={parseInt(selectedCohort.id)}
+          cohortName={selectedCohort.name}
+          existingTracks={selectedCohort.tracks}
+        />
+      )}
     </div>
   );
 };

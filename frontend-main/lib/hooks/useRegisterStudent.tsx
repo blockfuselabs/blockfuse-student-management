@@ -1,3 +1,4 @@
+/* eslint-disable prefer-const */
 "use client";
 
 import { useCallback, useState, useEffect } from "react";
@@ -124,7 +125,7 @@ export const useRegisterStudent = () => {
 
   // Format social media inputs
   const formatSocialInputs = (params: RegisterStudentParams) => {
-    let { twitter, github } = params;
+    let { twitter, linkedin, github } = params;
 
     // Format Twitter handle
     if (twitter && twitter.startsWith('@')) {
@@ -135,6 +136,8 @@ export const useRegisterStudent = () => {
     if (github && !github.startsWith('http') && !github.includes('github.com')) {
       github = `https://github.com/${github}`;
     }
+
+
 
     return { ...params, twitter, linkedin, github };
   };

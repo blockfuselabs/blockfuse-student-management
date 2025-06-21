@@ -83,6 +83,14 @@ export const useGetCohorts = () => {
       args: [i],
      });
 
+     // Get tracks for this cohort
+     const cohortTracks = await publicClient.readContract({
+      address: CONTRACT_ADDRESS,
+      abi: CohortFacetABI.abi,
+      functionName: "getCohortTracks",
+      args: [i],
+     });
+
      if (cohortData) {
       // Correct order: [id, tracks, totalStudents, startDate, endDate, duration, studentsByTrack]
       const [id, , totalStudents, startDate, endDate] = cohortData;
@@ -114,6 +122,7 @@ export const useGetCohorts = () => {
        endDate: endDateObj.toISOString().split('T')[0],
        students: Number(totalStudents),
        status,
+       tracks: Array.isArray(cohortTracks) ? cohortTracks.map(t => Number(t)) : [],
       };
 
       cohortsData.push(cohort);

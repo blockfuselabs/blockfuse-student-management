@@ -16,7 +16,7 @@ export const studentColumns = [
     accessor: "name" as const,
   },
   {
-    header: "Email",
+    header: "Track",
     accessor: "email" as const,
   },
   {
@@ -28,15 +28,14 @@ export const studentColumns = [
     accessor: "status" as const,
     render: (item: Student) => (
       <span
-        className={`px-2 py-1 rounded-full text-xs font-medium ${
-          item.status === "active"
+        className={`px-2 py-1 rounded-full text-xs font-medium ${item.status === "active"
             ? "bg-green-100 text-green-800"
             : item.status === "graduated"
-            ? "bg-blue-100 text-blue-800"
-            : item.status === "evicted"
-            ? "bg-red-100 text-red-800"
-            : "bg-yellow-100 text-yellow-800"
-        }`}
+              ? "bg-blue-100 text-blue-800"
+              : item.status === "evicted"
+                ? "bg-red-100 text-red-800"
+                : "bg-yellow-100 text-yellow-800"
+          }`}
       >
         {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
       </span>
@@ -94,11 +93,10 @@ export const mentorColumns = [
     accessor: "status" as const,
     render: (item: Mentor) => (
       <span
-        className={`px-2 py-1 rounded-full text-xs font-medium ${
-          item.status === "active"
+        className={`px-2 py-1 rounded-full text-xs font-medium ${item.status === "active"
             ? "bg-green-100 text-green-800"
             : "bg-gray-100 text-gray-800"
-        }`}
+          }`}
       >
         {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
       </span>

@@ -10,8 +10,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
-import { useRegisterStudent, getTrackOptions} from "@/lib/hooks/useRegisterStudent";
+import { useRegisterStudent } from "@/lib/hooks/useRegisterStudent";
+import { useGetCohorts } from "@/lib/hooks/useGetCohorts";
 import { toast } from "sonner"; // or your preferred toast library
+import CohortFacetABI from "@/lib/contract/CohortFacet.json";
+import { usePublicClient } from "wagmi";
 
 type Props = {
   isOpen: boolean;
@@ -25,10 +28,12 @@ export function AddStudentModal({ isOpen, setIsOpen }: Props) {
   const [twitter, setTwitter] = React.useState("");
   const [linkedin, setLinkedin] = React.useState("");
   const [github, setGithub] = React.useState("");
- 
-  type Track = number; // Or use an enum or union type if needed
-  
-    const [track, setTrack] = React.useState<Track | "">("");
+
+  // Define Track type - should match your contract enum
+  type Track = 0 | 1; // 0 = web2, 1 = web3
+  // Or use an enum or union type if needed
+
+  const [track, setTrack] = React.useState<number | "">("");
   const [cohort, setCohort] = React.useState<number | "">("");
   const [studentAddress, setStudentAddress] = React.useState("");
 
@@ -38,15 +43,21 @@ export function AddStudentModal({ isOpen, setIsOpen }: Props) {
     label: string;
   };
 
-  // Get track options
-  const trackOptions = getTrackOptions();
+  const publicClient = usePublicClient();
+  const [trackOptions, setTrackOptions] = React.useState<{ value: number; label: string }[]>([]);
 
-  // Cohort options - you might want to fetch these dynamically from your contract
-  const cohortOptions = [
-    { value: 1, label: "Cohort 1 - Web Development 2024" },
-    { value: 2, label: "Cohort 2 - Mobile Development 2024" },
-    { value: 3, label: "Cohort 3 - Blockchain Development 2024" },
-  ];
+  // Get real cohort data and filter out completed cohorts
+  const { cohorts, isLoading: isLoadingCohorts } = useGetCohorts();
+
+  // Filter out completed cohorts and create options
+  const cohortOptions = React.useMemo(() => {
+    return cohorts
+      .filter(cohort => cohort.status !== "completed")
+      .map(cohort => ({
+        value: parseInt(cohort.id),
+        label: `${cohort.name} (${cohort.status}) - ${cohort.startDate} to ${cohort.endDate}`
+      }));
+  }, [cohorts]);
 
   const {
     registerStudent,
@@ -56,6 +67,24 @@ export function AddStudentModal({ isOpen, setIsOpen }: Props) {
     reset,
     transactionHash
   } = useRegisterStudent();
+
+  // Set track options from cohorts array when cohort changes
+  React.useEffect(() => {
+    if (!cohort) {
+      setTrackOptions([]);
+      return;
+    }
+    const selectedCohort = cohorts.find(c => parseInt(c.id) === Number(cohort));
+    if (selectedCohort && Array.isArray(selectedCohort.tracks)) {
+      const options = selectedCohort.tracks.map((track) => ({
+        value: track,
+        label: track === 0 ? "web2" : track === 1 ? "web3" : `Track ${track}`,
+      }));
+      setTrackOptions(options);
+    } else {
+      setTrackOptions([]);
+    }
+  }, [cohort, cohorts]);
 
   // Handle successful registration
   React.useEffect(() => {
@@ -76,6 +105,23 @@ export function AddStudentModal({ isOpen, setIsOpen }: Props) {
     }
   }, [error]);
 
+  // Debug: Log all information about the selected cohort when it changes
+  React.useEffect(() => {
+    if (!cohort) return;
+    // Find the cohort object from the cohorts array
+    const selectedCohortObj = cohorts.find(c => parseInt(c.id) === Number(cohort));
+    // Find the cohort option from cohortOptions
+    const selectedCohortOption = cohortOptions.find(opt => opt.value === Number(cohort));
+    console.log('--- Cohort Debug Info ---');
+    console.log('Selected cohort value:', cohort);
+    console.log('Type of selected cohort:', typeof cohort);
+    console.log('Selected cohort object from cohorts:', selectedCohortObj);
+    console.log('Selected cohort option from cohortOptions:', selectedCohortOption);
+    console.log('All cohortOptions:', cohortOptions);
+    console.log('All cohorts:', cohorts);
+    console.log('-------------------------');
+  }, [cohort, cohorts, cohortOptions]);
+
   const handleClose = () => {
     setIsOpen(false);
     // Reset form state
@@ -93,7 +139,7 @@ export function AddStudentModal({ isOpen, setIsOpen }: Props) {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    
+
     // Validate required fields
     if (!firstname.trim() || !lastname.trim() || !studentAddress.trim() || track === "" || cohort === "") {
       toast.error("Please fill in all required fields");
@@ -117,12 +163,14 @@ export function AddStudentModal({ isOpen, setIsOpen }: Props) {
     }
   };
 
-  const isFormValid = 
-    firstname.trim() && 
-    lastname.trim() && 
-    studentAddress.trim() && 
-    track !== "" && 
+  const isFormValid =
+    firstname.trim() &&
+    lastname.trim() &&
+    studentAddress.trim() &&
+    track !== "" &&
     cohort !== "";
+
+  const isSubmitting = isLoading || isLoadingCohorts;
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
@@ -132,7 +180,7 @@ export function AddStudentModal({ isOpen, setIsOpen }: Props) {
             Register New Student
           </DialogTitle>
         </DialogHeader>
-        
+
         <form onSubmit={handleSubmit} className="flex flex-col gap-4 mt-2">
           {/* First Name */}
           <div>
@@ -145,7 +193,7 @@ export function AddStudentModal({ isOpen, setIsOpen }: Props) {
               value={firstname}
               onChange={(e) => setFirstname(e.target.value)}
               className="rounded-md border-gray-300 text-gray-900 w-full"
-              disabled={isLoading}
+              disabled={isSubmitting}
               required
             />
           </div>
@@ -161,7 +209,7 @@ export function AddStudentModal({ isOpen, setIsOpen }: Props) {
               value={lastname}
               onChange={(e) => setLastname(e.target.value)}
               className="rounded-md border-gray-300 text-gray-900 w-full"
-              disabled={isLoading}
+              disabled={isSubmitting}
               required
             />
           </div>
@@ -177,30 +225,9 @@ export function AddStudentModal({ isOpen, setIsOpen }: Props) {
               value={studentAddress}
               onChange={(e) => setStudentAddress(e.target.value)}
               className="rounded-md border-gray-300 text-gray-900 w-full font-mono text-sm"
-              disabled={isLoading}
+              disabled={isSubmitting}
               required
             />
-          </div>
-
-          {/* Track Selection */}
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              Track <span className="text-red-500">*</span>
-            </label>
-            <select
-              value={track}
-              onChange={(e) => setTrack(e.target.value === "" ? "" : Number(e.target.value) as Track)}
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              disabled={isLoading}
-              required
-            >
-              <option value="" disabled>Select Track</option>
-                {trackOptions.map((option: TrackOption) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-                ))}
-            </select>
           </div>
 
           {/* Cohort Selection */}
@@ -212,47 +239,79 @@ export function AddStudentModal({ isOpen, setIsOpen }: Props) {
               value={cohort}
               onChange={(e) => setCohort(e.target.value === "" ? "" : Number(e.target.value))}
               className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              disabled={isLoading}
+              disabled={isSubmitting}
               required
             >
-              <option value="" disabled>Select Cohort</option>
+              <option value="" disabled>
+                {isLoadingCohorts ? "Loading cohorts..." : "Select Cohort"}
+              </option>
               {cohortOptions.map((option) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
                 </option>
               ))}
             </select>
+            {cohortOptions.length === 0 && !isLoadingCohorts && (
+              <p className="text-sm text-gray-500 mt-1">
+                No active cohorts available. Please create a cohort first.
+              </p>
+            )}
+          </div>
+
+          {/* Track Selection */}
+          <div>
+            <label className="block text-sm font-medium mb-1">
+              Track <span className="text-red-500">*</span>
+            </label>
+            <select
+              value={track}
+              onChange={(e) => setTrack(e.target.value === "" ? "" : Number(e.target.value))}
+              className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              disabled={isSubmitting || !cohort}
+              required
+            >
+              <option value="" disabled>Select Track</option>
+              {trackOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+            {/* Show message if no tracks available for selected cohort */}
+            {cohort && trackOptions.length === 0 && (
+              <div className="text-xs text-red-500 mt-1">No tracks available for this cohort. Please add tracks first.</div>
+            )}
           </div>
 
           {/* Social Media Fields */}
           <div className="space-y-3">
             <h3 className="text-sm font-medium text-gray-700">Social Media </h3>
-            
+
             <Input
               type="text"
               placeholder="Twitter handle (@username) or URL"
               value={twitter}
               onChange={(e) => setTwitter(e.target.value)}
               className="rounded-md border-gray-300 text-gray-900 w-full"
-              disabled={isLoading}
+              disabled={isSubmitting}
             />
-            
+
             <Input
               type="text"
               placeholder="LinkedIn profile URL"
               value={linkedin}
               onChange={(e) => setLinkedin(e.target.value)}
               className="rounded-md border-gray-300 text-gray-900 w-full"
-              disabled={isLoading}
+              disabled={isSubmitting}
             />
-            
+
             <Input
               type="text"
               placeholder="GitHub username or URL"
               value={github}
               onChange={(e) => setGithub(e.target.value)}
               className="rounded-md border-gray-300 text-gray-900 w-full"
-              disabled={isLoading}
+              disabled={isSubmitting}
             />
           </div>
 
@@ -279,22 +338,25 @@ export function AddStudentModal({ isOpen, setIsOpen }: Props) {
               variant="outline"
               className="flex-1"
               onClick={handleClose}
-              disabled={isLoading}
+              disabled={isSubmitting}
             >
               Cancel
             </Button>
             <Button
               type="submit"
               className="flex-1 bg-black text-white hover:bg-gray-800 transition"
-              disabled={!isFormValid || isLoading}
+              disabled={!isFormValid || isSubmitting}
             >
-              {isLoading ? (
+              {isSubmitting ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Registering...
+                  {isLoading ? "Registering..." : "Loading..."}
                 </>
               ) : (
-                "Register Student"
+                <>
+                  <CheckCircle2 className="mr-2 h-4 w-4" />
+                  Register Student
+                </>
               )}
             </Button>
           </div>

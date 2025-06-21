@@ -29,13 +29,18 @@ export function AddCohortModal({ isOpen, setIsOpen }: Props) {
   const [endDate, setEndDate] = React.useState<Date>();
   const [openStart, setOpenStart] = React.useState(false);
   const [openEnd, setOpenEnd] = React.useState(false);
+  const TRACK_OPTIONS = [
+    { value: 0, label: "web2" },
+    { value: 1, label: "web3" },
+  ];
+  const [selectedTracks, setSelectedTracks] = React.useState<number[]>([0, 1]);
   const { createCohort, isPending, isConfirming, isSuccess, error, transactionHash } =
     useCreateCohort();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (startDate && endDate) {
-      await createCohort(startDate, endDate);
+    if (startDate && endDate && selectedTracks.length > 0) {
+      await createCohort(startDate, endDate, selectedTracks);
       if (isSuccess) {
         setIsOpen(false); // Close modal on success
       }
@@ -110,11 +115,32 @@ export function AddCohortModal({ isOpen, setIsOpen }: Props) {
               </PopoverContent>
             </Popover>
           </div>
+          {/* Track Multi-Select */}
+          <div>
+            <label className="block text-sm font-medium mb-1">Tracks</label>
+            <select
+              multiple
+              value={selectedTracks.map(String)}
+              onChange={e => {
+                const options = Array.from(e.target.selectedOptions).map(opt => Number(opt.value));
+                setSelectedTracks(options);
+              }}
+              className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              required
+            >
+              {TRACK_OPTIONS.map(option => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+            <div className="text-xs text-gray-500 mt-1">Hold Ctrl (Windows) or Cmd (Mac) to select multiple tracks.</div>
+          </div>
           <Button
             type="submit"
             size="lg"
             className="w-full rounded-md bg-black text-white hover:bg-gray-800 transition"
-            disabled={isPending || isConfirming || !startDate || !endDate}
+            disabled={isPending || isConfirming || !startDate || !endDate || selectedTracks.length === 0}
           >
             {isPending || isConfirming ? (
               <div className="flex items-center justify-center gap-2">
