@@ -1,8 +1,5 @@
 /* eslint-disable prefer-const */
 "use client";
-import { useState, useEffect } from "react";
-import { useWriteContract, useTransaction } from "wagmi";
-import { CONTRACT_ADDRESS } from "@/lib/contract/address";
 import { useCallback, useState, useEffect } from "react";
 import { useWriteContract, useWaitForTransactionReceipt } from "wagmi";
 import { CONTRACT_ADDRESS } from '@/lib/contract/address';
@@ -10,11 +7,12 @@ import AdminFacetABI from "@/lib/contract/AdminFacet.json";
 import { RegisterStudentParams, RegisterStudentState } from "../types";
 import { Track } from "../types";
 
-
-
 export const useRegisterStudent = () => {
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [state, setState] = useState<RegisterStudentState>({
+    isLoading: false,
+    isSuccess: false,
+    error: null
+  });
 
   const {
     writeContract,
@@ -33,13 +31,6 @@ export const useRegisterStudent = () => {
 
   // Handle transaction success
   useEffect(() => {
-    if (isSuccess) {
-      console.log("Student registered successfully!");
-    }
-  }, [isSuccess]);
-
-  // Handle transaction errors
-  useEffect(() => {
     if (isConfirmed) {
       setState(prev => ({
         ...prev,
@@ -47,8 +38,9 @@ export const useRegisterStudent = () => {
         isLoading: false,
         error: null
       }));
+      console.log("Student registered successfully!");
     }
-  }, [isWriteError, isTransactionError, writeError]);
+  }, [isConfirmed]);
 
   // Handle errors from write or receipt
   useEffect(() => {
@@ -62,8 +54,6 @@ export const useRegisterStudent = () => {
       }));
     }
   }, [writeError, receiptError]);
-
-      console.log("Registering student with details:", studentDetails);
 
   // Validation function
   const validateStudentData = (params: RegisterStudentParams) => {
@@ -130,8 +120,6 @@ export const useRegisterStudent = () => {
       github = `https://github.com/${github}`;
     }
 
-
-
     return { ...params, twitter, linkedin, github };
   };
 
@@ -169,6 +157,8 @@ export const useRegisterStudent = () => {
           studentAddress: formattedParams.studentAddress as `0x${string}`,
         };
 
+        console.log("Registering student with details:", studentDetails);
+
         // Write to contract using the new registerStudent function
         writeContract({
           address: CONTRACT_ADDRESS as `0x${string}`,
@@ -187,33 +177,18 @@ export const useRegisterStudent = () => {
         }));
         console.error("Error registering student:", error);
       }
-
-      // Call the contract function
-      await writeContract({
-        address: CONTRACT_ADDRESS as `0x${string}`,
-        abi: DiamondABI.abi,
-        functionName: "registerStudent",
-        args: [studentDetails],
-      });
-    } catch (err) {
-      console.error("Error registering student:", err);
-      setError(
-        err instanceof Error ? err.message : "Failed to register student"
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    },
+    [writeContract]
+  );
 
   return {
     registerStudent,
-    isLoading: isLoading || isTransactionLoading,
-    isSuccess,
-    error,
-    resetError: () => setError(null),
+    isLoading: state.isLoading || isWritePending || isConfirming,
+    isSuccess: state.isSuccess,
+    error: state.error,
+    resetError: () => setState(prev => ({ ...prev, error: null })),
   };
 };
-
 
 export const getTrackName = (track: Track): string => {
   const trackNames = {

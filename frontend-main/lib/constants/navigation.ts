@@ -11,6 +11,7 @@ import {
   BarChart3,
   User,
   LogOut,
+  CheckCircle,
 } from "lucide-react";
 
 export const adminRoutes = {
