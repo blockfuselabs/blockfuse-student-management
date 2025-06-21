@@ -1,4 +1,9 @@
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Button } from "../ui/button";
 import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 
@@ -54,11 +59,17 @@ export const studentColumns = [
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem className="flex items-center gap-2 cursor-pointer" onClick={() => console.log("Edit", item.id)}>
+          <DropdownMenuItem
+            className="flex items-center gap-2 cursor-pointer"
+            onClick={() => console.log("Edit", item.id)}
+          >
             <Pencil className="h-4 w-4" />
             Edit
           </DropdownMenuItem>
-          <DropdownMenuItem className="flex items-center gap-2 cursor-pointer text-red-600 focus:text-red-600" onClick={() => console.log("Delete", item.id)}>
+          <DropdownMenuItem
+            className="flex items-center gap-2 cursor-pointer text-red-600 focus:text-red-600"
+            onClick={() => console.log("Delete", item.id)}
+          >
             <Trash2 className="h-4 w-4" />
             Delete
           </DropdownMenuItem>
@@ -116,13 +127,82 @@ export const mentorColumns = [
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem className="flex items-center gap-2 cursor-pointer" onClick={() => console.log("Edit", item.id)}>
+          <DropdownMenuItem
+            className="flex items-center gap-2 cursor-pointer"
+            onClick={() => console.log("Edit", item.id)}
+          >
             <Pencil className="h-4 w-4" />
             Edit
           </DropdownMenuItem>
-          <DropdownMenuItem className="flex items-center gap-2 cursor-pointer text-red-600 focus:text-red-600" onClick={() => console.log("Delete", item.id)}>
+          <DropdownMenuItem
+            className="flex items-center gap-2 cursor-pointer text-red-600 focus:text-red-600"
+            onClick={() => console.log("Delete", item.id)}
+          >
             <Trash2 className="h-4 w-4" />
             Delete
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    ),
+  },
+];
+
+export type Admin = {
+  id: string;
+  address: string;
+  isActive: boolean;
+};
+
+export const adminColumns = [
+  {
+    header: "Wallet Address",
+    accessor: "address" as const,
+    render: (item: Admin) => (
+      <div className="font-mono text-sm">
+        {item.address.slice(0, 6)}...{item.address.slice(-4)}
+      </div>
+    ),
+  },
+  {
+    header: "Status",
+    accessor: "isActive" as const,
+    render: (item: Admin) => (
+      <span
+        className={`px-2 py-1 rounded-full text-xs font-medium ${
+          item.isActive
+            ? "bg-green-100 text-green-800"
+            : "bg-gray-100 text-gray-800"
+        }`}
+      >
+        {item.isActive ? "Active" : "Inactive"}
+      </span>
+    ),
+  },
+  {
+    header: "Actions",
+    accessor: "id" as const,
+    render: (item: Admin) => (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" className="h-8 w-8 p-0">
+            <span className="sr-only">Open menu</span>
+            <MoreHorizontal className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem
+            className="flex items-center gap-2 cursor-pointer"
+            onClick={() => console.log("View", item.address)}
+          >
+            <Pencil className="h-4 w-4" />
+            View Details
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            className="flex items-center gap-2 cursor-pointer text-red-600 focus:text-red-600"
+            onClick={() => console.log("Remove", item.address)}
+          >
+            <Trash2 className="h-4 w-4" />
+            Remove Admin
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

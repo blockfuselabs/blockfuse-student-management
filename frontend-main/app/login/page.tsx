@@ -10,20 +10,26 @@ import { useRouter } from "next/navigation";
 const LoginPage = () => {
   const [isHovered, setIsHovered] = useState(false);
   const [isRoleChecking, setIsRoleChecking] = useState(false);
-  const { isAdmin, isStudent, isSuperAdmin, isLoading: roleLoading } = useUserRole();
+  const {
+    isAdmin,
+    isStudent,
+    isSuperAdmin,
+    isLoading: roleLoading,
+  } = useUserRole();
   const router = useRouter();
-  const { isConnected, isConnecting: wagmiIsConnecting, address } = useAccount();
-  console.log(isAdmin,isStudent,isSuperAdmin,roleLoading)
+  const { isConnected, isConnecting: wagmiIsConnecting } = useAccount();
+  console.log(isAdmin, isStudent, isSuperAdmin, roleLoading);
   useEffect(() => {
     if (isConnected && !roleLoading && !isRoleChecking) {
-      setIsRoleChecking(true);// Simulate blockchain role checking delay
+      setIsRoleChecking(true); // Simulate blockchain role checking delay
       const checkRoleAndRedirect = async () => {
-        try {// Role checking is handled by useUserRole hook
-          if (!isSuperAdmin || !isAdmin) {
+        try {
+          // Role checking is handled by useUserRole hook
+          if (isSuperAdmin || isAdmin) {
             router.push("/admin");
           } else if (isStudent) {
             router.push("/student");
-          } else {// Handle case where user has no valid role
+          } else {
             router.push("/unauthorized");
           }
         } catch (error) {
@@ -55,7 +61,12 @@ const LoginPage = () => {
             <div className="text-center max-w-md">
               <div className="mb-8">
                 <div className="w-20 h-20 mx-auto mb-6 bg-white backdrop-blur-sm rounded-full flex items-center justify-center">
-                 <Image src="/images/logo-two.svg" alt="" height={60} width={60} />
+                  <Image
+                    src="/images/logo-two.svg"
+                    alt=""
+                    height={60}
+                    width={60}
+                  />
                 </div>
                 <h2 className="text-4xl font-bold mb-4 bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent">
                   BlockFuse SMS
@@ -115,7 +126,6 @@ const LoginPage = () => {
           </div>
         </div>
       </div>
-     
 
       <div className="w-full md:w-1/2 h-full flex items-center justify-center bg-gradient-to-br from-gray-50 to-white relative overflow-hidden">
         <div className="relative z-10 w-full max-w-md px-8">
@@ -161,7 +171,6 @@ const LoginPage = () => {
                       ${
                         isLoading
                           ? "bg-gray-400 cursor-not-allowed"
-
                           : "bg-gradient-to-r  from-[#9537EA] to-[#9537EA] hover:from-[#800895] hover:to-[#a015b9]hover:scale-105 hover:shadow-xl active:scale-95"
                       }
                       text-white shadow-lg
@@ -210,7 +219,7 @@ const LoginPage = () => {
           </div>
           <div className="text-center mt-8">
             <p className="text-sm text-gray-500">
-              Don't have a wallet?
+              Don&apos;t have a wallet?
               <a
                 href="#"
                 className="text-blue-600 hover:text-blue-800 font-medium ml-1"
