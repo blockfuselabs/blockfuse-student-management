@@ -6,7 +6,8 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "verify-contract:ts": "tsx scripts/verify-contract.ts"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.14",
@@ -31,7 +32,8 @@
     "sonner": "^2.0.5",
     "tailwind-merge": "^3.3.1",
     "viem": "^2.31.3",
-    "wagmi": "^2.15.6"
+    "wagmi": "^2.15.6",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",

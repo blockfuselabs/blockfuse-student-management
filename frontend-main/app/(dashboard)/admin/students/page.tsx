@@ -1,48 +1,13 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Table } from "@/components/shared/Table";
 import { AddStudentModal } from "@/components/modals/AddStudentModal";
+import { AddStudentsExcelModal } from "@/components/modals/AddStudentsExcelModal";
 import { Student, studentColumns } from "@/components/tables/StudentColumns";
-
-const studentsData: Student[] = [
-  {
-    id: "1",
-    name: "Alice Johnson",
-    email: "alice@example.com",
-    cohort: "Web Development 2024",
-    status: "active",
-  },
-  {
-    id: "2",
-    name: "Bob Smith",
-    email: "bob@example.com",
-    cohort: "Mobile Development 2024",
-    status: "graduated",
-  },
-  {
-    id: "3",
-    name: "Charlie Brown",
-    email: "charlie@example.com",
-    cohort: "Data Science 2024",
-    status: "evicted",
-  },
-  {
-    id: "4",
-    name: "Diana Prince",
-    email: "diana@example.com",
-    cohort: "Web Development 2024",
-    status: "suspended",
-  },
-  {
-    id: "5",
-    name: "Eve Adams",
-    email: "eve@example.com",
-    cohort: "Web Development 2024",
-    status: "active",
-  },
-];
+import { useGetCohorts } from "@/lib/hooks/useGetCohorts";
+import { useGetStudentsForCohorts, StudentDetails } from "@/lib/hooks/useGetStudents";
 
 const statusTabs = [
   { label: "All", value: "all" },
@@ -52,22 +17,58 @@ const statusTabs = [
   { label: "Suspended", value: "suspended" },
 ];
 
+// Helper to map on-chain studentDetails to Student table type
+function mapStudentDetailsToStudent(
+  s: StudentDetails,
+  cohortName: string
+): Student {
+  // Map track number to label
+  let trackLabel = s.track === 0 ? "web2" : s.track === 1 ? "web3" : `Track ${s.track}`;
+  return {
+    id: s.studentAddress,
+    name: `${s.firstname} ${s.lastname}`,
+    email: trackLabel, // Show track instead of email
+    cohort: cohortName,
+    status: s.isActive ? "active" : "suspended", // You may want to improve this mapping
+  };
+}
+
 const StudentsPage = () => {
   const [addStudentModalOpen, setAddStudentModalOpen] = useState(false);
+  const [addExcelModalOpen, setAddExcelModalOpen] = useState(false);
   const [selectedTab, setSelectedTab] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
 
+  // Get all cohorts
+  const { cohorts } = useGetCohorts();
 
+  // Fetch all students for all cohorts/tracks
+  const { students: allOnChainStudents, isLoading: isLoadingStudents, error: studentsError } = useGetStudentsForCohorts(cohorts);
+  // Map on-chain students to table format
+  const mappedStudents = useMemo(() => {
+    // Map cohortId to cohort name for fast lookup
+    const cohortIdToName: Record<string, string> = {};
+    for (const cohort of cohorts) {
+      cohortIdToName[String(cohort.id)] = cohort.name;
+    }
+    return allOnChainStudents.map((s) => mapStudentDetailsToStudent(s, cohortIdToName[String(s.cohort)] || `Cohort ${s.cohort}`));
+  }, [allOnChainStudents, cohorts]);
 
-  const filteredStudents = studentsData.filter((student) => {
-    const matchesTab =
-      selectedTab === "all" ? true : student.status === selectedTab;
-    const matchesSearch =
-      student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      student.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      student.cohort.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesTab && matchesSearch;
-  });
+  // Debug: log students
+  console.log('On-chain students:', allOnChainStudents);
+
+  // Filtered students for search and tab
+  const filteredStudents = useMemo(() => {
+    return mappedStudents.filter((student) => {
+      const matchesTab =
+        selectedTab === "all" ? true : student.status === selectedTab;
+      const matchesSearch =
+        student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        student.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        student.cohort.toLowerCase().includes(searchTerm.toLowerCase());
+      return matchesTab && matchesSearch;
+    });
+  }, [mappedStudents, selectedTab, searchTerm]);
 
   return (
     <div className="p-6 h-screen bg-white rounded-xl">
@@ -80,13 +81,23 @@ const StudentsPage = () => {
             Add, organize, and manage students by status.
           </p>
         </div>
-        <Button
-          size="lg"
-          className="flex text-base h-[44px] w-[130px] gap-1 items-center"
-          onClick={() => setAddStudentModalOpen(true)}
-        >
-          Add new
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            size="lg"
+            className="flex text-base h-[44px] w-[130px] gap-1 items-center"
+            onClick={() => setAddStudentModalOpen(true)}
+          >
+            Add new
+          </Button>
+          <Button
+            size="lg"
+            variant="outline"
+            className="flex text-base h-[44px] w-[150px] gap-1 items-center"
+            onClick={() => setAddExcelModalOpen(true)}
+          >
+            Add via Excel
+          </Button>
+        </div>
       </div>
 
       {/* Tabs and Search */}
@@ -113,6 +124,17 @@ const StudentsPage = () => {
         />
       </div>
 
+      {/* Loading and Error States */}
+      {isLoadingStudents && (
+        <div className="flex justify-center items-center py-8">
+          <span className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mr-2"></span>
+          <span className="text-gray-700">Loading students from chain...</span>
+        </div>
+      )}
+      {studentsError && (
+        <div className="text-red-600 text-center py-2 font-medium">{studentsError}</div>
+      )}
+
       <div className="mt-2 w-full">
         <Table
           data={filteredStudents}
@@ -126,6 +148,10 @@ const StudentsPage = () => {
       <AddStudentModal
         isOpen={addStudentModalOpen}
         setIsOpen={setAddStudentModalOpen}
+      />
+      <AddStudentsExcelModal
+        isOpen={addExcelModalOpen}
+        setIsOpen={setAddExcelModalOpen}
       />
     </div>
   );

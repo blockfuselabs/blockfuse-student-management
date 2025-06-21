@@ -95,12 +95,12 @@ export const studentRoutes = {
   bottom: [
     {
       title: "Profile",
-      href: "/admin/profile",
+      href: "/student/profile",
       icon: User,
     },
     {
       title: "Logout",
-      href: "/admin/logout",
+      href: "/student/logout",
       icon: LogOut,
     },
   ],

@@ -34,6 +34,9 @@ const DashboardNav = () => {
     }
   };
 
+  const handleLogout = () => {
+    router.push("/admin/logout");
+  };
   // Don't render address until mounted to prevent hydration mismatch
   const displayAddress = isMounted ? truncateAddress(address) : "Loading...";
 
@@ -80,7 +83,7 @@ const DashboardNav = () => {
               <span>Profile</span>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-red-600">
+            <DropdownMenuItem onClick={handleLogout} className="text-red-600">
               <LogOut className="mr-2 h-4 w-4" />
               <span>Log out</span>
             </DropdownMenuItem>

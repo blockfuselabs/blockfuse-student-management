@@ -9,16 +9,11 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useGetCohorts } from "@/lib/hooks/useGetCohorts";
 
 const statusOptions = [
   { value: "active", label: "Active" },
   { value: "inactive", label: "Inactive" },
-];
-
-const cohortOptions = [
-  { value: "Web Development 2024", label: "Web Development 2024" },
-  { value: "Mobile Development 2024", label: "Mobile Development 2024" },
-  { value: "Data Science 2024", label: "Data Science 2024" },
 ];
 
 type Props = {
@@ -31,6 +26,19 @@ export function AddMentorModal({ isOpen, setIsOpen }: Props) {
   const [email, setEmail] = React.useState("");
   const [cohort, setCohort] = React.useState("");
   const [status, setStatus] = React.useState("active");
+
+  // Get real cohort data and filter out completed cohorts
+  const { cohorts, isLoading: isLoadingCohorts } = useGetCohorts();
+
+  // Filter out completed cohorts and create options
+  const cohortOptions = React.useMemo(() => {
+    return cohorts
+      .filter(cohort => cohort.status !== "completed")
+      .map(cohort => ({
+        value: cohort.id,
+        label: `${cohort.name} (${cohort.status}) - ${cohort.startDate} to ${cohort.endDate}`
+      }));
+  }, [cohorts]);
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -62,36 +70,47 @@ export function AddMentorModal({ isOpen, setIsOpen }: Props) {
             onChange={(e) => setCohort(e.target.value)}
             className="w-full rounded-md border-gray-300 text-gray-900 focus:outline-none focus:ring-0 focus:border-gray-300"
             required
+            disabled={isLoadingCohorts}
           >
-            <option value="" disabled>Select Cohort</option>
+            <option value="" disabled>
+              {isLoadingCohorts ? "Loading cohorts..." : "Select Cohort"}
+            </option>
             {cohortOptions.map((option) => (
               <option key={option.value} value={option.value}>
                 {option.label}
               </option>
             ))}
           </select>
-          <div>
-            <label className="block text-sm font-medium mb-1">Status</label>
-            <select
-              value={status}
-              onChange={(e) => setStatus(e.target.value)}
-              className="w-full rounded-md border-gray-300 text-gray-900 focus:outline-none focus:ring-0 focus:border-gray-300"
-            >
-              {statusOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
-          <Button
-            type="submit"
-            size={"lg"}
-            className="w-full rounded-md bg-black text-white hover:bg-gray-800 transition"
-            disabled={!name.trim() || !email.trim() || !cohort.trim()}
+          {cohortOptions.length === 0 && !isLoadingCohorts && (
+            <p className="text-sm text-gray-500">
+              No active cohorts available. Please create a cohort first.
+            </p>
+          )}
+          <select
+            value={status}
+            onChange={(e) => setStatus(e.target.value)}
+            className="w-full rounded-md border-gray-300 text-gray-900 focus:outline-none focus:ring-0 focus:border-gray-300"
+            required
           >
-            Add Mentor
-          </Button>
+            {statusOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+          <div className="flex gap-3 pt-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsOpen(false)}
+              className="flex-1"
+            >
+              Cancel
+            </Button>
+            <Button type="submit" className="flex-1">
+              Add Mentor
+            </Button>
+          </div>
         </form>
       </DialogContent>
     </Dialog>

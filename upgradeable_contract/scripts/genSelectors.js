@@ -3,14 +3,18 @@ const path = require("path/posix");
 
 const args = process.argv.slice(2);
 
-if (args.length != 1) {
+if (args.length != 2) {
   console.log(`please supply the correct parameters:
     facetName
+    artifactFolderPath
   `);
   process.exit(1);
 }
 
-async function printSelectors(contractName, artifactFolderPath = "../out") {
+async function printSelectors(
+  contractName,
+  artifactFolderPath = "../artifacts/contracts/facets"
+) {
   const contractFilePath = path.join(
     artifactFolderPath,
     `${contractName}.sol`,
