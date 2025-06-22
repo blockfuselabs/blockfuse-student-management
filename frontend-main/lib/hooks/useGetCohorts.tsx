@@ -1,191 +1,160 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
-import { useReadContract } from "wagmi";
-import { CONTRACT_ADDRESS } from "@/lib/contract/address";
-import DiamondABI from "@/lib/contract/DiamondABI.json";
 
-export interface CohortData {
-  id: number;
-  tracks: string[];
-  totalStudents: number;
-  startDate: number;
-  endDate: number;
-  duration: number;
-}
+import { useReadContract, usePublicClient, useAccount, useChainId } from "wagmi";
+import CohortFacetABI from "../contract/CohortFacet.json";
+import { CONTRACT_ADDRESS } from "../contract/address";
+import { Cohort } from "@/components/tables/CohortsColums";
+import { useEffect, useState } from "react";
 
-export interface GetCohortsState {
-  cohorts: CohortData[];
-  isLoading: boolean;
-  error: string | null;
-}
+export const useGetCohorts = () => {
+ const [cohorts, setCohorts] = useState<Cohort[]>([]);
+ const [isLoading, setIsLoading] = useState(false);
+ const [fallbackCohortCount, setFallbackCohortCount] = useState<number | null>(null);
+ const publicClient = usePublicClient();
+ const { address, isConnected } = useAccount();
+ const chainId = useChainId();
 
-// Helper function to convert number to Roman numeral
-const toRomanNumeral = (num: number): string => {
-  if (num === 0) return "0";
+ // Get total cohort count
+ const { data: cohortCount, isLoading: isLoadingCount, error: cohortCountError } = useReadContract({
+  address: CONTRACT_ADDRESS,
+  abi: CohortFacetABI.abi,
+  functionName: "getCohortCount",
+ });
 
-  const romanNumerals = [
-    { value: 1000, numeral: "M" },
-    { value: 900, numeral: "CM" },
-    { value: 500, numeral: "D" },
-    { value: 400, numeral: "CD" },
-    { value: 100, numeral: "C" },
-    { value: 90, numeral: "XC" },
-    { value: 50, numeral: "L" },
-    { value: 40, numeral: "XL" },
-    { value: 10, numeral: "X" },
-    { value: 9, numeral: "IX" },
-    { value: 5, numeral: "V" },
-    { value: 4, numeral: "IV" },
-    { value: 1, numeral: "I" },
-  ];
+ // Debug the contract call directly and set fallback count
+ useEffect(() => {
+  const debugContractCall = async () => {
+   if (!publicClient || !isConnected || chainId !== 11155111) {
+    return;
+   }
 
-  let result = "";
-  let remaining = num;
-
-  for (const { value, numeral } of romanNumerals) {
-    while (remaining >= value) {
-      result += numeral;
-      remaining -= value;
-    }
-  }
-
-  return result;
-};
-
-export const useGetCohorts = (refreshKey: number = 0) => {
-  const [state, setState] = useState<GetCohortsState>({
-    cohorts: [],
-    isLoading: true,
-    error: null,
-  });
-
-  // Get cohort count first
-  const {
-    data: cohortCount,
-    isLoading: countLoading,
-    error: countError,
-  } = useReadContract({
-    address: CONTRACT_ADDRESS as `0x${string}`,
-    abi: DiamondABI.abi,
-    functionName: "getCohortCount",
-  });
-
-  // Get all cohorts from the contract
-  const {
-    data: cohortsData,
-    isLoading: cohortsLoading,
-    error: cohortsError,
-  } = useReadContract({
-    address: CONTRACT_ADDRESS as `0x${string}`,
-    abi: DiamondABI.abi,
-    functionName: "getAllCohorts",
-  });
-
-  useEffect(() => {
-    console.log("=== useGetCohorts Debug ===");
-    console.log("Cohort Count:", cohortCount);
-    console.log("Cohorts Data:", cohortsData);
-
-    if (countLoading || cohortsLoading) {
-      console.log("Loading cohorts data...");
-      setState((prev) => ({ ...prev, isLoading: true }));
-      return;
-    }
-
-    if (countError || cohortsError) {
-      console.error("Error getting cohorts data:", countError || cohortsError);
-      const errorMessage =
-        (countError || cohortsError)?.message || "Unknown error";
-      setState({
-        cohorts: [],
-        isLoading: false,
-        error: `Failed to get cohorts data: ${errorMessage}`,
-      });
-      return;
-    }
-
-    if (!cohortCount || Number(cohortCount) === 0) {
-      console.log("No cohorts found");
-      setState({
-        cohorts: [],
-        isLoading: false,
-        error: null,
-      });
-      return;
-    }
-
-    if (!cohortsData) {
-      console.log("No cohorts data found");
-      setState({
-        cohorts: [],
-        isLoading: false,
-        error: null,
-      });
-      return;
-    }
-
-    // Parse the cohorts data
-    const [ids, totalStudents, startDates, endDates, durations, tracks] =
-      cohortsData as [
-        bigint[],
-        bigint[],
-        bigint[],
-        bigint[],
-        bigint[],
-        number[][]
-      ];
-
-    console.log("Parsed data:", {
-      ids: ids.map((id) => Number(id)),
-      totalStudents: totalStudents.map((students) => Number(students)),
-      startDates: startDates.map((date) => Number(date)),
-      endDates: endDates.map((date) => Number(date)),
-      durations: durations.map((duration) => Number(duration)),
-      tracks,
+   try {
+    const debugResult = await publicClient.readContract({
+     address: CONTRACT_ADDRESS,
+     abi: CohortFacetABI.abi,
+     functionName: "getCohortCount",
     });
+    setFallbackCohortCount(Number(debugResult));
+   } catch (error) {
+    console.error("❌ Direct contract call failed:", error);
+   }
+  };
 
-    const cohorts: CohortData[] = [];
+  debugContractCall();
+ }, [publicClient, isConnected, chainId]);
 
-    // Convert track enums to strings and create cohort objects
-    for (let i = 0; i < ids.length; i++) {
-      const trackEnums = tracks[i] || [];
-      const trackStrings = trackEnums.map((track) => {
-        return track === 0 ? "web2" : "web3";
-      });
+ // Use fallback count if useReadContract fails
+ const effectiveCohortCount = cohortCount || fallbackCohortCount;
 
-      cohorts.push({
-        id: Number(ids[i]),
-        tracks: trackStrings,
-        totalStudents: Number(totalStudents[i]),
-        startDate: Number(startDates[i]),
-        endDate: Number(endDates[i]),
-        duration: Number(durations[i]),
-      });
+ // Fetch cohorts when count is available
+ useEffect(() => {
+  const fetchCohorts = async () => {
+   // Check authentication requirements
+   if (!isConnected) {
+    setCohorts([]);
+    return;
+   }
+
+   if (chainId !== 11155111) {
+    setCohorts([]);
+    return;
+   }
+
+   if (!effectiveCohortCount || effectiveCohortCount === 0) {
+    setCohorts([]);
+    return;
+   }
+
+   if (!publicClient) {
+    return;
+   }
+
+   setIsLoading(true);
+
+   const cohortsData: Cohort[] = [];
+
+   // Fetch each cohort sequentially using public client
+   for (let i = 1; i <= effectiveCohortCount; i++) {
+    try {
+     const cohortData = await publicClient.readContract({
+      address: CONTRACT_ADDRESS,
+      abi: CohortFacetABI.abi,
+      functionName: "getCohort",
+      args: [i],
+     });
+
+     // Get tracks for this cohort
+     const cohortTracks = await publicClient.readContract({
+      address: CONTRACT_ADDRESS,
+      abi: CohortFacetABI.abi,
+      functionName: "getCohortTracks",
+      args: [i],
+     });
+
+     if (cohortData) {
+      // Correct order: [id, tracks, totalStudents, startDate, endDate, duration, studentsByTrack]
+      const [id, , totalStudents, startDate, endDate] = cohortData;
+
+      // Check if this is a valid cohort (has non-zero dates)
+      if (Number(startDate) === 0 || Number(endDate) === 0) {
+       continue;
+      }
+
+      // Convert timestamps to dates
+      const startDateObj = new Date(Number(startDate) * 1000);
+      const endDateObj = new Date(Number(endDate) * 1000);
+      const currentDate = new Date();
+
+      // Determine status based on dates
+      let status: "active" | "completed" | "upcoming";
+      if (currentDate < startDateObj) {
+       status = "upcoming";
+      } else if (currentDate > endDateObj) {
+       status = "completed";
+      } else {
+       status = "active";
+      }
+
+      const cohort: Cohort = {
+       id: id?.toString() || i.toString(),
+       name: `Cohort ${id?.toString() || i}`,
+       startDate: startDateObj.toISOString().split('T')[0],
+       endDate: endDateObj.toISOString().split('T')[0],
+       students: Number(totalStudents),
+       status,
+       tracks: Array.isArray(cohortTracks) ? cohortTracks.map(t => Number(t)) : [],
+      };
+
+      cohortsData.push(cohort);
+     }
+    } catch (error) {
+     console.error(`❌ Error fetching cohort ${i}:`, error);
     }
+   }
 
-    // Sort cohorts in hierarchical order (ascending by ID)
-    cohorts.sort((a, b) => a.id - b.id);
+   setCohorts(cohortsData);
+   setIsLoading(false);
+  };
 
-    console.log("Final cohorts list (sorted):", cohorts);
+  fetchCohorts();
+ }, [effectiveCohortCount, publicClient, isConnected, chainId]);
 
-    setState({
-      cohorts,
-      isLoading: false,
-      error: null,
-    });
-  }, [
-    refreshKey,
-    cohortCount,
-    cohortsData,
-    countLoading,
-    cohortsLoading,
-    countError,
-    cohortsError,
-  ]);
+ console.log("🔍 useGetCohorts Debug:", {
+  cohortCount: effectiveCohortCount,
+  cohortsFound: cohorts.length,
+  isLoading: isLoading || isLoadingCount,
+  isConnected,
+  isCorrectNetwork: chainId === 11155111,
+  hasError: !!cohortCountError
+ });
 
-  const refetch = useCallback(() => {
-    // The hook will automatically refetch when refreshKey changes
-  }, []);
-
-  return { ...state, refetch, toRomanNumeral };
-};
+ return {
+  cohorts,
+  isLoading: isLoading || isLoadingCount,
+  cohortCount: effectiveCohortCount,
+  error: cohortCountError,
+  isConnected,
+  isCorrectNetwork: chainId === 11155111,
+  address,
+ };
+}; 

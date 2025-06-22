@@ -1,3 +1,4 @@
+// Force redeploy for selector update
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity ^0.8.28;
 
@@ -129,5 +130,23 @@ contract StudentFacet {
         returns (LibAppStorage.studentDetails memory studentData)
     {
         studentData = layout.student[_studentAddress];
+    }
+
+    function getStudentsByCohortAndTrack(uint8 _cohortId, LibAppStorage.Track _track)
+        public
+        view
+        returns (LibAppStorage.studentDetails[] memory)
+    {
+        LibAppStorage.Cohort storage cohort = layout.cohorts[_cohortId];
+        address[] memory studentAddresses = cohort.studentsByTrack[_track];
+
+        LibAppStorage.studentDetails[] memory studentDetailsList =
+            new LibAppStorage.studentDetails[](studentAddresses.length);
+
+        for (uint256 i = 0; i < studentAddresses.length; i++) {
+            studentDetailsList[i] = layout.student[studentAddresses[i]];
+        }
+
+        return studentDetailsList;
     }
 }

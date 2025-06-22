@@ -1,97 +1,116 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import React, { useState, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { Table } from "@/components/shared/Table";
 // import { AddCohorModal } from "@/components/modals/AddCohortModal";
 import { AddCohortModal } from "@/components/modals/AddCohortModal";
-import { Cohort, cohortcolumns } from "@/components/tables/CohortsColums";
+import { AddTrackToCohortModal } from "@/components/modals/AddTrackToCohortModal";
+import { Cohort, createCohortColumns } from "@/components/tables/CohortsColums";
 import { useGetCohorts } from "@/lib/hooks/useGetCohorts";
-import { RefreshCw } from "lucide-react";
-
-// Helper function to convert number to Roman numeral
-const toRomanNumeral = (num: number): string => {
-  if (num === 0) return "0";
-
-  const romanNumerals = [
-    { value: 1000, numeral: "M" },
-    { value: 900, numeral: "CM" },
-    { value: 500, numeral: "D" },
-    { value: 400, numeral: "CD" },
-    { value: 100, numeral: "C" },
-    { value: 90, numeral: "XC" },
-    { value: 50, numeral: "L" },
-    { value: 40, numeral: "XL" },
-    { value: 10, numeral: "X" },
-    { value: 9, numeral: "IX" },
-    { value: 5, numeral: "V" },
-    { value: 4, numeral: "IV" },
-    { value: 1, numeral: "I" },
-  ];
-
-  let result = "";
-  let remaining = num;
-
-  for (const { value, numeral } of romanNumerals) {
-    while (remaining >= value) {
-      result += numeral;
-      remaining -= value;
-    }
-  }
-
-  return result;
-};
+import { useChainId } from "wagmi";
 
 const CohortsPage = () => {
   const [addCohortModalOpen, setAddCohortModal] = useState(false);
-  const [refreshKey, setRefreshKey] = useState(0);
+  const [addTrackModalOpen, setAddTrackModalOpen] = useState(false);
+  const [selectedCohort, setSelectedCohort] = useState<Cohort | null>(null);
+  const { cohorts, isLoading, cohortCount, error, isConnected, isCorrectNetwork, address } = useGetCohorts();
+  const chainId = useChainId();
 
-  // Fetch cohorts from blockchain
-  const {
-    cohorts: blockchainCohorts,
-    isLoading,
-    error,
-  } = useGetCohorts(refreshKey);
+  // Debug network status (console only)
+  useEffect(() => {
+    console.log("🌐 Network Debug:", {
+      chainId,
+      expectedChainId: 11155111, // Sepolia
+      isCorrectNetwork: chainId === 11155111,
+      hasError: !!error,
+      errorMessage: error?.message,
+      isConnected,
+      address,
+      cohortCount
+    });
+  }, [chainId, error, isConnected, address, cohortCount]);
 
-  // Transform blockchain data to match our Cohort type
-  const cohortsData: Cohort[] = blockchainCohorts.map((cohort) => ({
-    id: cohort.id,
-    name: `Cohort ${toRomanNumeral(cohort.id)}`, // Generate name from ID with Roman numeral
-    startDate: cohort.startDate,
-    endDate: cohort.endDate,
-    students: cohort.totalStudents,
-    tracks: cohort.tracks,
-    duration: cohort.duration,
-    status: "active" as const, // This will be calculated in the column render
-  }));
+  // Refresh data when modal is closed (indicating a new cohort might have been created)
+  const handleModalClose = () => {
+    setAddCohortModal(false);
+    // The useGetCohorts hook will automatically refetch when cohortCount changes
+  };
 
-  // Refresh function
-  const handleRefresh = useCallback(() => {
-    setRefreshKey((prev) => prev + 1);
-  }, []);
+  // Handle add track modal close
+  const handleAddTrackModalClose = () => {
+    setAddTrackModalOpen(false);
+    setSelectedCohort(null);
+  };
 
-  // Handle cohort added
-  const handleCohortAdded = useCallback(() => {
-    handleRefresh();
-  }, [handleRefresh]);
+  // Handle add track action from table
+  const handleAddTrack = (cohort: Cohort) => {
+    setSelectedCohort(cohort);
+    setAddTrackModalOpen(true);
+  };
 
-  if (error) {
-    return (
-      <div className="p-6 h-screen bg-white rounded-xl">
-        <div className="flex items-center justify-center h-full">
+  // Create columns with the add track callback
+  const cohortcolumns = createCohortColumns(handleAddTrack);
+
+  // Render different content based on connection status
+  const renderContent = () => {
+    if (!isConnected) {
+      return (
+        <div className="flex items-center justify-center h-32">
           <div className="text-center">
-            <h2 className="text-xl font-semibold text-red-600 mb-2">
-              Error Loading Cohorts
-            </h2>
-            <p className="text-gray-600">{error}</p>
-            <Button onClick={handleRefresh} className="mt-4" variant="outline">
-              Try Again
-            </Button>
+            <div className="text-gray-500 mb-2">Wallet not connected</div>
+            <div className="text-sm text-gray-400">Please connect your wallet to view cohorts</div>
           </div>
         </div>
-      </div>
+      );
+    }
+
+    if (!isCorrectNetwork) {
+      return (
+        <div className="flex items-center justify-center h-32">
+          <div className="text-center">
+            <div className="text-gray-500 mb-2">Wrong network</div>
+            <div className="text-sm text-gray-400">Please switch to Sepolia testnet</div>
+          </div>
+        </div>
+      );
+    }
+
+    if (isLoading) {
+      return (
+        <div className="flex items-center justify-center h-32">
+          <div className="text-gray-500">Loading cohorts...</div>
+        </div>
+      );
+    }
+
+    if (cohorts.length === 0) {
+      return (
+        <div className="flex items-center justify-center h-32">
+          <div className="text-gray-500">
+            {error ? (
+              <div>
+                <div>Error loading cohorts: {error.message}</div>
+                <div className="text-sm mt-2">Please check your network connection</div>
+              </div>
+            ) : (
+              "No cohorts found. Create your first cohort!"
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <Table
+        data={cohorts}
+        columns={cohortcolumns}
+        title=""
+        searchable={false}
+        exportable={false}
+      />
     );
-  }
+  };
 
   return (
     <div className="p-6 h-screen bg-white rounded-xl">
@@ -104,70 +123,35 @@ const CohortsPage = () => {
             Create, organize, and manage student cohorts.
           </p>
         </div>
-        <div className="flex gap-2">
-          <Button
-            size="lg"
-            variant="outline"
-            className="flex text-base h-[44px] w-[44px] gap-1 items-center"
-            onClick={handleRefresh}
-            disabled={isLoading}
-          >
-            <RefreshCw
-              className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`}
-            />
-          </Button>
-          <Button
-            size="lg"
-            className="flex text-base h-[44px] w-[130px] gap-1 items-center"
-            onClick={() => setAddCohortModal(true)}
-          >
-            Add new
-          </Button>
-        </div>
+
+        <Button
+          size="lg"
+          className="flex text-base h-[44px] w-[130px] gap-1 items-center"
+          onClick={() => setAddCohortModal(true)}
+          disabled={!isConnected || !isCorrectNetwork}
+        >
+          Add new
+        </Button>
       </div>
 
       <div className="mt-7 w-full">
-        {isLoading ? (
-          <div className="flex items-center justify-center h-64">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black mx-auto mb-2"></div>
-              <p className="text-gray-600">Loading cohorts...</p>
-            </div>
-          </div>
-        ) : (
-          <>
-            {cohortsData.length === 0 ? (
-              <div className="flex items-center justify-center h-64">
-                <div className="text-center">
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">
-                    No Cohorts Found
-                  </h3>
-                  <p className="text-gray-600 mb-4">
-                    Create your first cohort to get started.
-                  </p>
-                  <Button onClick={() => setAddCohortModal(true)}>
-                    Create Cohort I
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <Table
-                data={cohortsData}
-                columns={cohortcolumns}
-                title=""
-                searchable={false}
-                exportable={false}
-              />
-            )}
-          </>
-        )}
+        {renderContent()}
       </div>
 
       <AddCohortModal
         isOpen={addCohortModalOpen}
-        setIsOpen={setAddCohortModal}
-        onCohortAdded={handleCohortAdded}
+        setIsOpen={handleModalClose}
       />
+
+      {selectedCohort && (
+        <AddTrackToCohortModal
+          isOpen={addTrackModalOpen}
+          setIsOpen={handleAddTrackModalClose}
+          cohortId={parseInt(selectedCohort.id)}
+          cohortName={selectedCohort.name}
+          existingTracks={selectedCohort.tracks}
+        />
+      )}
     </div>
   );
 };

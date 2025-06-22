@@ -5,138 +5,76 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "../ui/button";
-import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { MoreHorizontal, Pencil, Trash2, Plus } from "lucide-react";
 
 export type Cohort = {
-  id: number;
+  id: string;
   name: string;
-  startDate: number;
-  endDate: number;
+  startDate: string;
+  endDate: string;
   students: number;
-  tracks: string[];
-  duration: number;
   status: "active" | "completed" | "upcoming";
+  tracks: number[]; // Array of track numbers (0 for web2, 1 for web3)
 };
 
-// Helper function to format timestamp to readable date
-const formatDate = (timestamp: number): string => {
-  return new Date(timestamp * 1000).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
+// Helper function to get track name
+const getTrackName = (trackNumber: number): string => {
+  return trackNumber === 0 ? "web2" : trackNumber === 1 ? "web3" : `Track ${trackNumber}`;
 };
 
-// Helper function to calculate status based on dates
-const calculateStatus = (
-  startDate: number,
-  endDate: number
-): "active" | "completed" | "upcoming" => {
-  const now = Math.floor(Date.now() / 1000);
-
-  if (now < startDate) {
-    return "upcoming";
-  } else if (now >= startDate && now <= endDate) {
-    return "active";
-  } else {
-    return "completed";
-  }
-};
-
-// Helper function to format tracks
-const formatTracks = (tracks: string[]): string => {
-  if (!tracks || tracks.length === 0) return "No tracks";
-  return tracks.map((track) => track.toUpperCase()).join(", ");
-};
-
-// Helper function to convert number to Roman numeral
-const toRomanNumeral = (num: number): string => {
-  if (num === 0) return "0";
-
-  const romanNumerals = [
-    { value: 1000, numeral: "M" },
-    { value: 900, numeral: "CM" },
-    { value: 500, numeral: "D" },
-    { value: 400, numeral: "CD" },
-    { value: 100, numeral: "C" },
-    { value: 90, numeral: "XC" },
-    { value: 50, numeral: "L" },
-    { value: 40, numeral: "XL" },
-    { value: 10, numeral: "X" },
-    { value: 9, numeral: "IX" },
-    { value: 5, numeral: "V" },
-    { value: 4, numeral: "IV" },
-    { value: 1, numeral: "I" },
-  ];
-
-  let result = "";
-  let remaining = num;
-
-  for (const { value, numeral } of romanNumerals) {
-    while (remaining >= value) {
-      result += numeral;
-      remaining -= value;
-    }
-  }
-
-  return result;
-};
-
-export const cohortcolumns = [
+// Create a function that returns the columns with the onAddTrack callback
+export const createCohortColumns = (onAddTrack: (cohort: Cohort) => void) => [
   {
     header: "Cohort Name",
-    accessor: "id" as const,
-    render: (item: Cohort) => (
-      <span className="font-medium">Cohort {toRomanNumeral(item.id)}</span>
-    ),
+    accessor: "name" as const,
+  },
+  {
+    header: "Start Date",
+    accessor: "startDate" as const,
+  },
+  {
+    header: "End Date",
+    accessor: "endDate" as const,
+  },
+  {
+    header: "Students",
+    accessor: "students" as const,
   },
   {
     header: "Tracks",
     accessor: "tracks" as const,
     render: (item: Cohort) => (
-      <span className="text-sm text-gray-600">{formatTracks(item.tracks)}</span>
-    ),
-  },
-  {
-    header: "Start Date",
-    accessor: "startDate" as const,
-    render: (item: Cohort) => (
-      <span className="text-sm">{formatDate(item.startDate)}</span>
-    ),
-  },
-  {
-    header: "End Date",
-    accessor: "endDate" as const,
-    render: (item: Cohort) => (
-      <span className="text-sm">{formatDate(item.endDate)}</span>
-    ),
-  },
-  {
-    header: "Students",
-    accessor: "students" as const,
-    render: (item: Cohort) => (
-      <span className="font-medium">{item.students}</span>
+      <div className="flex flex-wrap gap-1">
+        {item.tracks.length > 0 ? (
+          item.tracks.map((track) => (
+            <span
+              key={`${item.id}-${track}`}
+              className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+            >
+              {getTrackName(track)}
+            </span>
+          ))
+        ) : (
+          <span className="text-gray-500 text-sm">No tracks</span>
+        )}
+      </div>
     ),
   },
   {
     header: "Status",
     accessor: "status" as const,
-    render: (item: Cohort) => {
-      const status = calculateStatus(item.startDate, item.endDate);
-      return (
-        <span
-          className={`px-2 py-1 rounded-full text-xs font-medium ${
-            status === "active"
-              ? "bg-green-100 text-green-800"
-              : status === "upcoming"
-              ? "bg-blue-100 text-blue-800"
-              : "bg-gray-100 text-gray-800"
+    render: (item: Cohort) => (
+      <span
+        className={`px-2 py-1 rounded-full text-xs font-medium ${item.status === "active"
+          ? "bg-green-100 text-green-800"
+          : item.status === "upcoming"
+            ? "bg-blue-100 text-blue-800"
+            : "bg-gray-100 text-gray-800"
           }`}
-        >
-          {status}
-        </span>
-      );
-    },
+      >
+        {item.status}
+      </span>
+    ),
   },
   {
     header: "Actions",
@@ -150,6 +88,13 @@ export const cohortcolumns = [
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
+          <DropdownMenuItem
+            className="flex items-center gap-2 cursor-pointer"
+            onClick={() => onAddTrack(item)}
+          >
+            <Plus className="h-4 w-4" />
+            Add Track
+          </DropdownMenuItem>
           <DropdownMenuItem
             className="flex items-center gap-2 cursor-pointer"
             onClick={() => console.log("Edit", item.id)}

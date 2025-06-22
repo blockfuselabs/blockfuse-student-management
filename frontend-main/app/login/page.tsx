@@ -20,8 +20,7 @@ const LoginPage = () => {
   } = useUserRole();
   const router = useRouter();
   const { isConnected, isConnecting: wagmiIsConnecting } = useAccount();
-
-  console.log(isAdmin, isStudent, isSuperAdmin, roleLoading);
+  console.log(isAdmin,isStudent,isSuperAdmin,roleLoading)
   useEffect(() => {
     if (isConnected && !roleLoading && !isRoleChecking) {
       setIsRoleChecking(true); // Simulate blockchain role checking delay

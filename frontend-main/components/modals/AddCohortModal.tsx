@@ -6,6 +6,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -106,6 +107,9 @@ export function AddCohortModal({ isOpen, setIsOpen, onCohortAdded }: Props) {
           <DialogTitle className="text-lg font-semibold text-gray-900">
             Add New Cohort
           </DialogTitle>
+          <DialogDescription className="text-sm text-gray-600">
+            Create a new cohort by selecting start and end dates.
+          </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4 mt-2">
           {/* Start Date Picker */}
@@ -121,11 +125,10 @@ export function AddCohortModal({ isOpen, setIsOpen, onCohortAdded }: Props) {
                 <Button
                   id="startDate"
                   variant="outline"
-                  className={`w-full justify-between ${
-                    !startDate && formattedError?.includes("start date")
-                      ? "border-red-500"
-                      : ""
-                  }`}
+                  className={`w-full justify-between ${!startDate && formattedError?.includes("start date")
+                    ? "border-red-500"
+                    : ""
+                    }`}
                   onClick={() => setOpenStart(true)}
                   type="button"
                 >
@@ -156,11 +159,10 @@ export function AddCohortModal({ isOpen, setIsOpen, onCohortAdded }: Props) {
                 <Button
                   id="endDate"
                   variant="outline"
-                  className={`w-full justify-between ${
-                    !endDate && formattedError?.includes("end date")
-                      ? "border-red-500"
-                      : ""
-                  }`}
+                  className={`w-full justify-between ${!endDate && formattedError?.includes("end date")
+                    ? "border-red-500"
+                    : ""
+                    }`}
                   onClick={() => setOpenEnd(true)}
                   type="button"
                 >
@@ -181,7 +183,7 @@ export function AddCohortModal({ isOpen, setIsOpen, onCohortAdded }: Props) {
               </PopoverContent>
             </Popover>
           </div>
-          {/* Error Display (4 lines) */}
+          {/* Error Display */}
           <div className="w-full" aria-live="polite">
             {formattedError && (
               <div className="mt-2 text-red-500 text-sm flex items-center gap-1 truncate">
