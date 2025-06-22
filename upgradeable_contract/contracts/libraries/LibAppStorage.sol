@@ -40,6 +40,7 @@ library LibAppStorage {
         mapping(address => studentDetails) student;
         mapping(address => int[] ) studentScore;
         mapping(address => bool) admins;
+        address[] adminList; // Array to track all admin addresses for enumeration
         // Mapping: Cohort ID -> Track -> Day -> Student Address -> Attendance
         mapping(uint8 => mapping(Track => mapping(uint256 => mapping(address => bool)))) attendance;
         mapping(uint8 => mapping(Track =>AttendanceRecord[])) attendanceRecords;

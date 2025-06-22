@@ -1,3 +1,5 @@
+
+
 const { getSelectors, FacetCutAction } = require("./libraries/diamond.js");
 const { ethers } = require("hardhat");
 async function deployDiamond() {
@@ -30,7 +32,9 @@ async function deployDiamond() {
   const FacetNames = [
     "DiamondLoupeFacet",
     "OwnershipFacet",
-    "DiamondCutFacet",
+    "AdminFacet",
+    "StudentFacet",
+    "CohortFacet",
   ];
   const cut = [];
   for (const FacetName of FacetNames) {

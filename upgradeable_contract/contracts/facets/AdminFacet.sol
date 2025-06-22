@@ -32,13 +32,29 @@ contract AdminFacet {
     }
 
     function addAdmin(address adminAddress) external onlySuperAdmin returns (bool) {
+        require(adminAddress != address(0), Error.INVALID_ADDRESS());
+        require(!layout.admins[adminAddress], "Admin already exists");
+        
         layout.admins[adminAddress] = true;
+        layout.adminList.push(adminAddress);
         emit Event.AdminAdded(adminAddress);
         return true;
     }
 
     function removeAdmin(address adminAddress) external onlySuperAdmin returns (bool) {
+        require(layout.admins[adminAddress], "Admin does not exist");
+        
         layout.admins[adminAddress] = false;
+        
+        // Remove from adminList array
+        for (uint256 i = 0; i < layout.adminList.length; i++) {
+            if (layout.adminList[i] == adminAddress) {
+                layout.adminList[i] = layout.adminList[layout.adminList.length - 1];
+                layout.adminList.pop();
+                break;
+            }
+        }
+        
         emit Event.AdminRemoved(adminAddress);
         return true;
     }
@@ -106,17 +122,35 @@ contract AdminFacet {
         require(layout.student[oldAddress].isActive, Error.STUDENT_DOES_NOT_EXIST());
         require(!layout.student[newAddress].isActive, Error.STUDENT_DOES_NOT_EXIST());
 
+        uint8 cohortId = layout.student[oldAddress].cohort;
+        LibAppStorage.Track track = layout.student[oldAddress].track;
+
+        address[] storage students = layout.cohorts[cohortId].studentsByTrack[track];
+        uint256 idx = students.length; // default to not found
+        for (uint256 i = 0; i < students.length; i++) {
+            if (students[i] == oldAddress) {
+                idx = i;
+                break;
+            }
+        }
+        if (idx < students.length) {
+            students[idx] = newAddress;
+        }
+
         layout.student[newAddress] = layout.student[oldAddress];
         layout.student[newAddress].isActive = true;
         layout.student[newAddress].studentAddress = newAddress;
-
         // Deactivate the old address
         layout.student[oldAddress].isActive = false;
 
         emit Event.StudentWalletReplaced(oldAddress, newAddress);
     }
 
-    function isStudentActive(address student) public view returns (bool) {
+    function isStudentActive(address student) external view returns (bool) {
         return layout.student[student].isActive;
+    }
+
+    function getAllAdmins() external view returns (address[] memory) {
+        return layout.adminList;
     }
 }

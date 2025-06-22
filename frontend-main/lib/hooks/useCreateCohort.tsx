@@ -1,16 +1,15 @@
 "use client";
 import { useCallback, useState } from "react";
-import { useWriteContract, useWaitForTransactionReceipt } from "wagmi";
+import { useWriteContract, useWaitForTransactionReceipt, usePublicClient } from "wagmi";
 import { CONTRACT_ADDRESS } from '@/lib/contract/address';
-import ABI from "@/lib/contract/ABI.json"
+import CohortFacetABI from "@/lib/contract/CohortFacet.json"
 
 export const useCreateCohort = () => {
   const [error, setError] = useState<string | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
-
+  const publicClient = usePublicClient();
 
   const { writeContract, data: hash, isPending, error: writeError } = useWriteContract();
-
 
   const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
     hash,
@@ -19,31 +18,52 @@ export const useCreateCohort = () => {
   interface CreateCohortParams {
     startDate: string | number | Date;
     endDate: string | number | Date;
+    tracks?: number[];
   }
 
-  type CreateCohortFunction = (startDate: CreateCohortParams['startDate'], endDate: CreateCohortParams['endDate']) => Promise<void>;
+  type CreateCohortFunction = (startDate: CreateCohortParams['startDate'], endDate: CreateCohortParams['endDate'], tracks?: number[]) => Promise<void>;
 
   const createCohort: CreateCohortFunction = useCallback(
-    async (startDate, endDate) => {
+    async (startDate, endDate, tracks = [0, 1]) => {
       try {
         setError(null);
         setIsSuccess(false);
 
-        
         if (!startDate || !endDate || startDate >= endDate) {
           throw new Error("Invalid date range: startDate must be before endDate");
         }
 
         const startTimestamp: number = Math.floor(new Date(startDate).getTime() / 1000);
         const endTimestamp: number = Math.floor(new Date(endDate).getTime() / 1000);
-        console.log(startTimestamp)
-        console.log(endTimestamp)
+
+        // Create the cohort
         await writeContract({
           address: CONTRACT_ADDRESS,
-          abi: ABI.abi,
+          abi: CohortFacetABI.abi,
           functionName: "createCohort",
           args: [startTimestamp, endTimestamp],
         });
+
+        // Wait a moment for the transaction to be mined (optional: poll for confirmation)
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+
+        // Get the latest cohort count (assume the new cohort is the latest)
+        const cohortCount = await publicClient.readContract({
+          address: CONTRACT_ADDRESS,
+          abi: CohortFacetABI.abi,
+          functionName: "getCohortCount",
+        });
+        const newCohortId = Number(cohortCount);
+
+        // Add each selected track to the new cohort
+        for (const track of tracks) {
+          await writeContract({
+            address: CONTRACT_ADDRESS,
+            abi: CohortFacetABI.abi,
+            functionName: "addTrackToCohort",
+            args: [newCohortId, track],
+          });
+        }
 
         if (hash) {
           setIsSuccess(true);
@@ -58,15 +78,15 @@ export const useCreateCohort = () => {
         }
       }
     },
-    [writeContract]
+    [writeContract, publicClient, hash]
   );
 
   return {
     createCohort,
     isPending,
-    isConfirming, 
+    isConfirming,
     isSuccess: isSuccess && isConfirmed,
-    error: error || writeError?.message, 
-    transactionHash: hash, 
+    error: error || writeError?.message,
+    transactionHash: hash,
   };
 };
