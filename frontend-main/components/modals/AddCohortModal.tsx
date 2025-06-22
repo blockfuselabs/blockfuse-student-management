@@ -29,8 +29,6 @@ type Props = {
 export function AddCohortModal({ isOpen, setIsOpen, onCohortAdded }: Props) {
   const [startDate, setStartDate] = React.useState<Date | undefined>();
   const [endDate, setEndDate] = React.useState<Date | undefined>();
-  const [openStart, setOpenStart] = React.useState(false);
-  const [openEnd, setOpenEnd] = React.useState(false);
 
   const {
     createCohort,
@@ -39,6 +37,7 @@ export function AddCohortModal({ isOpen, setIsOpen, onCohortAdded }: Props) {
     isSuccess,
     error,
     transactionHash,
+    currentStep,
   } = useCreateCohort();
 
   // Format error message
@@ -81,8 +80,6 @@ export function AddCohortModal({ isOpen, setIsOpen, onCohortAdded }: Props) {
     setIsOpen(false);
     setStartDate(undefined);
     setEndDate(undefined);
-    setOpenStart(false);
-    setOpenEnd(false);
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -99,6 +96,7 @@ export function AddCohortModal({ isOpen, setIsOpen, onCohortAdded }: Props) {
   };
 
   const isFormValid = startDate && endDate && endDate > startDate;
+  const isProcessing = isPending || isConfirming;
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
@@ -108,10 +106,12 @@ export function AddCohortModal({ isOpen, setIsOpen, onCohortAdded }: Props) {
             Add New Cohort
           </DialogTitle>
           <DialogDescription className="text-sm text-gray-600">
-            Create a new cohort by selecting start and end dates.
+            Create a new cohort by selecting start and end dates. You can add
+            tracks later from the cohort table.
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4 mt-2">
+
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           {/* Start Date Picker */}
           <div>
             <label
@@ -120,17 +120,18 @@ export function AddCohortModal({ isOpen, setIsOpen, onCohortAdded }: Props) {
             >
               Start Date
             </label>
-            <Popover open={openStart} onOpenChange={setOpenStart}>
+            <Popover>
               <PopoverTrigger asChild>
                 <Button
                   id="startDate"
                   variant="outline"
-                  className={`w-full justify-between ${!startDate && formattedError?.includes("start date")
-                    ? "border-red-500"
-                    : ""
-                    }`}
-                  onClick={() => setOpenStart(true)}
+                  className={`w-full justify-between ${
+                    !startDate && formattedError?.includes("start date")
+                      ? "border-red-500"
+                      : ""
+                  }`}
                   type="button"
+                  disabled={isProcessing}
                 >
                   {startDate ? format(startDate, "PPP") : "Select start date"}
                   <CalendarIcon className="ml-2 h-4 w-4 opacity-50" />
@@ -142,29 +143,30 @@ export function AddCohortModal({ isOpen, setIsOpen, onCohortAdded }: Props) {
                   selected={startDate}
                   onSelect={(date) => {
                     setStartDate(date);
-                    setOpenStart(false);
                   }}
                   captionLayout="dropdown"
                 />
               </PopoverContent>
             </Popover>
           </div>
+
           {/* End Date Picker */}
           <div>
             <label htmlFor="endDate" className="block text-sm font-medium mb-1">
               End Date
             </label>
-            <Popover open={openEnd} onOpenChange={setOpenEnd}>
+            <Popover>
               <PopoverTrigger asChild>
                 <Button
                   id="endDate"
                   variant="outline"
-                  className={`w-full justify-between ${!endDate && formattedError?.includes("end date")
-                    ? "border-red-500"
-                    : ""
-                    }`}
-                  onClick={() => setOpenEnd(true)}
+                  className={`w-full justify-between ${
+                    !endDate && formattedError?.includes("end date")
+                      ? "border-red-500"
+                      : ""
+                  }`}
                   type="button"
+                  disabled={isProcessing}
                 >
                   {endDate ? format(endDate, "PPP") : "Select end date"}
                   <CalendarIcon className="ml-2 h-4 w-4 opacity-50" />
@@ -176,13 +178,23 @@ export function AddCohortModal({ isOpen, setIsOpen, onCohortAdded }: Props) {
                   selected={endDate}
                   onSelect={(date) => {
                     setEndDate(date);
-                    setOpenEnd(false);
                   }}
                   captionLayout="dropdown"
                 />
               </PopoverContent>
             </Popover>
           </div>
+
+          {/* Current Step Display */}
+          {currentStep && (
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+              <div className="flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin text-gray-600" />
+                <span className="text-sm text-gray-700">{currentStep}</span>
+              </div>
+            </div>
+          )}
+
           {/* Error Display */}
           <div className="w-full" aria-live="polite">
             {formattedError && (
@@ -192,19 +204,21 @@ export function AddCohortModal({ isOpen, setIsOpen, onCohortAdded }: Props) {
               </div>
             )}
           </div>
+
           {/* Success Display */}
           {isSuccess && (
             <div className="mt-2 text-green-500 text-sm truncate">
               Cohort created! Hash: {transactionHash?.slice(0, 10)}...
             </div>
           )}
+
           <Button
             type="submit"
             size="lg"
             className="w-full rounded-md bg-black text-white hover:bg-gray-800 transition"
-            disabled={isPending || isConfirming || !isFormValid}
+            disabled={isProcessing || !isFormValid}
           >
-            {isPending || isConfirming ? (
+            {isProcessing ? (
               <div className="flex items-center justify-center gap-2">
                 <Loader2 className="w-5 h-5 animate-spin" />
                 <span>{isPending ? "Sending..." : "Confirming..."}</span>

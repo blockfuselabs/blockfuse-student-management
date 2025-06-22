@@ -1,10 +1,6 @@
 import { useState } from "react";
-import {
-  useContractWrite,
-  usePrepareContractWrite,
-  useWaitForTransaction,
-} from "wagmi";
-import { DiamondABI } from "@/lib/contract/DiamondABI";
+import { useWriteContract, useWaitForTransactionReceipt } from "wagmi";
+import StudentFacetABI from "@/lib/contract/StudentFacet.json";
 import { CONTRACT_ADDRESS } from "@/lib/contract/address";
 
 export interface LogAttendanceParams {
@@ -17,26 +13,15 @@ export const useLogAttendance = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const { config } = usePrepareContractWrite({
-    address: CONTRACT_ADDRESS as `0x${string}`,
-    abi: DiamondABI,
-    functionName: "logAttendance",
-    enabled: false, // We'll enable it when we have the parameters
-  });
-
   const {
-    data,
-    write,
-    isError: isWriteError,
+    writeContract,
+    data: hash,
+    isPending,
     error: writeError,
-  } = useContractWrite(config);
+  } = useWriteContract();
 
-  const {
-    isLoading: isTransactionLoading,
-    isSuccess,
-    isError: isTransactionError,
-  } = useWaitForTransaction({
-    hash: data?.hash,
+  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
+    hash,
   });
 
   const logAttendance = async (params: LogAttendanceParams) => {
@@ -46,14 +31,19 @@ export const useLogAttendance = () => {
 
       console.log("Logging attendance with params:", params);
 
-      if (!write) {
+      if (!writeContract) {
         throw new Error("Contract write function not available");
       }
 
-      // Call the contract function
-      write({
+      // Call the contract function with the correct parameters
+      await writeContract({
+        address: CONTRACT_ADDRESS,
+        abi: StudentFacetABI.abi,
+        functionName: "logAttendance",
         args: [params.studentAddress, params.cohortId, params.track],
       });
+
+      console.log("Attendance logging transaction submitted");
     } catch (err) {
       console.error("Error logging attendance:", err);
       setError(err instanceof Error ? err.message : "Failed to log attendance");
@@ -67,17 +57,17 @@ export const useLogAttendance = () => {
     console.log("Attendance logged successfully!");
   }
 
-  if (isWriteError || isTransactionError) {
-    const errorMessage = writeError?.message || "Transaction failed";
-    console.error("Transaction error:", errorMessage);
-    setError(errorMessage);
+  if (writeError) {
+    console.error("Transaction error:", writeError.message);
+    setError(writeError.message);
   }
 
   return {
     logAttendance,
-    isLoading: isLoading || isTransactionLoading,
+    isLoading: isLoading || isPending || isConfirming,
     isSuccess,
     error,
     resetError: () => setError(null),
+    transactionHash: hash,
   };
 };

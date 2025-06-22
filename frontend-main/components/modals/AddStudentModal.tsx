@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 import { useRegisterStudent } from "@/lib/hooks/useRegisterStudent";
 import { useGetCohorts } from "@/lib/hooks/useGetCohorts";
+import { useCallback } from "react";
 import { toast } from "sonner"; 
 
 type Props = {
@@ -40,6 +41,20 @@ export function AddStudentModal({ isOpen, setIsOpen }: Props) {
   // Get real cohort data and filter out completed cohorts
   const { cohorts, isLoading: isLoadingCohorts } = useGetCohorts();
 
+  const handleClose = useCallback(() => {
+    setIsOpen(false);
+    // Reset form state
+    setFirstname("");
+    setLastname("");
+    setTwitter("");
+    setLinkedin("");
+    setGithub("");
+    setTrack("");
+    setCohort("");
+    setStudentAddress("");
+    // Reset hook state
+    reset();
+  });
   // Filter out completed cohorts and create options
   const cohortOptions = React.useMemo(() => {
     return cohorts
@@ -114,20 +129,6 @@ export function AddStudentModal({ isOpen, setIsOpen }: Props) {
     console.log('-------------------------');
   }, [cohort, cohorts, cohortOptions]);
 
-  const handleClose = useCallback(() => {
-    setIsOpen(false);
-    // Reset form state
-    setFirstname("");
-    setLastname("");
-    setTwitter("");
-    setLinkedin("");
-    setGithub("");
-    setTrack("");
-    setCohort("");
-    setStudentAddress("");
-    // Reset hook state
-    reset();
-  });
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();

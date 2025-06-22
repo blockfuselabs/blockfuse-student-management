@@ -77,19 +77,9 @@ export const useRegisterStudent = () => {
     }
 
     // Social media URL validation (optional but should be valid if provided)
-    const urlRegex = /^https?:\/\/.+/;
+  
 
-    if (params.twitter && !urlRegex.test(params.twitter) && !params.twitter.startsWith('@')) {
-      errors.push("Twitter should be a valid URL or handle starting with @");
-    }
-
-    if (params.linkedin && !urlRegex.test(params.linkedin)) {
-      errors.push("LinkedIn should be a valid URL");
-    }
-
-    if (params.github && !urlRegex.test(params.github) && !params.github.includes('github.com')) {
-      errors.push("GitHub should be a valid URL or username");
-    }
+    
 
     // Track validation - updated for new track structure
     if (params.track < 0 || params.track > 1) {
