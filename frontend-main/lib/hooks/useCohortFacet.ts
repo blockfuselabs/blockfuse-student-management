@@ -1,12 +1,13 @@
 import { useReadContract, useWriteContract } from "wagmi";
-import DiamondABI from "@/lib/contract/DiamondABI.json";
+// import DiamondABI from "@/lib/contract/DiamondABI.json";
+import CohortFacetABI from "@/lib/contract/CohortFacet.json";
 import { CONTRACT_ADDRESS } from "@/lib/contract/address";
 
 // Example: Add hooks for CohortFacet functions
 export function useGetCohort(cohortId: number) {
   return useReadContract({
     address: CONTRACT_ADDRESS as `0x${string}`,
-    abi: DiamondABI.abi,
+    abi: CohortFacetABI.abi,
     functionName: "getCohort",
     args: [cohortId],
   });

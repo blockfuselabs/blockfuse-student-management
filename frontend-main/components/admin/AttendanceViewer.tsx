@@ -1,9 +1,8 @@
 "use client";
 
-
 import { useState } from "react";
-import { useGetAttendanceByCohortAndTrack } from "@/hooks/useGetAttendance";
-import { useGetStudent } from "@/hooks/useGetStudent";
+import { useGetAttendanceByCohortAndTrack } from "@/lib/hooks/useGetAttendance";
+import { useGetStudent } from "@/lib/hooks/useGetStudent";
 import { useIsMounted } from "@/lib/hooks/useIsMounted";
 import { Label } from "@/components/ui/label";
 import {
@@ -178,7 +177,7 @@ export default function AttendanceViewer() {
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold">
-                      {attendance.students.length}
+                      {attendance.students?.length || 0}
                     </div>
                     <p className="text-xs text-muted-foreground">
                       in Cohort {cohortId} - {getTrackName(Number(track))}
@@ -195,7 +194,7 @@ export default function AttendanceViewer() {
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold">
-                      {attendance.dates.length}
+                      {attendance.dates?.length || 0}
                     </div>
                     <p className="text-xs text-muted-foreground">
                       days with attendance records
@@ -212,7 +211,7 @@ export default function AttendanceViewer() {
                   </CardHeader>
                   <CardContent>
                     <div className="text-sm font-bold">
-                      {attendance.dates.length > 0
+                      {attendance.dates && attendance.dates.length > 0
                         ? formatDate(
                             attendance.dates[attendance.dates.length - 1]
                           )
@@ -233,7 +232,7 @@ export default function AttendanceViewer() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {attendance.students.length > 0 ? (
+                  {attendance.students && attendance.students.length > 0 ? (
                     <Table>
                       <TableHeader>
                         <TableRow>
@@ -263,7 +262,7 @@ export default function AttendanceViewer() {
               </Card>
 
               {/* Attendance Dates */}
-              {attendance.dates.length > 0 && (
+              {attendance.dates && attendance.dates.length > 0 && (
                 <Card>
                   <CardHeader>
                     <CardTitle className="text-lg">Attendance Dates</CardTitle>

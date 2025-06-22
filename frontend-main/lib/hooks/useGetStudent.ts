@@ -1,5 +1,5 @@
-import { useContractRead } from "wagmi";
-import DiamondABI from "@/lib/contract/DiamondABI.json";
+import { useReadContract } from "wagmi";
+import StudentABI from "@/lib/contract/StudentFacet.json";
 import { CONTRACT_ADDRESS } from "@/lib/contract/address";
 
 export interface StudentData {
@@ -17,19 +17,23 @@ export interface StudentData {
 }
 
 export const useGetStudent = (studentAddress: string) => {
-  const { data, isLoading, isError, error, refetch } = useContractRead({
+  // Only call the contract if we have a valid student address
+  const shouldCallContract = Boolean(
+    studentAddress && studentAddress.trim() !== ""
+  );
+
+  const { data, isLoading, isError, error, refetch } = useReadContract({
     address: CONTRACT_ADDRESS as `0x${string}`,
-    abi: DiamondABI,
+    abi: StudentABI.abi,
     functionName: "getStudent",
-    args: [studentAddress],
-    enabled: !!studentAddress && studentAddress.length === 42,
+    args: shouldCallContract ? [studentAddress] : undefined,
   });
 
   return {
     student: data as StudentData | undefined,
-    isLoading,
-    isError,
-    error,
+    isLoading: shouldCallContract ? isLoading : false,
+    isError: shouldCallContract ? isError : false,
+    error: shouldCallContract ? error : undefined,
     refetch,
   };
 };

@@ -2,7 +2,8 @@
 import { useState, useEffect } from "react";
 import { useWriteContract, useTransaction } from "wagmi";
 import { CONTRACT_ADDRESS } from "@/lib/contract/address";
-import DiamondABI from "@/lib/contract/DiamondABI.json";
+import AdminAbi  from "@/lib/contract/AdminFacet.json"
+
 
 export interface AddAdminParams {
   adminAddress: string;
@@ -63,7 +64,7 @@ export const useAddAdmin = () => {
       // Call the contract function
       await writeContract({
         address: CONTRACT_ADDRESS as `0x${string}`,
-        abi: DiamondABI.abi,
+        abi: AdminAbi.abi,
         functionName: "addAdmin",
         args: [params.adminAddress],
       });

@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useWriteContract, useTransaction } from "wagmi";
 import { CONTRACT_ADDRESS } from "@/lib/contract/address";
-import DiamondABI from "@/lib/contract/DiamondABI.json";
+import AdminABI from "@/lib/contract/DiamondABI.json";
 
 export interface RemoveAdminParams {
   adminAddress: string;
@@ -63,7 +63,7 @@ export const useRemoveAdmin = () => {
       // Call the contract function
       await writeContract({
         address: CONTRACT_ADDRESS as `0x${string}`,
-        abi: DiamondABI.abi,
+        abi: AdminABI.abi,
         functionName: "removeAdmin",
         args: [params.adminAddress],
       });

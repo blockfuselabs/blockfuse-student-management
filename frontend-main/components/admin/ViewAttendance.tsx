@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { useGetAttendanceByCohortAndTrack } from "@/hooks/useGetAttendance";
-import { useGetStudent } from "@/hooks/useGetStudent";
+import { useGetStudent } from "@/lib/hooks/useGetStudent";
+
 import { Label } from "@/components/ui/label";
 import {
   Select,

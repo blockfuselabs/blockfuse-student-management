@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useLogAttendance } from "@/hooks/useLogAttendance";
-import { useGetStudent } from "@/hooks/useGetStudent";
+import { useLogAttendance } from "@/lib/hooks/useLogAttendance";
+import { useGetStudent } from "@/lib/hooks/useGetStudent";
 import { useIsMounted } from "@/lib/hooks/useIsMounted";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
