@@ -3,12 +3,14 @@
 import { useEffect, useState, useRef } from "react";
 import { Html5Qrcode, Html5QrcodeScannerState } from "html5-qrcode";
 import { Button } from "@/components/ui/button";
+import { useAccount } from "wagmi";
 
 export default function ScanPage() {
   const [scanResult, setScanResult] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isScanning, setIsScanning] = useState<boolean>(false);
   const html5QrCodeRef = useRef<Html5Qrcode | null>(null);
+  const  { address } = useAccount()
 
   useEffect(() => {
     // Initialize scanner on component mount
@@ -39,7 +41,7 @@ export default function ScanPage() {
       setScanResult(null);
       setIsScanning(true);
 
-      const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+      const config = { fps: 10, qrbox: { width: 250, height: 400 } };
       await html5QrCodeRef.current.start(
         { facingMode: "environment" },
         config,
@@ -86,11 +88,11 @@ export default function ScanPage() {
       <h2 className="text-[22px] font-medium text-gray-800">Scan attendance QR code</h2>
       <div
         id="qr-reader"
-        className="w-full max-w-[300px] h-[300px] border border-gray-300 rounded-xl"
+        className="w-full max-w-[300px] h-[300px] border border-gray-300 rounded-xl overflow-hidden"
       ></div>
       {scanResult && (
         <div className="text-green-600">
-          <p>Scanned Result: {scanResult}</p>
+          <p>Data to submit: {scanResult}, wallet address: { address }</p>
         </div>
       )}
       {error && (

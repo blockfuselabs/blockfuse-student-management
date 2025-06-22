@@ -6,6 +6,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -22,9 +23,10 @@ import { toast } from "sonner";
 type Props = {
   isOpen: boolean;
   setIsOpen: (open: boolean) => void;
+  onCohortAdded?: () => void;
 };
 
-export function AddCohortModal({ isOpen, setIsOpen }: Props) {
+export function AddCohortModal({ isOpen, setIsOpen, onCohortAdded }: Props) {
   const [startDate, setStartDate] = React.useState<Date | undefined>();
   const [endDate, setEndDate] = React.useState<Date | undefined>();
   const [openStart, setOpenStart] = React.useState(false);
@@ -42,8 +44,10 @@ export function AddCohortModal({ isOpen, setIsOpen }: Props) {
   // Format error message
   const formatError = (err: string | null) => {
     if (!err) return null;
-    if (err.includes("reverted")) return "Transaction failed. Please check your wallet.";
-    if (err.includes("network")) return "Network error. Please check your connection.";
+    if (err.includes("reverted"))
+      return "Transaction failed. Please check your wallet.";
+    if (err.includes("network"))
+      return "Network error. Please check your connection.";
     if (err.includes("start date")) return "Please select a start date.";
     if (err.includes("end date")) return "Please select an end date.";
     return "Failed to create cohort.";
@@ -58,8 +62,11 @@ export function AddCohortModal({ isOpen, setIsOpen }: Props) {
         description: `Transaction: ${transactionHash.slice(0, 10)}...`,
       });
       handleClose();
+      if (onCohortAdded) {
+        onCohortAdded();
+      }
     }
-  }, [isSuccess, transactionHash]);
+  }, [isSuccess, transactionHash, onCohortAdded]);
 
   // Handle errors
   React.useEffect(() => {
@@ -100,11 +107,17 @@ export function AddCohortModal({ isOpen, setIsOpen }: Props) {
           <DialogTitle className="text-lg font-semibold text-gray-900">
             Add New Cohort
           </DialogTitle>
+          <DialogDescription className="text-sm text-gray-600">
+            Create a new cohort by selecting start and end dates.
+          </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4 mt-2">
           {/* Start Date Picker */}
           <div>
-            <label htmlFor="startDate" className="block text-sm font-medium mb-1">
+            <label
+              htmlFor="startDate"
+              className="block text-sm font-medium mb-1"
+            >
               Start Date
             </label>
             <Popover open={openStart} onOpenChange={setOpenStart}>
@@ -112,7 +125,10 @@ export function AddCohortModal({ isOpen, setIsOpen }: Props) {
                 <Button
                   id="startDate"
                   variant="outline"
-                  className={`w-full justify-between ${!startDate && formattedError?.includes("start date") ? "border-red-500" : ""}`}
+                  className={`w-full justify-between ${!startDate && formattedError?.includes("start date")
+                    ? "border-red-500"
+                    : ""
+                    }`}
                   onClick={() => setOpenStart(true)}
                   type="button"
                 >
@@ -143,7 +159,10 @@ export function AddCohortModal({ isOpen, setIsOpen }: Props) {
                 <Button
                   id="endDate"
                   variant="outline"
-                  className={`w-full justify-between ${!endDate && formattedError?.includes("end date") ? "border-red-500" : ""}`}
+                  className={`w-full justify-between ${!endDate && formattedError?.includes("end date")
+                    ? "border-red-500"
+                    : ""
+                    }`}
                   onClick={() => setOpenEnd(true)}
                   type="button"
                 >
@@ -164,11 +183,12 @@ export function AddCohortModal({ isOpen, setIsOpen }: Props) {
               </PopoverContent>
             </Popover>
           </div>
-          {/* Error Display (4 lines) */}
+          {/* Error Display */}
           <div className="w-full" aria-live="polite">
             {formattedError && (
               <div className="mt-2 text-red-500 text-sm flex items-center gap-1 truncate">
-                <AlertCircle className="h-4 w-4 flex-shrink-0" /> {formattedError}
+                <AlertCircle className="h-4 w-4 flex-shrink-0" />{" "}
+                {formattedError}
               </div>
             )}
           </div>

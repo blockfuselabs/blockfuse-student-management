@@ -1,9 +1,9 @@
 // Enum for Track - matches your smart contract enum
 export enum Track {
-  WEB3 = 0,
-  WEB2 = 1,
-  
+  WEB2 = 0,
+  WEB3 = 1
 }
+
 export interface RegisterStudentParams {
   firstname: string;
   lastname: string;
