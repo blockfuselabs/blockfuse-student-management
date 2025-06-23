@@ -13,7 +13,7 @@ export default function ScanPage() {
   const html5QrCodeRef = useRef<Html5Qrcode | null>(null);
   const  { address } = useAccount()
 
-  const { logAttendance, isLoading, isSuccess, error, resetError } =
+  const { logAttendance } =
     useLogAttendance();
 
   useEffect(() => {
@@ -49,9 +49,17 @@ export default function ScanPage() {
       await html5QrCodeRef.current.start(
         { facingMode: "environment" },
         config,
-        (decodedText: string) => {
+        async (decodedText: string) => {
           setScanResult(decodedText);
           setIsScanning(false);
+          const data = JSON.parse(decodedText);
+          console.log(data)
+
+          await logAttendance({
+            studentAddress: address as string,
+            cohortId: Number(data.cohortId),
+            track: Number(data.trackId),
+          });
           html5QrCodeRef.current
             ?.stop()
             .catch((err: unknown) =>
