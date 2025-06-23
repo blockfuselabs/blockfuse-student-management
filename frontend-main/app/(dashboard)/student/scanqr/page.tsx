@@ -57,6 +57,7 @@ export default function ScanPage() {
 
           await logAttendance({
             studentAddress: address as string,
+            // studentAddress: '0xCe2682E44734b96361BD0d7B0DEC01D2AB82adcF',
             cohortId: Number(data.cohortId),
             track: Number(data.trackId),
           });
