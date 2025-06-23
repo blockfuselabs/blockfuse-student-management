@@ -39,8 +39,12 @@ const tracks = [
 ];
 
 export function GenerateAttendanceModal({ isOpen, setIsOpen }: Props) {
-  const [selectedCohort, setSelectedCohort] = React.useState<string | undefined>();
-  const [selectedTrack, setSelectedTrack] = React.useState<string | undefined>();
+  const [selectedCohort, setSelectedCohort] = React.useState<
+    string | undefined
+  >();
+  const [selectedTrack, setSelectedTrack] = React.useState<
+    string | undefined
+  >();
   const [isGenerating, setIsGenerating] = React.useState(false);
   const [qrCodeDataUrl, setQrCodeDataUrl] = React.useState<string | null>(null);
 
@@ -59,9 +63,16 @@ export function GenerateAttendanceModal({ isOpen, setIsOpen }: Props) {
     }
     setIsGenerating(true);
     try {
+      const now = new Date();
+      const day = now.getDate();
+      const month = now.getMonth() + 1;
+      const year = now.getFullYear();
       const dataToEmbed = JSON.stringify({
         cohortId: selectedCohort,
         trackId: selectedTrack,
+        day,
+        month,
+        year,
       });
       const qrCodeUrl = await QRCode.toDataURL(dataToEmbed);
       setQrCodeDataUrl(qrCodeUrl);
@@ -86,7 +97,13 @@ export function GenerateAttendanceModal({ isOpen, setIsOpen }: Props) {
         </DialogHeader>
         {qrCodeDataUrl ? (
           <div className="flex flex-col items-center gap-4 mt-2">
-            <Image src={qrCodeDataUrl} alt="Attendance QR Code" height={300} width={300} className="object-contain" />
+            <Image
+              src={qrCodeDataUrl}
+              alt="Attendance QR Code"
+              height={300}
+              width={300}
+              className="object-contain"
+            />
             <p className="text-sm text-gray-600">
               Scan this code to mark your attendance.
             </p>
@@ -101,7 +118,10 @@ export function GenerateAttendanceModal({ isOpen, setIsOpen }: Props) {
         ) : (
           <form onSubmit={handleSubmit} className="flex flex-col gap-4 mt-2">
             <div>
-              <label htmlFor="cohort" className="block text-sm font-medium mb-1">
+              <label
+                htmlFor="cohort"
+                className="block text-sm font-medium mb-1"
+              >
                 Cohort
               </label>
               <Select onValueChange={setSelectedCohort} value={selectedCohort}>
@@ -135,7 +155,7 @@ export function GenerateAttendanceModal({ isOpen, setIsOpen }: Props) {
                 </SelectContent>
               </Select>
             </div>
-           
+
             <Button
               type="submit"
               size="lg"
@@ -156,4 +176,4 @@ export function GenerateAttendanceModal({ isOpen, setIsOpen }: Props) {
       </DialogContent>
     </Dialog>
   );
-} 
+}

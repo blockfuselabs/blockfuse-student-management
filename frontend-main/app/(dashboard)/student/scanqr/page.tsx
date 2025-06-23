@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import { Html5Qrcode, Html5QrcodeScannerState } from "html5-qrcode";
 import { Button } from "@/components/ui/button";
 import { useAccount } from "wagmi";
+import { useLogAttendance } from "@/lib/hooks/useLogAttendance";
 
 export default function ScanPage() {
   const [scanResult, setScanResult] = useState<string | null>(null);
@@ -11,6 +12,9 @@ export default function ScanPage() {
   const [isScanning, setIsScanning] = useState<boolean>(false);
   const html5QrCodeRef = useRef<Html5Qrcode | null>(null);
   const  { address } = useAccount()
+
+  const { logAttendance, isLoading, isSuccess, error, resetError } =
+    useLogAttendance();
 
   useEffect(() => {
     // Initialize scanner on component mount
