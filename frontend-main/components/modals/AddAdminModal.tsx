@@ -1,5 +1,3 @@
-"use client";
-
 import * as React from "react";
 import {
   Dialog,
@@ -19,24 +17,29 @@ type Props = {
 
 export function AddAdminModal({ isOpen, setIsOpen, onAdminAdded }: Props) {
   const [address, setAddress] = React.useState("");
-  const { addAdmin, isLoading, isSuccess, error, resetError } = useAddAdmin();
+  const { addAdmin, isLoading, isSuccess, error, resetState } = useAddAdmin();
 
   // Reset form and hook state when modal opens/closes
   React.useEffect(() => {
     if (!isOpen) {
       setAddress("");
-      resetError();
+      resetState();
     }
-  }, [isOpen, resetError]);
+  }, [isOpen, resetState]);
 
-  // Close modal and refresh list on success
+  // Handle success - close modal and refresh list
   React.useEffect(() => {
     if (isSuccess) {
-      setIsOpen(false);
-      // Call the refresh callback if provided
-      if (onAdminAdded) {
-        onAdminAdded();
-      }
+      console.log("Transaction successful, closing modal and refreshing data");
+      
+      // Small delay to ensure blockchain state is updated
+      setTimeout(() => {
+        setIsOpen(false);
+        // Call the refresh callback if provided
+        if (onAdminAdded) {
+          onAdminAdded();
+        }
+      }, 1000); // 1 second delay to allow blockchain to update
     }
   }, [isSuccess, setIsOpen, onAdminAdded]);
 
@@ -84,6 +87,12 @@ export function AddAdminModal({ isOpen, setIsOpen, onAdminAdded }: Props) {
           {error && (
             <div className="text-red-600 text-sm bg-red-50 p-2 rounded-md">
               {error}
+            </div>
+          )}
+
+          {isSuccess && (
+            <div className="text-green-600 text-sm bg-green-50 p-2 rounded-md">
+              Admin added successfully! Refreshing data...
             </div>
           )}
 

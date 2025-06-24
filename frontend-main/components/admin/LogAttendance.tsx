@@ -23,6 +23,15 @@ import {
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CheckCircle, AlertCircle, Loader2, User } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from "@/components/ui/popover";
+import { format } from "date-fns";
+import { useHasAttendance } from "@/lib/hooks/useGetAttendance";
+import { Calendar as CalendarIcon } from "lucide-react";
 
 export default function LogAttendance() {
   const isMounted = useIsMounted();
@@ -31,6 +40,8 @@ export default function LogAttendance() {
   const [track, setTrack] = useState("");
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const hasAutoFilled = useRef(false);
+  const [attendanceDate, setAttendanceDate] = useState<Date | null>(new Date());
+  const [duplicateError, setDuplicateError] = useState<string | null>(null);
 
   const { logAttendance, isLoading, isSuccess, error, resetError } =
     useLogAttendance();
@@ -53,6 +64,35 @@ export default function LogAttendance() {
   useEffect(() => {
     hasAutoFilled.current = false;
   }, [studentAddress]);
+
+  // Convert selected date to Unix day (seconds at midnight UTC)
+  const selectedDay = attendanceDate
+    ? Math.floor(attendanceDate.setHours(0, 0, 0, 0) / 1000)
+    : 0;
+
+  // Check for duplicate attendance
+  const { hasAttendance, refetch: refetchHasAttendance } = useHasAttendance(
+    studentAddress,
+    Number(cohortId),
+    Number(track),
+    selectedDay
+  );
+
+  useEffect(() => {
+    setDuplicateError(null);
+    if (studentAddress && cohortId && track && attendanceDate) {
+      refetchHasAttendance();
+    }
+    // eslint-disable-next-line
+  }, [studentAddress, cohortId, track, attendanceDate]);
+
+  // Refetch attendance status after successful log
+  useEffect(() => {
+    if (isSuccess) {
+      refetchHasAttendance();
+    }
+    // eslint-disable-next-line
+  }, [isSuccess]);
 
   // Don't render until mounted to prevent hydration mismatch
   if (!isMounted) {
@@ -100,23 +140,33 @@ export default function LogAttendance() {
       errors.track = "Track is required";
     }
 
+    if (!attendanceDate) {
+      errors.attendanceDate = "Attendance date is required";
+    }
+
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
+    setDuplicateError(null);
     if (!validateForm()) {
       return;
     }
-
+    // Check for duplicate attendance before logging
+    if (hasAttendance) {
+      setDuplicateError(
+        "Attendance already logged for this student on this day."
+      );
+      return;
+    }
     resetError();
-
     await logAttendance({
       studentAddress,
       cohortId: Number(cohortId),
       track: Number(track),
+      // Note: logAttendance does not support custom date, so this will log for now
     });
   };
 
@@ -186,6 +236,27 @@ export default function LogAttendance() {
                     <span className="font-medium text-sm">
                       Student Information
                     </span>
+                    {/* Attendance Status Indicator */}
+                    {attendanceDate &&
+                      studentAddress &&
+                      cohortId &&
+                      track &&
+                      (hasAttendance === undefined ? (
+                        <span className="ml-3 text-xs text-gray-500 flex items-center gap-1">
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                          Checking attendance...
+                        </span>
+                      ) : hasAttendance ? (
+                        <span className="ml-3 px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-xs flex items-center gap-1">
+                          <CheckCircle className="h-3 w-3" />
+                          Attendance Taken
+                        </span>
+                      ) : (
+                        <span className="ml-3 px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-700 text-xs flex items-center gap-1">
+                          <AlertCircle className="h-3 w-3" />
+                          No Attendance Yet
+                        </span>
+                      ))}
                   </div>
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
@@ -255,6 +326,50 @@ export default function LogAttendance() {
                 <p className="text-sm text-red-500">{formErrors.track}</p>
               )}
             </div>
+
+            {/* Date Picker */}
+            <div className="space-y-2">
+              <Label htmlFor="attendanceDate">Attendance Date</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    id="attendanceDate"
+                    variant="outline"
+                    className={`w-full justify-between ${
+                      formErrors.attendanceDate ? "border-red-500" : ""
+                    }`}
+                    type="button"
+                  >
+                    {attendanceDate
+                      ? format(attendanceDate, "PPP")
+                      : "Select date"}
+                    <CalendarIcon className="ml-2 h-4 w-4 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={attendanceDate || undefined}
+                    onSelect={setAttendanceDate}
+                    captionLayout="dropdown"
+                    required={true}
+                  />
+                </PopoverContent>
+              </Popover>
+              {formErrors.attendanceDate && (
+                <p className="text-sm text-red-500">
+                  {formErrors.attendanceDate}
+                </p>
+              )}
+            </div>
+
+            {/* Duplicate Error */}
+            {duplicateError && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{duplicateError}</AlertDescription>
+              </Alert>
+            )}
 
             {/* Success Message */}
             {isSuccess && (

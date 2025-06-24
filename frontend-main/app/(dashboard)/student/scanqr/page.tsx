@@ -8,13 +8,12 @@ import { useLogAttendance } from "@/lib/hooks/useLogAttendance";
 
 export default function ScanPage() {
   const [scanResult, setScanResult] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  // const [error, setError] = useState<string | null>(null);
   const [isScanning, setIsScanning] = useState<boolean>(false);
   const html5QrCodeRef = useRef<Html5Qrcode | null>(null);
   const  { address } = useAccount()
 
-  const { logAttendance, isLoading, isSuccess, error, resetError } =
-    useLogAttendance();
+  const { logAttendance, isLoading, isSuccess, error, resetError } =useLogAttendance();
 
   useEffect(() => {
     // Initialize scanner on component mount
