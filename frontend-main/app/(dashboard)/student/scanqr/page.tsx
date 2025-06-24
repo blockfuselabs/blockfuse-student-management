@@ -5,6 +5,7 @@ import { Html5Qrcode, Html5QrcodeScannerState } from "html5-qrcode";
 import { Button } from "@/components/ui/button";
 import { useAccount } from "wagmi";
 import { useLogAttendance } from "@/lib/hooks/useLogAttendance";
+import { ConnectButton } from "@rainbow-me/rainbowkit";
 
 export default function ScanPage() {
   const [scanResult, setScanResult] = useState<string | null>(null);
@@ -13,7 +14,7 @@ export default function ScanPage() {
   const html5QrCodeRef = useRef<Html5Qrcode | null>(null);
   const  { address } = useAccount()
 
-  const { logAttendance } =
+  const { logAttendance, isSuccess } =
     useLogAttendance();
 
   useEffect(() => {
@@ -55,6 +56,8 @@ export default function ScanPage() {
           const data = JSON.parse(decodedText);
           console.log(data)
 
+          // this where log attendacne is called
+          
           await logAttendance({
             studentAddress: address as string,
             // studentAddress: '0xCe2682E44734b96361BD0d7B0DEC01D2AB82adcF',
@@ -124,6 +127,8 @@ export default function ScanPage() {
           </Button>
         )}
       </div>
+
+      <ConnectButton />
     </div>
   );
 }
