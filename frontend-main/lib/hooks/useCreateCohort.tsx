@@ -1,104 +1,106 @@
 "use client";
-import { useCallback, useState } from "react";
-import {
-  useWriteContract,
-  useWaitForTransactionReceipt,
-  usePublicClient,
-} from "wagmi";
+
+import { useState, useEffect, useCallback } from "react";
+import { useWriteContract, useWaitForTransactionReceipt } from "wagmi";
 import { CONTRACT_ADDRESS } from "@/lib/contract/address";
 import CohortFacetABI from "@/lib/contract/CohortFacet.json";
 
 export const useCreateCohort = () => {
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
-  const [currentStep, setCurrentStep] = useState<string>("");
-  const publicClient = usePublicClient();
 
   const {
     writeContract,
-    data: hash,
-    isPending,
+    data: writeData,
+    isError: isPendingError,
     error: writeError,
+    isPending: isWritePending,
   } = useWriteContract();
 
-  const { isLoading: isConfirming, isSuccess: isConfirmed } =
-    useWaitForTransactionReceipt({
-      hash,
-    });
+  const {
+    isLoading: isTransactionLoading,
+    isSuccess: isTransactionSuccess,
+    isError: isTransactionError,
+    error: transactionError,
+  } = useWaitForTransactionReceipt({
+    hash: writeData,
+  });
 
-  interface CreateCohortParams {
-    startDate: string | number | Date;
-    endDate: string | number | Date;
-  }
+  // Handle success
+  useEffect(() => {
+    if (isTransactionSuccess) {
+      console.log("Cohort created successfully!");
+      setIsSuccess(true);
+      setIsLoading(false);
+    }
+  }, [isTransactionSuccess]);
 
-  type CreateCohortFunction = (
-    startDate: CreateCohortParams["startDate"],
-    endDate: CreateCohortParams["endDate"]
-  ) => Promise<void>;
+  // Handle errors
+  useEffect(() => {
+    if (isPendingError || isTransactionError) {
+      const errorMessage =
+        writeError?.message ||
+        transactionError?.message ||
+        transactionError?.toString() ||
+        "Failed to create cohort";
+      console.log("Transaction error:", errorMessage);
+      setError(errorMessage);
+      setIsLoading(false);
+    }
+  }, [isPendingError, isTransactionError, writeError, transactionError]);
 
-  const createCohort: CreateCohortFunction = useCallback(
-    async (startDate, endDate) => {
+  // Reset success state on new transaction
+  useEffect(() => {
+    if (isWritePending) {
+      setIsSuccess(false);
+    }
+  }, [isWritePending]);
+
+  const createCohort = useCallback(
+    async (startDate: Date, endDate: Date) => {
       try {
+        setIsLoading(true);
         setError(null);
         setIsSuccess(false);
-        setCurrentStep("");
 
-        if (!startDate || !endDate || startDate >= endDate) {
-          throw new Error(
-            "Invalid date range: startDate must be before endDate"
-          );
+        if (!startDate || !endDate || endDate <= startDate) {
+          throw new Error("Invalid date range: End date must be after start date");
         }
 
-        if (!publicClient) {
-          throw new Error("Public client not available");
-        }
+        const startTimestamp = Math.floor(startDate.getTime() / 1000);
+        const endTimestamp = Math.floor(endDate.getTime() / 1000);
 
-        const startTimestamp: number = Math.floor(
-          new Date(startDate).getTime() / 1000
-        );
-        const endTimestamp: number = Math.floor(
-          new Date(endDate).getTime() / 1000
-        );
-
-        // Create the cohort only
-        setCurrentStep("Creating cohort...");
-        console.log("Creating cohort with dates:", {
+        console.log("Creating cohort with params:", {
           startTimestamp,
           endTimestamp,
         });
 
-        await writeContract({
-          address: CONTRACT_ADDRESS,
+        writeContract({
+          address: CONTRACT_ADDRESS as `0x${string}`,
           abi: CohortFacetABI.abi,
           functionName: "createCohort",
           args: [startTimestamp, endTimestamp],
         });
-
-        setCurrentStep("Cohort created successfully!");
-        if (hash) {
-          setIsSuccess(true);
-        }
-      } catch (err: unknown) {
-        setCurrentStep("");
-        if (err instanceof Error) {
-          setError(err.message);
-          console.error("Error creating cohort:", err);
-        } else {
-          setError("Failed to create cohort");
-          console.error("Error creating cohort:", err);
-        }
+      } catch (err) {
+        console.error("Error creating cohort:", err);
+        setError(err instanceof Error ? err.message : "Failed to create cohort");
+        setIsLoading(false);
       }
     },
-    [writeContract, publicClient, hash]
+    [writeContract]
   );
+
+  const resetState = useCallback(() => {
+    setError(null);
+    setIsSuccess(false);
+  }, []);
 
   return {
     createCohort,
-    isPending,
-    isConfirming,
-    isSuccess: isSuccess && isConfirmed,
-    error: error || writeError?.message,
-    transactionHash: hash,
-    currentStep,
+    isLoading: isLoading || isWritePending || isTransactionLoading,
+    isSuccess,
+    error,
+    resetState,
   };
 };
