@@ -13,6 +13,10 @@
 # testing
 /coverage
 
+scripts
+
+.cursor
+
 # next.js
 /.next/
 /out/
