@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Outfit } from "next/font/google";
-import { Providers } from "./provider";
+import AppClientProviders from "./AppClientProviders";
 import "./globals.css";
 
 const outfit = Outfit({
@@ -20,8 +20,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${outfit.variable} font-sans antialiased`}>
-        <Providers>{children}</Providers>
+      <body className={`${outfit.className} font-sans antialiased`}>
+        <AppClientProviders>{children}</AppClientProviders> 
       </body>
     </html>
   );

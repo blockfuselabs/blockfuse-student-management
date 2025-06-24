@@ -1,10 +1,9 @@
 import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
 
 const BlockFuseSMSModule = buildModule("BlockFuseSMSModule", (m) => {
+  const blockFuseSMS = m.contract("BlockFuseSMS");
 
-    const save = m.contract("BlockFuseSMS");
-
-    return { save };
+  return { blockFuseSMS };
 });
 
 export default BlockFuseSMSModule;

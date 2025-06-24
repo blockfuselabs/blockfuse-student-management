@@ -1,126 +1,136 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Table } from "@/components/shared/Table";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-
-// Define the type for our cohort data
-type Cohort = {
-  id: string;
-  name: string;
-  startDate: string;
-  endDate: string;
-  students: number;
-  status: "active" | "completed" | "upcoming";
-};
-
-// Sample data
-const data: Cohort[] = [
-  {
-    id: "1",
-    name: "Web Development 2024",
-    startDate: "2024-01-15",
-    endDate: "2024-07-15",
-    students: 25,
-    status: "active",
-  },
-  {
-    id: "2",
-    name: "Mobile Development 2024",
-    startDate: "2024-02-01",
-    endDate: "2024-08-01",
-    students: 20,
-    status: "upcoming",
-  },
-  {
-    id: "3",
-    name: "Data Science 2024",
-    startDate: "2024-03-01",
-    endDate: "2024-09-01",
-    students: 15,
-    status: "upcoming",
-  },
-];
-
-// Define columns
-const columns = [
-  {
-    header: "Cohort Name",
-    accessor: "name" as const,
-  },
-  {
-    header: "Start Date",
-    accessor: "startDate" as const,
-  },
-  {
-    header: "End Date",
-    accessor: "endDate" as const,
-  },
-  {
-    header: "Students",
-    accessor: "students" as const,
-  },
-  {
-    header: "Status",
-    accessor: "status" as const,
-    render: (item: Cohort) => (
-      <span
-        className={`px-2 py-1 rounded-full text-xs font-medium ${
-          item.status === "active"
-            ? "bg-green-100 text-green-800"
-            : item.status === "upcoming"
-            ? "bg-blue-100 text-blue-800"
-            : "bg-gray-100 text-gray-800"
-        }`}
-      >
-        {item.status}
-      </span>
-    ),
-  },
-  {
-    header: "Actions",
-    accessor: "id" as const,
-    render: (item: Cohort) => (
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="h-8 w-8 p-0">
-            <span className="sr-only">Open menu</span>
-            <MoreHorizontal className="h-4 w-4" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem
-            className="flex items-center gap-2 cursor-pointer"
-            onClick={() => console.log("Edit", item.id)}
-          >
-            <Pencil className="h-4 w-4" />
-            Edit
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            className="flex items-center gap-2 cursor-pointer text-red-600 focus:text-red-600"
-            onClick={() => console.log("Delete", item.id)}
-          >
-            <Trash2 className="h-4 w-4" />
-            Delete
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    ),
-  },
-];
+// import { AddCohorModal } from "@/components/modals/AddCohortModal";
+import { AddCohortModal } from "@/components/modals/AddCohortModal";
+import { AddTrackToCohortModal } from "@/components/modals/AddTrackToCohortModal";
+import { Cohort, createCohortColumns } from "@/components/tables/CohortsColums";
+import { useGetCohorts } from "@/lib/hooks/useGetCohorts";
+import { useChainId } from "wagmi";
 
 const CohortsPage = () => {
+  const [addCohortModalOpen, setAddCohortModal] = useState(false);
+  const [addTrackModalOpen, setAddTrackModalOpen] = useState(false);
+  const [selectedCohort, setSelectedCohort] = useState<Cohort | null>(null);
+  const {
+    cohorts,
+    isLoading,
+    cohortCount,
+    error,
+    isConnected,
+    isCorrectNetwork,
+    address,
+    refetch,
+  } = useGetCohorts();
+  const chainId = useChainId();
+
+  // Debug network status (console only)
+  useEffect(() => {
+    console.log("🌐 Network Debug:", {
+      chainId,
+      expectedChainId: 11155111, // Sepolia
+      isCorrectNetwork: chainId === 11155111,
+      hasError: !!error,
+      errorMessage: error?.message,
+      isConnected,
+      address,
+      cohortCount,
+    });
+  }, [chainId, error, isConnected, address, cohortCount]);
+
+  // Refresh data when modal is closed (indicating a new cohort might have been created)
+  const handleModalClose = () => {
+    setAddCohortModal(false);
+    // The useGetCohorts hook will automatically refetch when cohortCount changes
+  };
+
+  // Handle add track modal close
+  const handleAddTrackModalClose = () => {
+    setAddTrackModalOpen(false);
+    setSelectedCohort(null);
+  };
+
+  // Handle add track action from table
+  const handleAddTrack = (cohort: Cohort) => {
+    setSelectedCohort(cohort);
+    setAddTrackModalOpen(true);
+  };
+
+  // Create columns with the add track callback
+  const cohortcolumns = createCohortColumns(handleAddTrack);
+
+  // Render different content based on connection status
+  const renderContent = () => {
+    if (!isConnected) {
+      return (
+        <div className="flex items-center justify-center h-32">
+          <div className="text-center">
+            <div className="text-gray-500 mb-2">Wallet not connected</div>
+            <div className="text-sm text-gray-400">
+              Please connect your wallet to view cohorts
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    if (!isCorrectNetwork) {
+      return (
+        <div className="flex items-center justify-center h-32">
+          <div className="text-center">
+            <div className="text-gray-500 mb-2">Wrong network</div>
+            <div className="text-sm text-gray-400">
+              Please switch to Sepolia testnet
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    if (isLoading) {
+      return (
+        <div className="flex items-center justify-center h-32">
+          <div className="text-gray-500">Loading cohorts...</div>
+        </div>
+      );
+    }
+
+    if (cohorts.length === 0) {
+      return (
+        <div className="flex items-center justify-center h-32">
+          <div className="text-gray-500">
+            {error ? (
+              <div>
+                <div>Error loading cohorts: {error.message}</div>
+                <div className="text-sm mt-2">
+                  Please check your network connection
+                </div>
+              </div>
+            ) : (
+              "No cohorts found. Create your first cohort!"
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <Table
+        data={cohorts}
+        columns={cohortcolumns}
+        title=""
+        searchable={false}
+        exportable={false}
+      />
+    );
+  };
+
   return (
     <div className="p-6 h-screen bg-white rounded-xl">
       <div className="flex w-full justify-between items-center">
-        <div className="">
+        <div>
           <h1 className="text-xl font-semibold text-gray-900 mb-1">
             Cohorts Management
           </h1>
@@ -132,21 +142,30 @@ const CohortsPage = () => {
         <Button
           size="lg"
           className="flex text-base h-[44px] w-[130px] gap-1 items-center"
+          onClick={() => setAddCohortModal(true)}
+          disabled={!isConnected || !isCorrectNetwork}
         >
           Add new
-          {/* <Plus size={14} /> */}
         </Button>
       </div>
 
-      <div className="mt-7 w-full">
-        <Table
-          data={data}
-          columns={columns}
-          title=""
-          searchable={false}
-          exportable={false}
+      <div className="mt-7 w-full">{renderContent()}</div>
+
+      <AddCohortModal
+        isOpen={addCohortModalOpen}
+        setIsOpen={handleModalClose}
+        onCohortAdded={refetch}
+      />
+
+      {selectedCohort && (
+        <AddTrackToCohortModal
+          isOpen={addTrackModalOpen}
+          setIsOpen={handleAddTrackModalClose}
+          cohortId={parseInt(selectedCohort.id)}
+          cohortName={selectedCohort.name}
+          existingTracks={selectedCohort.tracks}
         />
-      </div>
+      )}
     </div>
   );
 };

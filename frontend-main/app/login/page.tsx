@@ -3,19 +3,97 @@ import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { Wallet, Shield, Loader2 } from "lucide-react";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { useAccount} from "wagmi";
+import { useUserRole } from "@/lib/hooks/useUserRole";
+import { useIsMounted } from "@/lib/hooks/useIsMounted";
+import { useAccount } from "wagmi";
 import { useRouter } from "next/navigation";
 
 const LoginPage = () => {
   const [isHovered, setIsHovered] = useState(false);
+  const [isRoleChecking, setIsRoleChecking] = useState(false);
+  const isMounted = useIsMounted();
+  const {
+    isAdmin,
+    isStudent,
+    isSuperAdmin,
+    isLoading: roleLoading,
+  } = useUserRole();
   const router = useRouter();
   const { isConnected, isConnecting: wagmiIsConnecting } = useAccount();
-
+  console.log(isAdmin,isStudent,isSuperAdmin,roleLoading)
   useEffect(() => {
-    if (isConnected) {
-      router.push("/student");
+    if (isConnected && !roleLoading && !isRoleChecking) {
+      setIsRoleChecking(true); // Simulate blockchain role checking delay
+      const checkRoleAndRedirect = async () => {
+        try {
+          // Role checking is handled by useUserRole hook
+          if (isSuperAdmin || isAdmin) {
+            router.push("/admin");
+          } else if (isStudent) {
+            router.push("/student");
+          } else {
+            router.push("/unauthorized");
+          }
+        } catch (error) {
+          console.error("Error checking role:", error);
+          router.push("/error");
+        } finally {
+          setIsRoleChecking(false);
+        }
+      };
+
+      checkRoleAndRedirect();
     }
-  }, [isConnected, wagmiIsConnecting, router]);
+  }, [isConnected, roleLoading, isAdmin, isStudent, isSuperAdmin, router]);
+
+  // Combine loading states
+  const isLoading = wagmiIsConnecting || roleLoading || isRoleChecking;
+
+  // Don't render until mounted to prevent hydration mismatch
+  if (!isMounted) {
+    return (
+      <div className="w-full flex flex-row h-screen min-h-screen overflow-hidden">
+        <div className="w-full md:w-1/2 h-full flex items-center justify-center bg-gradient-to-br from-gray-50 to-white relative overflow-hidden">
+          <div className="relative z-10 w-full max-w-md px-8">
+            <div className="text-center mb-8">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-[#800895] to-[#a015b9] rounded-2xl mb-6 shadow-lg">
+                <Wallet className="w-8 h-8 text-white" />
+              </div>
+              <h1 className="text-2xl md:text-3xl font-semibold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent mb-2">
+                Welcome Back
+              </h1>
+              <p className="text-gray-600 text-lg">
+                Connect your wallet to access portal
+              </p>
+            </div>
+            <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-2xl p-8 border border-white/20">
+              <div className="mb-6">
+                <div className="flex items-center flex-col gap-3 mb-4">
+                  <div className="w-10 h-10 bg-gradient-to-r from-[#800895] to-[#a015b9] rounded-full flex items-center justify-center">
+                    <Shield className="w-6 h-6 text-white" />
+                  </div>
+                  <div className="text-center">
+                    <h3 className="font-semibold text-gray-900">
+                      Wallet Authentication
+                    </h3>
+                    <p className="text-sm text-gray-600">
+                      Secure login with your crypto wallet
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="w-full py-3 px-6 rounded-2xl font-semibold text-lg bg-gradient-to-r from-[#9537EA] to-[#9537EA] text-white shadow-lg">
+                <div className="flex items-center justify-center gap-3">
+                  <Loader2 className="w-5 h-5 text-white animate-spin" />
+                  <span>Loading...</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full flex flex-row h-screen min-h-screen overflow-hidden">
@@ -24,15 +102,20 @@ const LoginPage = () => {
         <div
           className="w-full h-full bg-cover bg-center relative"
           style={{
-            backgroundImage: "url('/icons8-team-FcLyt7lW5wg-unsplash.jpg')",
+            backgroundImage: "url('/auth-bg.jpeg')",
           }}
         >
-          <div className="absolute inset-0 bg-gradient-to-br from-purple-900/80 via-blue-900/70 to-indigo-800/80"></div>
+          <div className="absolute inset-0 bg-gradient-to-br from-[#000000] via-blue-900/70 to-indigo-800/80"></div>
           <div className="absolute inset-0 flex flex-col justify-center items-center text-white p-12 z-10">
             <div className="text-center max-w-md">
               <div className="mb-8">
                 <div className="w-20 h-20 mx-auto mb-6 bg-white backdrop-blur-sm rounded-full flex items-center justify-center">
-                 <Image src="/images/logo-two.svg" alt="" height={60} width={60} />
+                  <Image
+                    src="/images/logo-two.svg"
+                    alt=""
+                    height={60}
+                    width={60}
+                  />
                 </div>
                 <h2 className="text-4xl font-bold mb-4 bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent">
                   BlockFuse SMS
@@ -76,7 +159,7 @@ const LoginPage = () => {
                   <span>Track Attendance & Performance</span>
                 </div>
                 <div className="flex items-center gap-3 bg-white/10 backdrop-blur-sm rounded-lg p-3">
-                  <div className="w-8 h-8 bg-purple-400 rounded-full flex items-center justify-center">
+                  <div className="w-8 h-8 bg-[#9537EA] rounded-full flex items-center justify-center">
                     <svg
                       className="w-4 h-4 text-white"
                       fill="currentColor"
@@ -92,13 +175,14 @@ const LoginPage = () => {
           </div>
         </div>
       </div>
+
       <div className="w-full md:w-1/2 h-full flex items-center justify-center bg-gradient-to-br from-gray-50 to-white relative overflow-hidden">
         <div className="relative z-10 w-full max-w-md px-8">
           <div className="text-center mb-8">
             <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-[#800895] to-[#a015b9] rounded-2xl mb-6 shadow-lg">
               <Wallet className="w-8 h-8 text-white" />
             </div>
-            <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent mb-2">
+            <h1 className="text-2xl md:text-3xl font-semibold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent mb-2">
               Welcome Back
             </h1>
             <p className="text-gray-600 text-lg">
@@ -129,28 +213,32 @@ const LoginPage = () => {
                   <button
                     onMouseEnter={() => setIsHovered(true)}
                     onMouseLeave={() => setIsHovered(false)}
-                    disabled={wagmiIsConnecting}
+                    disabled={isLoading}
                     onClick={connected ? openAccountModal : openConnectModal}
                     className={`
-                      w-full py-4 px-6 rounded-2xl font-semibold text-lg transition-all duration-300 transform
+                      w-full py-3 px-6 rounded-2xl font-semibold text-lg transition-all duration-300 transform
                       ${
-                        wagmiIsConnecting
+                        isLoading
                           ? "bg-gray-400 cursor-not-allowed"
-                          : "bg-gradient-to-r  from-[#DE24FF] to-[#DE24FF] hover:from-[#800895] hover:to-[#a015b9]hover:scale-105 hover:shadow-xl active:scale-95"
+                          : "bg-gradient-to-r  from-[#9537EA] to-[#9537EA] hover:from-[#800895] hover:to-[#a015b9]hover:scale-105 hover:shadow-xl active:scale-95"
                       }
                       text-white shadow-lg
                       ${
-                        isHovered && !wagmiIsConnecting
+                        isHovered && !isLoading
                           ? "shadow-2xl shadow-blue-500/25"
                           : ""
                       }
                     `}
                   >
                     <div className="flex items-center justify-center gap-3">
-                      {wagmiIsConnecting ? (
+                      {isLoading ? (
                         <>
                           <Loader2 className="w-5 h-5 text-white animate-spin" />
-                          <span>Connecting...</span>
+                          <span>
+                            {wagmiIsConnecting
+                              ? "Connecting..."
+                              : "Checking Role..."}
+                          </span>
                         </>
                       ) : connected ? (
                         <span>{account.displayName}</span>
@@ -180,7 +268,7 @@ const LoginPage = () => {
           </div>
           <div className="text-center mt-8">
             <p className="text-sm text-gray-500">
-              Don&#39;t have a wallet?
+              Don&apos;t have a wallet?
               <a
                 href="#"
                 className="text-blue-600 hover:text-blue-800 font-medium ml-1"
