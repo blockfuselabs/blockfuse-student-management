@@ -11,7 +11,6 @@ import {
   BarChart3,
   User,
   LogOut,
-  CheckCircle,
 } from "lucide-react";
 
 export const adminRoutes = {
@@ -48,11 +47,6 @@ export const adminRoutes = {
     },
   ],
   management: [
-    {
-      title: "Attendance",
-      href: "/admin/attendance",
-      icon: CheckCircle,
-    },
     {
       title: "Courses",
       href: "/admin/courses",

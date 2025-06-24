@@ -14,7 +14,16 @@ const CohortsPage = () => {
   const [addCohortModalOpen, setAddCohortModal] = useState(false);
   const [addTrackModalOpen, setAddTrackModalOpen] = useState(false);
   const [selectedCohort, setSelectedCohort] = useState<Cohort | null>(null);
-  const { cohorts, isLoading, cohortCount, error, isConnected, isCorrectNetwork, address } = useGetCohorts();
+  const {
+    cohorts,
+    isLoading,
+    cohortCount,
+    error,
+    isConnected,
+    isCorrectNetwork,
+    address,
+    refetch,
+  } = useGetCohorts();
   const chainId = useChainId();
 
   // Debug network status (console only)
@@ -27,7 +36,7 @@ const CohortsPage = () => {
       errorMessage: error?.message,
       isConnected,
       address,
-      cohortCount
+      cohortCount,
     });
   }, [chainId, error, isConnected, address, cohortCount]);
 
@@ -59,7 +68,9 @@ const CohortsPage = () => {
         <div className="flex items-center justify-center h-32">
           <div className="text-center">
             <div className="text-gray-500 mb-2">Wallet not connected</div>
-            <div className="text-sm text-gray-400">Please connect your wallet to view cohorts</div>
+            <div className="text-sm text-gray-400">
+              Please connect your wallet to view cohorts
+            </div>
           </div>
         </div>
       );
@@ -70,7 +81,9 @@ const CohortsPage = () => {
         <div className="flex items-center justify-center h-32">
           <div className="text-center">
             <div className="text-gray-500 mb-2">Wrong network</div>
-            <div className="text-sm text-gray-400">Please switch to Sepolia testnet</div>
+            <div className="text-sm text-gray-400">
+              Please switch to Sepolia testnet
+            </div>
           </div>
         </div>
       );
@@ -91,7 +104,9 @@ const CohortsPage = () => {
             {error ? (
               <div>
                 <div>Error loading cohorts: {error.message}</div>
-                <div className="text-sm mt-2">Please check your network connection</div>
+                <div className="text-sm mt-2">
+                  Please check your network connection
+                </div>
               </div>
             ) : (
               "No cohorts found. Create your first cohort!"
@@ -134,13 +149,12 @@ const CohortsPage = () => {
         </Button>
       </div>
 
-      <div className="mt-7 w-full">
-        {renderContent()}
-      </div>
+      <div className="mt-7 w-full">{renderContent()}</div>
 
       <AddCohortModal
         isOpen={addCohortModalOpen}
         setIsOpen={handleModalClose}
+        onCohortAdded={refetch}
       />
 
       {selectedCohort && (

@@ -1,4 +1,5 @@
 "use client";
+
 import { useState, useEffect, useCallback } from "react";
 import { useReadContract } from "wagmi";
 import { CONTRACT_ADDRESS } from "@/lib/contract/address";
@@ -27,10 +28,18 @@ export const useGetAdmins = (refreshKey: number = 0) => {
     data: adminAddresses,
     isLoading: adminsLoading,
     error: adminsError,
+    refetch, // Add this to get the refetch function
   } = useReadContract({
     address: CONTRACT_ADDRESS as `0x${string}`,
     abi: AdminFacetABI.abi,
     functionName: "getAllAdmins",
+    // Add these options to ensure fresh data
+    query: {
+      refetchOnMount: true,
+      refetchOnWindowFocus: false,
+      staleTime: 0, // Always consider data stale
+      gcTime: 0, // Don't cache the data
+    }
   });
 
   useEffect(() => {
@@ -81,9 +90,18 @@ export const useGetAdmins = (refreshKey: number = 0) => {
     });
   }, [refreshKey, adminAddresses, adminsLoading, adminsError]);
 
-  const refetch = useCallback(() => {
-    // The hook will automatically refetch when refreshKey changes
-  }, []);
+  // Trigger refetch when refreshKey changes
+  useEffect(() => {
+    if (refreshKey > 0) {
+      console.log("Refetching admins due to refreshKey change:", refreshKey);
+      refetch();
+    }
+  }, [refreshKey, refetch]);
 
-  return { ...state, refetch };
+  const manualRefetch = useCallback(async () => {
+    console.log("Manual refetch triggered");
+    await refetch();
+  }, [refetch]);
+
+  return { ...state, refetch: manualRefetch };
 };

@@ -19,24 +19,12 @@ import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import QRCode from "qrcode";
 import Image from "next/image";
+import { useGetCohorts } from "@/lib/hooks/useGetCohorts";
 
 type Props = {
   isOpen: boolean;
   setIsOpen: (open: boolean) => void;
 };
-
-// Mock data for cohorts and tracks
-const cohorts = [
-  { id: "1", name: "Cohort 1" },
-  { id: "2", name: "Cohort 2" },
-  { id: "3", name: "Cohort 3" },
-];
-
-const tracks = [
-  { id: "1", name: "Frontend" },
-  { id: "2", name: "Backend" },
-  { id: "3", name: "Full-stack" },
-];
 
 export function GenerateAttendanceModal({ isOpen, setIsOpen }: Props) {
   const [selectedCohort, setSelectedCohort] = React.useState<
@@ -47,6 +35,23 @@ export function GenerateAttendanceModal({ isOpen, setIsOpen }: Props) {
   >();
   const [isGenerating, setIsGenerating] = React.useState(false);
   const [qrCodeDataUrl, setQrCodeDataUrl] = React.useState<string | null>(null);
+
+  // Fetch real cohorts and tracks
+  const { cohorts, isLoading: isLoadingCohorts } = useGetCohorts();
+
+  // Find the selected cohort object
+  const selectedCohortObj = React.useMemo(() => {
+    return cohorts.find((c) => c.id === selectedCohort);
+  }, [selectedCohort, cohorts]);
+
+  // Track options for the selected cohort
+  const trackOptions = React.useMemo(() => {
+    if (!selectedCohortObj) return [];
+    return selectedCohortObj.tracks.map((track) => ({
+      value: track.toString(),
+      label: track === 0 ? "web2" : track === 1 ? "web3" : `Track ${track}`,
+    }));
+  }, [selectedCohortObj]);
 
   const handleClose = () => {
     setIsOpen(false);
@@ -124,9 +129,19 @@ export function GenerateAttendanceModal({ isOpen, setIsOpen }: Props) {
               >
                 Cohort
               </label>
-              <Select onValueChange={setSelectedCohort} value={selectedCohort}>
+              <Select
+                onValueChange={setSelectedCohort}
+                value={selectedCohort}
+                disabled={isLoadingCohorts}
+              >
                 <SelectTrigger id="cohort" className="w-full">
-                  <SelectValue placeholder="Select a cohort" />
+                  <SelectValue
+                    placeholder={
+                      isLoadingCohorts
+                        ? "Loading cohorts..."
+                        : "Select a cohort"
+                    }
+                  />
                 </SelectTrigger>
                 <SelectContent>
                   {cohorts.map((cohort) => (
@@ -142,14 +157,26 @@ export function GenerateAttendanceModal({ isOpen, setIsOpen }: Props) {
               <label htmlFor="track" className="block text-sm font-medium mb-1">
                 Track
               </label>
-              <Select onValueChange={setSelectedTrack} value={selectedTrack}>
+              <Select
+                onValueChange={setSelectedTrack}
+                value={selectedTrack}
+                disabled={!selectedCohortObj || trackOptions.length === 0}
+              >
                 <SelectTrigger id="track" className="w-full">
-                  <SelectValue placeholder="Select a track" />
+                  <SelectValue
+                    placeholder={
+                      !selectedCohortObj
+                        ? "Select a cohort first"
+                        : trackOptions.length === 0
+                        ? "No tracks available"
+                        : "Select a track"
+                    }
+                  />
                 </SelectTrigger>
                 <SelectContent>
-                  {tracks.map((track) => (
-                    <SelectItem key={track.id} value={track.id}>
-                      {track.name}
+                  {trackOptions.map((track) => (
+                    <SelectItem key={track.value} value={track.value}>
+                      {track.label}
                     </SelectItem>
                   ))}
                 </SelectContent>

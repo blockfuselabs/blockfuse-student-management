@@ -1,9 +1,9 @@
 "use client";
-import { useState, useEffect } from "react";
-import { useWriteContract, useTransaction } from "wagmi";
-import { CONTRACT_ADDRESS } from "@/lib/contract/address";
-import AdminAbi  from "@/lib/contract/AdminFacet.json"
 
+import { useState, useEffect, useCallback } from "react";
+import { useWriteContract, useWaitForTransactionReceipt } from "wagmi";
+import { CONTRACT_ADDRESS } from "@/lib/contract/address";
+import AdminAbi from "@/lib/contract/AdminFacet.json";
 
 export interface AddAdminParams {
   adminAddress: string;
@@ -12,48 +12,61 @@ export interface AddAdminParams {
 export const useAddAdmin = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isSuccess, setIsSuccess] = useState(false);
 
   const {
     writeContract,
     data: writeData,
     isError: isWriteError,
     error: writeError,
+    isPending: isWritePending,
   } = useWriteContract();
 
   const {
     isLoading: isTransactionLoading,
-    isSuccess,
+    isSuccess: isTransactionSuccess,
     isError: isTransactionError,
-  } = useTransaction({
+    error: transactionError,
+  } = useWaitForTransactionReceipt({
     hash: writeData,
   });
 
   // Handle transaction success
   useEffect(() => {
-    if (isSuccess) {
+    if (isTransactionSuccess) {
       console.log("Admin added successfully!");
+      setIsSuccess(true);
+      setIsLoading(false);
     }
-  }, [isSuccess]);
+  }, [isTransactionSuccess]);
 
   // Handle transaction errors
   useEffect(() => {
     if (isWriteError || isTransactionError) {
-      const errorMessage = writeError?.message || "Transaction failed";
+      const errorMessage = 
+        writeError?.message || 
+        transactionError?.message || 
+        "Transaction failed";
       console.log("Transaction error:", errorMessage);
       setError(errorMessage);
+      setIsLoading(false);
     }
-  }, [isWriteError, isTransactionError, writeError]);
+  }, [isWriteError, isTransactionError, writeError, transactionError]);
+
+  // Reset success state when starting new transaction
+  useEffect(() => {
+    if (isWritePending) {
+      setIsSuccess(false);
+    }
+  }, [isWritePending]);
 
   const addAdmin = async (params: AddAdminParams) => {
     try {
       setIsLoading(true);
       setError(null);
+      setIsSuccess(false);
 
       console.log("Adding admin with params:", params);
-
-      if (!writeContract) {
-        throw new Error("Contract write function not available");
-      }
 
       // Validate admin address
       const addressRegex = /^0x[a-fA-F0-9]{40}$/;
@@ -62,7 +75,7 @@ export const useAddAdmin = () => {
       }
 
       // Call the contract function
-      await writeContract({
+      writeContract({
         address: CONTRACT_ADDRESS as `0x${string}`,
         abi: AdminAbi.abi,
         functionName: "addAdmin",
@@ -71,16 +84,21 @@ export const useAddAdmin = () => {
     } catch (err) {
       console.error("Error adding admin:", err);
       setError(err instanceof Error ? err.message : "Failed to add admin");
-    } finally {
       setIsLoading(false);
     }
   };
 
+  const resetState = useCallback(() => {
+    setError(null);
+    setIsSuccess(false);
+  }, []);
+
   return {
     addAdmin,
-    isLoading: isLoading || isTransactionLoading,
+    isLoading: isLoading || isWritePending || isTransactionLoading,
     isSuccess,
     error,
     resetError: () => setError(null),
+    resetState,
   };
 };
