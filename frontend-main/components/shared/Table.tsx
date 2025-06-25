@@ -15,6 +15,7 @@ interface TableProps<T> {
   title?: string;
   searchable?: boolean;
   exportable?: boolean;
+  isLoading?: boolean;
 }
 
 export function Table<T extends { id: string | number }>({
@@ -23,6 +24,7 @@ export function Table<T extends { id: string | number }>({
   title,
   searchable = true,
   exportable = true,
+  isLoading,
 }: TableProps<T>) {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortConfig, setSortConfig] = useState<{
@@ -91,6 +93,7 @@ export function Table<T extends { id: string | number }>({
     window.URL.revokeObjectURL(url);
   };
 
+
   return (
     <div className="w-full">
       {/* Table Header with Search and Export */}
@@ -135,9 +138,7 @@ export function Table<T extends { id: string | number }>({
                   <div className="flex items-center gap-2">
                     {column.header}
                     {sortConfig.key === column.accessor && (
-                      <span>
-                        {sortConfig.direction === "asc" ? "↑" : "↓"}
-                      </span>
+                      <span>{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
                     )}
                   </div>
                 </th>
@@ -151,12 +152,15 @@ export function Table<T extends { id: string | number }>({
                   colSpan={columns.length}
                   className="px-6 py-4 text-center text-gray-500"
                 >
-                  No data found
+                  <div className="text-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-2"></div>
+                    <p className="text-gray-600">Loading ...</p>
+                  </div>
                 </td>
               </tr>
             ) : (
               sortedData.map((item, index) => (
-                <tr key={item.id + '-' + index} className="hover:bg-gray-50">
+                <tr key={item.id + "-" + index} className="hover:bg-gray-50">
                   {columns.map((column) => (
                     <td
                       key={String(column.accessor)}
@@ -175,4 +179,4 @@ export function Table<T extends { id: string | number }>({
       </div>
     </div>
   );
-} 
+}

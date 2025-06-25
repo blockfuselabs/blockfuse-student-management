@@ -82,42 +82,9 @@ const CohortsPage = () => {
       );
     }
 
-    if (!isConnected) {
-      return (
-        <div className="flex items-center justify-center h-32">
-          <div className="text-center">
-            <div className="text-gray-500 mb-2">Wallet not connected</div>
-            <div className="text-sm text-gray-400">
-              Please connect your wallet to view cohorts
-            </div>
-          </div>
-        </div>
-      );
-    }
+    
 
-    if (!isCorrectNetwork) {
-      return (
-        <div className="flex items-center justify-center h-32">
-          <div className="text-center">
-            <div className="text-gray-500 mb-2">Wrong network</div>
-            <div className="text-sm text-gray-400">
-              Please switch to Sepolia testnet
-            </div>
-          </div>
-        </div>
-      );
-    }
-
-    if (isLoading) {
-      return (
-        <div className="flex items-center justify-center h-32">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-2"></div>
-            <p className="text-gray-600">Loading cohorts...</p>
-          </div>
-        </div>
-      );
-    }
+  
 
     return (
       <Table
@@ -126,6 +93,7 @@ const CohortsPage = () => {
         title=""
         searchable={false}
         exportable={false}
+        isLoading={isLoading}
       />
     );
   };
