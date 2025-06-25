@@ -5,15 +5,17 @@ import { Html5Qrcode, Html5QrcodeScannerState } from "html5-qrcode";
 import { Button } from "@/components/ui/button";
 import { useAccount } from "wagmi";
 import { useLogAttendance } from "@/lib/hooks/useLogAttendance";
+import { ConnectButton } from "@rainbow-me/rainbowkit";
 
 export default function ScanPage() {
   const [scanResult, setScanResult] = useState<string | null>(null);
-  // const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [isScanning, setIsScanning] = useState<boolean>(false);
   const html5QrCodeRef = useRef<Html5Qrcode | null>(null);
   const  { address } = useAccount()
 
-  const { logAttendance, isLoading, isSuccess, error, resetError } =useLogAttendance();
+  const { logAttendance, isSuccess } =
+    useLogAttendance();
 
   useEffect(() => {
     // Initialize scanner on component mount
@@ -48,9 +50,20 @@ export default function ScanPage() {
       await html5QrCodeRef.current.start(
         { facingMode: "environment" },
         config,
-        (decodedText: string) => {
+        async (decodedText: string) => {
           setScanResult(decodedText);
           setIsScanning(false);
+          const data = JSON.parse(decodedText);
+          console.log(data)
+
+          // this where log attendacne is called
+          
+          await logAttendance({
+            studentAddress: address as string,
+            // studentAddress: '0xCe2682E44734b96361BD0d7B0DEC01D2AB82adcF',
+            cohortId: Number(data.cohortId),
+            track: Number(data.trackId),
+          });
           html5QrCodeRef.current
             ?.stop()
             .catch((err: unknown) =>
@@ -114,6 +127,8 @@ export default function ScanPage() {
           </Button>
         )}
       </div>
+
+      <ConnectButton />
     </div>
   );
 }
