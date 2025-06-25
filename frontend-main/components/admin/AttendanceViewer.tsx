@@ -38,18 +38,33 @@ import {
   CheckCircle,
   XCircle,
 } from "lucide-react";
+import { useContractRead } from 'wagmi';
+import StudentFacetABI from '@/lib/contract/StudentFacet.json';
+import { CONTRACT_ADDRESS as STUDENT_FACET_ADDRESS } from '@/lib/contract/address';
+import { useGetCohorts } from '../../lib/hooks/useGetCohorts';
 
 export default function AttendanceViewer() {
   const isMounted = useIsMounted();
   const [cohortId, setCohortId] = useState("");
   const [track, setTrack] = useState("");
 
+  // Fetch cohorts
+  const {
+    cohorts,
+    isLoading: isCohortsLoading,
+    error: cohortsError,
+  } = useGetCohorts();
+
+  // Find selected cohort object
+  const selectedCohort = cohorts.find((c) => c.id === cohortId);
+  const availableTracks = selectedCohort ? selectedCohort.tracks : [];
+
   // Only call the hook if we have valid parameters
   const shouldCallAttendance = Boolean(
     cohortId &&
-      track &&
-      !isNaN(Number(cohortId)) &&
-      (Number(track) === 0 || Number(track) === 1)
+    track &&
+    !isNaN(Number(cohortId)) &&
+    (Number(track) === 0 || Number(track) === 1)
   );
 
   const { attendance, isLoading, isError, error } =
@@ -57,11 +72,11 @@ export default function AttendanceViewer() {
       shouldCallAttendance ? Number(cohortId) : 0,
       shouldCallAttendance ? Number(track) : 0
     );
+  
+  console.log(attendance)
 
   const formatDate = (timestamp: number) => {
-    // Use client time to prevent hydration issues
     if (!isMounted) return "Loading...";
-
     return new Date(timestamp * 1000).toLocaleDateString("en-US", {
       year: "numeric",
       month: "short",
@@ -72,7 +87,7 @@ export default function AttendanceViewer() {
   };
 
   const getTrackName = (trackNumber: number) => {
-    return trackNumber === 0 ? "Web2" : "Web3";
+    return trackNumber === 0 ? "Web2" : trackNumber === 1 ? "Web3" : `Track ${trackNumber}`;
   };
 
   // Don't render until mounted to prevent hydration mismatch
@@ -98,6 +113,82 @@ export default function AttendanceViewer() {
     );
   }
 
+  // Handle loading and error states for cohorts
+  if (isCohortsLoading) {
+    return (
+      <div className="max-w-6xl mx-auto p-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Calendar className="h-5 w-5 text-blue-600" />
+              View Attendance Records
+            </CardTitle>
+            <CardDescription>Loading cohorts...</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+              <span className="ml-2 text-gray-600">Loading cohorts...</span>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (cohortsError) {
+    return (
+      <div className="max-w-6xl mx-auto p-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Calendar className="h-5 w-5 text-blue-600" />
+              View Attendance Records
+            </CardTitle>
+            <CardDescription>Error loading cohorts</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Alert variant="destructive" className="mb-6">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                {cohortsError.message || "Failed to load cohorts"}
+              </AlertDescription>
+            </Alert>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Handle no cohorts
+  if (!cohorts || cohorts.length === 0) {
+    return (
+      <div className="max-w-6xl mx-auto p-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Calendar className="h-5 w-5 text-blue-600" />
+              View Attendance Records
+            </CardTitle>
+            <CardDescription>No cohorts found</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="text-center py-8 text-gray-500">
+              <Calendar className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+              <p>No cohorts are available. Please add a cohort to view attendance data.</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Reset track when cohort changes
+  const handleCohortChange = (value: string) => {
+    setCohortId(value);
+    setTrack("");
+  };
+
   return (
     <div className="max-w-6xl mx-auto p-6">
       <Card>
@@ -114,15 +205,15 @@ export default function AttendanceViewer() {
           {/* Filters */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             <div className="space-y-2">
-              <Label htmlFor="cohortId">Cohort ID</Label>
-              <Select value={cohortId} onValueChange={setCohortId}>
+              <Label htmlFor="cohortId">Cohort</Label>
+              <Select value={cohortId} onValueChange={handleCohortChange} disabled={cohorts.length === 0}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select a cohort" />
                 </SelectTrigger>
                 <SelectContent>
-                  {Array.from({ length: 10 }, (_, i) => i + 1).map((id) => (
-                    <SelectItem key={id} value={id.toString()}>
-                      Cohort {id}
+                  {cohorts.map((cohort) => (
+                    <SelectItem key={cohort.id} value={cohort.id}>
+                      {cohort.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -131,13 +222,20 @@ export default function AttendanceViewer() {
 
             <div className="space-y-2">
               <Label htmlFor="track">Track</Label>
-              <Select value={track} onValueChange={setTrack}>
+              <Select
+                value={track}
+                onValueChange={setTrack}
+                disabled={!cohortId || availableTracks.length === 0}
+              >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select a track" />
+                  <SelectValue placeholder={cohortId ? (availableTracks.length > 0 ? "Select a track" : "No tracks available") : "Select a cohort first"} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="0">Web2</SelectItem>
-                  <SelectItem value="1">Web3</SelectItem>
+                  {availableTracks.map((trackNum) => (
+                    <SelectItem key={trackNum} value={trackNum.toString()}>
+                      {getTrackName(trackNum)}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -213,8 +311,8 @@ export default function AttendanceViewer() {
                     <div className="text-sm font-bold">
                       {attendance.dates && attendance.dates.length > 0
                         ? formatDate(
-                            attendance.dates[attendance.dates.length - 1]
-                          )
+                          attendance.dates[attendance.dates.length - 1]
+                        )
                         : "No records"}
                     </div>
                     <p className="text-xs text-muted-foreground">
@@ -247,7 +345,8 @@ export default function AttendanceViewer() {
                           <StudentRow
                             key={studentAddress}
                             studentAddress={studentAddress}
-                            attendanceCount={1}
+                            cohortId={cohortId}
+                            track={track}
                           />
                         ))}
                       </TableBody>
@@ -316,12 +415,23 @@ export default function AttendanceViewer() {
 // Student Row Component
 function StudentRow({
   studentAddress,
-  attendanceCount,
+  cohortId,
+  track,
 }: {
   studentAddress: string;
-  attendanceCount: number;
+  cohortId: number;
+  track: number;
 }) {
   const { student, isLoading } = useGetStudent(studentAddress);
+  const { data: attendanceDates, isLoading: isAttendanceLoading } = useContractRead({
+    address: STUDENT_FACET_ADDRESS,
+    abi: StudentFacetABI.abi,
+    functionName: 'getAttendanceDatesForStudent',
+    args: [studentAddress, cohortId, track],
+    watch: true,
+  });
+
+  console.log('student debug', student)
 
   return (
     <TableRow>
@@ -357,7 +467,16 @@ function StudentRow({
         )}
       </TableCell>
       <TableCell>
-        <Badge variant="outline">{attendanceCount}</Badge>
+        {isAttendanceLoading ? (
+          <Loader2 className="h-4 w-4 animate-spin" />
+        ) : (
+          <Badge variant="outline">
+            {attendanceDates ? attendanceDates.length : 0}
+            {attendanceDates && attendanceDates.length > 0 && (
+              <span title={attendanceDates.map((day: number) => new Date(day * 86400 * 1000).toLocaleDateString()).join(', ')} style={{ marginLeft: 6, cursor: 'pointer' }}>🗓️</span>
+            )}
+          </Badge>
+        )}
       </TableCell>
     </TableRow>
   );

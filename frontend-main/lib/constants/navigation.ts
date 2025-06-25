@@ -31,11 +31,6 @@ export const adminRoutes = {
       icon: Users,
     },
     {
-      title: "Mentors",
-      href: "/admin/mentors",
-      icon: UserCog,
-    },
-    {
       title: "Attendance",
       href: "/admin/attendance",
       icon: Settings,

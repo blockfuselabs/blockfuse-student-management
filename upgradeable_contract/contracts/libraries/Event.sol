@@ -15,4 +15,5 @@ library Event {
     event StudentAddedToCohort(address indexed studentAddress, uint8 indexed cohort);
     event AttendanceLogged(uint256 indexed cohortId, address indexed student, string indexed track, uint256 date);
     event StudentWalletReplaced(address indexed oldAddress, address indexed newAddress);
+    event AdminReplaced(address indexed oldAdmin, address indexed newAdmin);
 }

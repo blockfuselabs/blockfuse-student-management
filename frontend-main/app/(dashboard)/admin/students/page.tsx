@@ -57,6 +57,7 @@ const StudentsPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCohort, setSelectedCohort] = useState<string>("all");
   const [selectedTrack, setSelectedTrack] = useState<string>("all");
+  const [refreshKey, setRefreshKey] = useState(0);
 
   // Get all cohorts
   const { cohorts } = useGetCohorts();
@@ -66,7 +67,7 @@ const StudentsPage = () => {
     students: allOnChainStudents,
     isLoading: isLoadingStudents,
     error: studentsError,
-  } = useGetStudentsForCohorts(cohorts);
+  } = useGetStudentsForCohorts(cohorts, refreshKey);
 
   // Map on-chain students to table format
   const mappedStudents = useMemo(() => {
@@ -166,10 +167,9 @@ const StudentsPage = () => {
             <button
               key={tab.value}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors focus:outline-none
-                ${
-                  selectedTab === tab.value
-                    ? "bg-black text-white"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                ${selectedTab === tab.value
+                  ? "bg-black text-white"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                 }
               `}
               onClick={() => setSelectedTab(tab.value)}
@@ -242,32 +242,32 @@ const StudentsPage = () => {
           selectedTrack !== "all" ||
           selectedTab !== "all" ||
           searchTerm) && (
-          <div className="flex items-center gap-2 text-sm text-gray-600">
-            <span>Active filters:</span>
-            {selectedCohort !== "all" && (
-              <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                Cohort:{" "}
-                {cohortOptions.find((c) => c.value === selectedCohort)?.label}
-              </span>
-            )}
-            {selectedTrack !== "all" && (
-              <span className="bg-green-100 text-green-800 px-2 py-1 rounded">
-                Track:{" "}
-                {trackOptions.find((t) => t.value === selectedTrack)?.label}
-              </span>
-            )}
-            {selectedTab !== "all" && (
-              <span className="bg-purple-100 text-purple-800 px-2 py-1 rounded">
-                Status: {statusTabs.find((t) => t.value === selectedTab)?.label}
-              </span>
-            )}
-            {searchTerm && (
-              <span className="bg-orange-100 text-orange-800 px-2 py-1 rounded">
-                Search: &ldquo;{searchTerm}&rdquo;
-              </span>
-            )}
-          </div>
-        )}
+            <div className="flex items-center gap-2 text-sm text-gray-600">
+              <span>Active filters:</span>
+              {selectedCohort !== "all" && (
+                <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                  Cohort:{" "}
+                  {cohortOptions.find((c) => c.value === selectedCohort)?.label}
+                </span>
+              )}
+              {selectedTrack !== "all" && (
+                <span className="bg-green-100 text-green-800 px-2 py-1 rounded">
+                  Track:{" "}
+                  {trackOptions.find((t) => t.value === selectedTrack)?.label}
+                </span>
+              )}
+              {selectedTab !== "all" && (
+                <span className="bg-purple-100 text-purple-800 px-2 py-1 rounded">
+                  Status: {statusTabs.find((t) => t.value === selectedTab)?.label}
+                </span>
+              )}
+              {searchTerm && (
+                <span className="bg-orange-100 text-orange-800 px-2 py-1 rounded">
+                  Search: &ldquo;{searchTerm}&rdquo;
+                </span>
+              )}
+            </div>
+          )}
       </div>
 
       {/* Loading and Error States */}
@@ -305,6 +305,7 @@ const StudentsPage = () => {
       <AddStudentModal
         isOpen={addStudentModalOpen}
         setIsOpen={setAddStudentModalOpen}
+        refetchStudents={() => setRefreshKey((k) => k + 1)}
       />
       <AddStudentsExcelModal
         isOpen={addExcelModalOpen}

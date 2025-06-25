@@ -34,7 +34,7 @@ contract AdminFacet {
     function addAdmin(address adminAddress) external onlySuperAdmin returns (bool) {
         require(adminAddress != address(0), Error.INVALID_ADDRESS());
         require(!layout.admins[adminAddress], "Admin already exists");
-        
+
         layout.admins[adminAddress] = true;
         layout.adminList.push(adminAddress);
         emit Event.AdminAdded(adminAddress);
@@ -43,9 +43,9 @@ contract AdminFacet {
 
     function removeAdmin(address adminAddress) external onlySuperAdmin returns (bool) {
         require(layout.admins[adminAddress], "Admin does not exist");
-        
+
         layout.admins[adminAddress] = false;
-        
+
         // Remove from adminList array
         for (uint256 i = 0; i < layout.adminList.length; i++) {
             if (layout.adminList[i] == adminAddress) {
@@ -54,7 +54,7 @@ contract AdminFacet {
                 break;
             }
         }
-        
+
         emit Event.AdminRemoved(adminAddress);
         return true;
     }
@@ -73,6 +73,7 @@ contract AdminFacet {
     }
 
     function registerStudent(LibAppStorage.studentDetails calldata newStudent) external onlyAdmin {
+        require(bytes(newStudent.email).length > 0, "Email is required");
         string memory usernameConstruct = newStudent.username;
 
         LibAppStorage.studentDetails memory studentCopy = newStudent;
@@ -152,5 +153,30 @@ contract AdminFacet {
 
     function getAllAdmins() external view returns (address[] memory) {
         return layout.adminList;
+    }
+
+    function superAdmin() public view returns (address) {
+        return layout.superAdmin;
+    }
+
+    function replaceAdmin(address oldAdmin, address newAdmin) external onlySuperAdmin returns (bool) {
+        require(oldAdmin != address(0) && newAdmin != address(0), Error.INVALID_ADDRESS());
+        require(layout.admins[oldAdmin], "Old admin does not exist");
+        require(!layout.admins[newAdmin], "New admin already exists");
+
+        // Update mapping
+        layout.admins[oldAdmin] = false;
+        layout.admins[newAdmin] = true;
+
+        // Replace in adminList array
+        for (uint256 i = 0; i < layout.adminList.length; i++) {
+            if (layout.adminList[i] == oldAdmin) {
+                layout.adminList[i] = newAdmin;
+                break;
+            }
+        }
+
+        emit Event.AdminReplaced(oldAdmin, newAdmin);
+        return true;
     }
 }

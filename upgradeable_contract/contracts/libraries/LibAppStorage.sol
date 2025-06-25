@@ -2,11 +2,15 @@
 pragma solidity ^0.8.28;
 
 library LibAppStorage {
-    enum Track { web2, web3 }
+    enum Track {
+        web2,
+        web3
+    }
 
     struct studentDetails {
         string firstname;
         string lastname;
+        string email;
         string username;
         string twitter;
         string linkedin;
@@ -29,8 +33,8 @@ library LibAppStorage {
     }
 
     struct AttendanceRecord {
-        uint256 date; 
-        address studentAddress; 
+        uint256 date;
+        address studentAddress;
     }
 
     struct Layout {
@@ -38,17 +42,17 @@ library LibAppStorage {
         mapping(uint8 => Cohort) cohorts; // Mapping of cohort ID to Cohort details
         mapping(address => string) usernames;
         mapping(address => studentDetails) student;
-        mapping(address => int[] ) studentScore;
+        mapping(address => int256[]) studentScore;
         mapping(address => bool) admins;
         address[] adminList; // Array to track all admin addresses for enumeration
         // Mapping: Cohort ID -> Track -> Day -> Student Address -> Attendance
         mapping(uint8 => mapping(Track => mapping(uint256 => mapping(address => bool)))) attendance;
-        mapping(uint8 => mapping(Track =>AttendanceRecord[])) attendanceRecords;
+        mapping(uint8 => mapping(Track => AttendanceRecord[])) attendanceRecords;
         mapping(address => AttendanceRecord[]) individualAttendanceRecord;
         address superAdmin;
     }
 
-    function layout() pure internal returns (Layout storage l) {
+    function layout() internal pure returns (Layout storage l) {
         assembly {
             l.slot := 0
         }

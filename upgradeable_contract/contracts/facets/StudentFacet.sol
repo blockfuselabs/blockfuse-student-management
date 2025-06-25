@@ -149,4 +149,36 @@ contract StudentFacet {
 
         return studentDetailsList;
     }
+
+    /**
+     * @notice Returns all attendance dates for a given student in a cohort and track
+     * @param student The address of the student
+     * @param cohortId The cohort ID
+     * @param track The track (web2/web3)
+     * @return attendanceDates Array of days (uint256) the student was present
+     */
+    function getAttendanceDatesForStudent(address student, uint8 cohortId, LibAppStorage.Track track)
+        external
+        view
+        returns (uint256[] memory attendanceDates)
+    {
+        LibAppStorage.Cohort storage cohort = layout.cohorts[cohortId];
+        require(cohort.cohortId != 0, Error.COHORT_DOES_NOT_EXIST());
+
+        uint256 cohortStartDay = cohort.startDate / 1 days;
+        uint256 cohortEndDay = cohort.endDate / 1 days;
+
+        uint256[] memory tempDates = new uint256[](cohortEndDay - cohortStartDay + 1);
+        uint256 count = 0;
+        for (uint256 day = cohortStartDay; day <= cohortEndDay; day++) {
+            if (layout.attendance[cohortId][track][day][student]) {
+                tempDates[count] = day;
+                count++;
+            }
+        }
+        attendanceDates = new uint256[](count);
+        for (uint256 i = 0; i < count; i++) {
+            attendanceDates[i] = tempDates[i];
+        }
+    }
 }

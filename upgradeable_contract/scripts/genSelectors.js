@@ -20,7 +20,9 @@ async function printSelectors(
     `${contractName}.sol`,
     `${contractName}.json`
   );
-  const contractArtifact = require(contractFilePath);
+  const resolvedPath = path.resolve(contractFilePath);
+  console.log("Absolute contractFilePath:", resolvedPath); // Debug log
+  const contractArtifact = require(resolvedPath);
   const abi = contractArtifact.abi;
   const bytecode = contractArtifact.bytecode;
   const target = new ethers.ContractFactory(abi, bytecode);
