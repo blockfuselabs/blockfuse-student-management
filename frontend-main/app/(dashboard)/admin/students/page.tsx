@@ -64,7 +64,6 @@ const StudentsPage = () => {
   // Fetch all students for all cohorts/tracks
   const {
     students: allOnChainStudents,
-    isLoading: isLoadingStudents,
     error: studentsError,
   } = useGetStudentsForCohorts(cohorts);
 
@@ -83,8 +82,8 @@ const StudentsPage = () => {
     );
   }, [allOnChainStudents, cohorts]);
 
-  // Debug: log students
-  console.log("On-chain students:", allOnChainStudents);
+
+
 
   // Filtered students for search, tab, cohort, and track
   const filteredStudents = useMemo(() => {
@@ -271,12 +270,7 @@ const StudentsPage = () => {
       </div>
 
       {/* Loading and Error States */}
-      {isLoadingStudents && (
-        <div className="flex justify-center items-center py-8">
-          <span className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mr-2"></span>
-          <span className="text-gray-700">Loading students from chain...</span>
-        </div>
-      )}
+
       {studentsError && (
         <div className="text-red-600 text-center py-2 font-medium">
           {studentsError}
