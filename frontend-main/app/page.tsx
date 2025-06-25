@@ -1,158 +1,193 @@
 "use client";
+import Image from "next/image";
+import React from "react";
+import { Montserrat } from "next/font/google";
+import { motion } from "framer-motion";
+import Link from "next/link";
 
-import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import {
-  GraduationCap,
-  Users,
-  Shield,
-  Clock,
-  TrendingUp,
-  ArrowRight,
-  Database,
-  Lock,
-} from "lucide-react";
+const montserrat = Montserrat({ subsets: ["latin"], weight: ["700"] });
 
-export default function Home() {
-  const router = useRouter();
+const textVariants = {
+  hidden: { opacity: 0, y: 40 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.8, ease: [0.42, 0, 0.58, 1] },
+  },
+};
 
-  const features = [
-    {
-      icon: <GraduationCap className="h-6 w-6" />,
-      title: "Student Management",
-      description:
-        "Comprehensive student profiles with blockchain-verified credentials",
-    },
-    {
-      icon: <Users className="h-6 w-6" />,
-      title: "Cohort Organization",
-      description:
-        "Organize students by cohorts and tracks (Web2/Web3) seamlessly",
-    },
-    {
-      icon: <Clock className="h-6 w-6" />,
-      title: "Attendance Tracking",
-      description:
-        "Real-time attendance logging with immutable blockchain records",
-    },
-    {
-      icon: <Shield className="h-6 w-6" />,
-      title: "Role-Based Access",
-      description: "Secure access control for admins, staff, and students",
-    },
-    {
-      icon: <TrendingUp className="h-6 w-6" />,
-      title: "Performance Analytics",
-      description: "Track student progress and performance metrics",
-    },
-    {
-      icon: <Database className="h-6 w-6" />,
-      title: "Blockchain Security",
-      description: "Decentralized data storage with enhanced security",
-    },
-  ];
+const subtitleVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0, transition: { delay: 0.3, duration: 0.7 } },
+};
 
+const buttonVariants = {
+  hidden: { opacity: 0, scale: 0.9 },
+  visible: (i: number) => ({
+    opacity: 1,
+    scale: 1,
+    transition: { delay: 0.5 + i * 0.15, duration: 0.5 },
+  }),
+};
+
+const statsVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0, transition: { delay: 0.7, duration: 0.7 } },
+};
+
+const LandingPage = () => {
   return (
-    <div
-      className="min-h-screen relative overflow-hidden"
-      style={{
-        backgroundImage: 'url("/auth-bg.jpeg")',
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        backgroundRepeat: "no-repeat",
-      }}
-    >
-      {/* Dark Overlay */}
-      <div className="absolute inset-0 bg-black/60" />
-
-      {/* Subtle Gradient Overlay */}
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-900/20 via-purple-900/20 to-slate-900/40" />
-
-      {/* Floating Elements */}
-      <div className="absolute top-20 left-20 w-72 h-72 bg-blue-500/10 rounded-full blur-3xl animate-pulse" />
-      <div className="absolute bottom-20 right-20 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse delay-1000" />
-      <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-pink-500/10 rounded-full blur-3xl animate-pulse delay-500" />
-
-      {/* Main Content */}
-      <div className="relative z-10 h-screen flex flex-col">
-        {/* Header */}
-        <header className="flex-1 flex flex-col justify-center items-center text-center px-4">
-          <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-6 py-2 mb-8">
-            <Lock className="h-4 w-4 text-blue-400" />
-            <span className="text-sm text-white/80">
-              Blockchain-Powered Education Management
-            </span>
+    <div className="w-full min-h-screen overflow-hidden bg-gradient-to-r from-[#1B1720] via-[#1B1720] to-[#0e0d1c] text-white relative">
+      <div className="container mx-auto h-screen relative">
+        <span className="size-8 bg-white rounded-full absolute top-20 right-[27rem]"></span>
+        <nav className="w-full flex items-center justify-between py-6">
+          <div className="w-1/2 flex justify-between">
+            <Image src="/images/logo-two.svg" alt="" height={50} width={50} />
+            <ul className="flex items-center gap-6 text-gray-400 cursor-pointer">
+              <li>Home</li>
+              <li>features</li>
+              <li>How to use</li>
+              <li>More info</li>
+            </ul>
           </div>
+          <button className="absolute right-0 py-2 px-10 rounded-l-full rounded-t-full bg-[#fff] text-black">
+            Signin
+          </button>
+        </nav>
 
-          <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight">
-            Welcome to{" "}
-            <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
-              Blockfuse Labs
-            </span>
-          </h1>
-
-          <p className="text-xl md:text-2xl text-white/80 mb-8 max-w-3xl mx-auto leading-relaxed">
-            The next-generation student management system designed for modern
-            educational institutions. Built on blockchain technology for
-            transparency, security, and efficiency.
-          </p>
-
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <Button
-              size="lg"
-              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-4 text-lg font-semibold rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
-              onClick={() => router.push("/login")}
+        <div className="h-full grow flex items-center">
+          <div className="w-[40%] flex flex-col gap-6 relative">
+            <span className="size-8 rounded-full bg-[#8C0282] absolute -top-14 -left-8"></span>
+            <motion.h1
+              className={`text-4xl font-extrabold tracking-wide leading-tight ${montserrat.className}`}
+              variants={textVariants}
+              initial="hidden"
+              animate="visible"
             >
-              Get Started
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </Button>
-            <Button
-              variant="outline"
-              size="lg"
-              className="border-white/20 text-white hover:bg-white/10 px-8 py-4 text-lg font-semibold rounded-full backdrop-blur-sm"
+              Your Modern <br /> Student Management Dapp
+            </motion.h1>
+            <motion.p
+              className="text-lg text-gray-300"
+              variants={subtitleVariants}
+              initial="hidden"
+              animate="visible"
             >
-              Learn More
-            </Button>
-          </div>
-        </header>
+              Lorem ipsum, dolor sit amet consectetur adipisicing elit. Pariatur
+              nisi quam ducimus distinctio distinctio distinctio.
+            </motion.p>
 
-        {/* Features Grid */}
-        <section className="flex-1 flex flex-col justify-center px-4 py-8">
-          <h2 className="text-3xl md:text-4xl font-bold text-white text-center mb-8">
-            Powerful Features for Modern Education
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-6xl mx-auto">
-            {features.map((feature, index) => (
-              <div
-                key={index}
-                className="bg-white/5 backdrop-blur-sm rounded-2xl p-4 border border-white/10 hover:bg-white/10 transition-all duration-300 hover:transform hover:scale-105"
-              >
-                <div className="bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg p-3 w-fit mb-3">
-                  <div className="text-white">{feature.icon}</div>
+            <div className="flex gap-6">
+              {[
+                {
+                  text: "Get Started",
+                  className:
+                    "py-3 px-10 rounded-r-full rounded-t-full bg-[#9434EA] text-white",
+                  link: "/login",
+                },
+                {
+                  text: "Learn more",
+                  className:
+                    "py-3 px-10 rounded-l-full rounded-t-full bg-[#3F3A38] text-white",
+                  link: "/",
+                },
+              ].map((btn, i) => (
+                <Link key={btn.text} href={btn.link}>
+                  <motion.button
+                    className={btn.className}
+                    variants={buttonVariants}
+                    initial="hidden"
+                    animate="visible"
+                    custom={i}
+                    whileHover={{ scale: 1.07 }}
+                    whileTap={{ scale: 0.97 }}
+                  >
+                    {btn.text}
+                  </motion.button>
+                </Link>
+              ))}
+            </div>
+
+            <motion.div
+              className="flex"
+              variants={statsVariants}
+              initial="hidden"
+              animate="visible"
+            >
+              <h3></h3>
+              <div className="bg-[#262630] w-full p-6 rounded-2xl flex justify-between items-center">
+                <div className="flex flex-col gap-2">
+                  <h2 className="text-2xl font-bold text-white">200+</h2>
+                  <p className="text-gray-500 text-sm">
+                    Total Students
+                    <br /> onboarded
+                  </p>
                 </div>
-                <h3 className="text-lg font-semibold text-white mb-2">
-                  {feature.title}
-                </h3>
-                <p className="text-white/70 leading-relaxed text-sm">
-                  {feature.description}
-                </p>
+                <div className="flex flex-col gap-2">
+                  <h2 className="text-2xl font-bold text-white px-2">4</h2>
+                  <p className="text-gray-500 text-sm">
+                    Active Tracks/ <br /> courses
+                  </p>
+                </div>
+                <div className="flex flex-col gap-2">
+                  <h2 className="text-2xl font-bold text-white tpx-2">50+</h2>
+                  <p className="text-gray-500 text-sm">
+                    Active Mentors and
+                    <br /> Instructors
+                  </p>
+                </div>
               </div>
-            ))}
+            </motion.div>
           </div>
-        </section>
 
-        {/* Footer */}
-        <footer className="py-6 text-center">
-          <div className="border-t border-white/10 pt-4">
-            <p className="text-white/60">
-              © 2024 Blockfuse Labs. All rights reserved. |
-              <span className="text-blue-400 ml-1">
-                Powered by Blockchain Technology
-              </span>
-            </p>
+          {/* ...rest of your image grid code remains unchanged... */}
+          <div className="grow flex gap-10 h-full">
+            <span className="size-8 bg-purple-700 rounded-full absolute bottom-10 right-72"></span>
+            <div className=" h-full pt-10 absolute right-[25rem]">
+              <div className="flex flex-col gap-6 h-full mt-10">
+                <div className="h-[50%] w-[150px] p-10 rounded-full relative overflow-hidden">
+                  <Image
+                    src="/auth-bg.jpeg"
+                    alt=""
+                    className="object-cover"
+                    fill
+                  />
+                </div>
+                <div className="h-[50%]  w-[150px] p-10 rounded-full relative overflow-hidden">
+                  <Image
+                    src="/smiles.jpeg"
+                    alt=""
+                    className="object-cover"
+                    fill
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="flex flex-col gap-6 h-full absolute right-52 top-0 bottom-0">
+              <div className="h-[100%] bg-gray-400 w-[150px] p-10 rounded-b-full relative overflow-hidden">
+                <Image src="/vic.jpeg" alt="" className="object-cover" fill />
+              </div>
+              <div className="h-[100%] bg-gray-400 w-[150px] p-10 rounded-t-full relative overflow-hidden">
+                <Image
+                  src="/devlongs.JPG"
+                  alt=""
+                  className="object-cover"
+                  fill
+                />
+              </div>
+            </div>
+            <div className="flex flex-col gap-6 h-full mt-6 absolute right-0">
+              <div className="h-[50%] bg-gray-400 w-[150px] p-10 rounded-full relative overflow-hidden">
+                <Image src="/mitong.JPG" alt="" className="object-cover" fill />
+              </div>
+              <div className="h-[50%] bg-gray-400 w-[150px] p-10 rounded-full  relative overflow-hidden">
+                <Image src="/scar.jpeg" alt="" className="object-cover" fill />
+              </div>
+            </div>
           </div>
-        </footer>
+        </div>
       </div>
     </div>
   );
-}
+};
+
+export default LandingPage;

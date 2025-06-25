@@ -155,8 +155,8 @@ export function Table<T extends { id: string | number }>({
                 </td>
               </tr>
             ) : (
-              sortedData.map((item) => (
-                <tr key={item.id} className="hover:bg-gray-50">
+              sortedData.map((item, index) => (
+                <tr key={item.id + '-' + index} className="hover:bg-gray-50">
                   {columns.map((column) => (
                     <td
                       key={String(column.accessor)}

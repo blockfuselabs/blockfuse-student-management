@@ -19,49 +19,31 @@ const Layout = ({ children }: Props) => {
   const { isAdmin, isSuperAdmin, isLoading: roleLoading } = useUserRole();
   const [hasCheckedRole, setHasCheckedRole] = useState(false);
 
-  // Debug logging
-  console.log("=== Admin Layout Debug ===");
-  console.log("Is Mounted:", isMounted);
-  console.log("Is Connected:", isConnected);
-  console.log("Is Admin:", isAdmin);
-  console.log("Is Super Admin:", isSuperAdmin);
-  console.log("Role Loading:", roleLoading);
-  console.log("Has Checked Role:", hasCheckedRole);
+
 
   // Reset hasCheckedRole when wallet disconnects
   useEffect(() => {
     if (!isConnected && hasCheckedRole) {
-      console.log("Wallet disconnected, resetting role check state");
       setHasCheckedRole(false);
     }
   }, [isConnected, hasCheckedRole]);
 
   useEffect(() => {
-    console.log("=== Admin Layout useEffect ===");
-    console.log("Is Mounted:", isMounted);
-    console.log("Role Loading:", roleLoading);
-    console.log("Is Connected:", isConnected);
-    console.log("Is Admin:", isAdmin);
-    console.log("Is Super Admin:", isSuperAdmin);
-    console.log("Has Checked Role:", hasCheckedRole);
-
+   
     // Handle immediate disconnection
     if (isMounted && !isConnected) {
-      console.log("Wallet not connected, redirecting to login");
       router.push("/login");
       return;
     }
 
     // Only proceed if mounted, connected, role loading is complete, and we haven't checked yet
     if (isMounted && isConnected && !roleLoading && !hasCheckedRole) {
-      console.log("Role check completed, evaluating authentication...");
       setHasCheckedRole(true);
 
       if (!isAdmin && !isSuperAdmin) {
-        console.log("Redirecting to unauthorized - not admin");
         router.push("/unauthorized");
-      } else {
-        console.log("User is authenticated as admin");
+      } else if(isAdmin || isSuperAdmin) {
+         router.push("/admin");
       }
     } else {
       console.log("Still loading or not mounted yet");

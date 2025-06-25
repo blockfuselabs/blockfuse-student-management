@@ -7,7 +7,7 @@ import { AddAdminModal } from "@/components/modals/AddAdminModal";
 import { Admin, adminColumns } from "@/components/tables/StudentColumns";
 import { useGetAdmins } from "@/lib/hooks/useGetAdmins";
 import { RefreshCw } from "lucide-react";
-import { ToastContainer } from "react-toastify";
+import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 const statusTabs = [
@@ -27,6 +27,7 @@ const AdminsPage = () => {
     admins: blockchainAdmins,
     isLoading,
     error,
+    refetch,
   } = useGetAdmins(refreshKey);
 
   console.log(blockchainAdmins);
@@ -56,18 +57,38 @@ const AdminsPage = () => {
   });
 
   // Refresh function
-  const handleRefresh = useCallback(() => {
+  const handleRefresh = useCallback(async () => {
+    console.log("Refreshing admins data...");
     setRefreshKey((prev) => prev + 1);
-  }, []);
+    
+    // Also trigger manual refetch
+    if (refetch) {
+      await refetch();
+    }
+  }, [refetch]);
 
-  // Handle admin added
-  const handleAdminAdded = useCallback(() => {
-    handleRefresh();
+  // Handle admin added - enhanced with toast notification
+  const handleAdminAdded = useCallback(async () => {
+    console.log("Admin added callback triggered");
+    toast.success("Admin added successfully!", {
+      position: "top-right",
+      autoClose: 3000,
+    });
+    
+    // Refresh the data
+    await handleRefresh();
   }, [handleRefresh]);
 
   // Handle admin removed
-  const handleAdminRemoved = useCallback(() => {
-    handleRefresh();
+  const handleAdminRemoved = useCallback(async () => {
+    console.log("Admin removed callback triggered");
+    toast.success("Admin removed successfully!", {
+      position: "top-right",
+      autoClose: 3000,
+    });
+    
+    // Refresh the data
+    await handleRefresh();
   }, [handleRefresh]);
 
   if (error) {
