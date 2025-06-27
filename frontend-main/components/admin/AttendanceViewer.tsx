@@ -32,7 +32,6 @@ import { Badge } from "@/components/ui/badge";
 import {
   Calendar,
   Users,
-  Clock,
   AlertCircle,
   Loader2,
   CheckCircle,
@@ -40,9 +39,11 @@ import {
 } from "lucide-react";
 import { useGetCohorts } from '../../lib/hooks/useGetCohorts';
 import { useGetAttendanceDatesForStudent } from "@/lib/hooks/useGetAttendance";
+import { useAccount } from "wagmi";
 
 export default function AttendanceViewer() {
   const isMounted = useIsMounted();
+  const { address: connectedAddress } = useAccount();
   const [cohortId, setCohortId] = useState("");
   const [track, setTrack] = useState("");
   const [selectedStudent, setSelectedStudent] = useState<string | null>(null);
@@ -72,18 +73,8 @@ export default function AttendanceViewer() {
       shouldCallAttendance ? Number(track) : 0
     );
 
+  console.log("Connected wallet address:", connectedAddress);
   console.log(attendance)
-
-  const formatDate = (timestamp: number | bigint) => {
-    if (!isMounted) return "Loading...";
-    return new Date(Number(timestamp) * 1000).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
 
   const getTrackName = (trackNumber: number) => {
     return trackNumber === 0 ? "Web2" : trackNumber === 1 ? "Web3" : `Track ${trackNumber}`;
@@ -273,7 +264,7 @@ export default function AttendanceViewer() {
           {attendance && !isLoading && shouldCallAttendance && (
             <div className="space-y-6">
               {/* Summary Stats */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">
@@ -304,25 +295,6 @@ export default function AttendanceViewer() {
                     </div>
                     <p className="text-xs text-muted-foreground">
                       days with attendance records
-                    </p>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">
-                      Latest Attendance
-                    </CardTitle>
-                    <Clock className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-sm font-bold">
-                      {attendance[1] && attendance[1].length > 0
-                        ? formatDate(Number(attendance[1][attendance[1].length - 1]))
-                        : "No records"}
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      most recent entry
                     </p>
                   </CardContent>
                 </Card>
@@ -469,7 +441,12 @@ function StudentRow({
 
 // Component to render attendance dates for a student
 function StudentAttendanceDates({ studentAddress, cohortId, track, attendanceCount }: { studentAddress: string; cohortId: number; track: number; attendanceCount: number }) {
-  const { attendanceDates, isLoading } = useGetAttendanceDatesForStudent(studentAddress, Number(cohortId), Number(track));
+  // Debug: log arguments
+  console.log("StudentAttendanceDates args:", { studentAddress, cohortId, track });
+  const { attendanceDates, isLoading, error } = useGetAttendanceDatesForStudent(studentAddress, Number(cohortId), Number(track));
+  // Debug: log raw attendanceDates and error
+  console.log("attendanceDates raw:", attendanceDates);
+  console.log("attendanceDates error:", error);
 
   if (attendanceCount === 0) {
     return <div>No attendance taken for this student.</div>;
