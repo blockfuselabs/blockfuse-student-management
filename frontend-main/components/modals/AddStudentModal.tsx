@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 import { useRegisterStudent } from "@/lib/hooks/useRegisterStudent";
 import { useGetCohorts } from "@/lib/hooks/useGetCohorts";
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 import { toast } from "sonner";
 
 type Props = {
@@ -102,9 +102,6 @@ export function AddStudentModal({ isOpen, setIsOpen, refetchStudents }: Props) {
   // Handle successful registration
   React.useEffect(() => {
     if (isSuccess && transactionHash) {
-      toast.success("Student registered successfully!", {
-        description: `Transaction: ${transactionHash.slice(0, 10)}...`
-      });
       handleClose();
     }
   }, [handleClose, isSuccess, transactionHash]);
@@ -112,9 +109,7 @@ export function AddStudentModal({ isOpen, setIsOpen, refetchStudents }: Props) {
   // Handle errors
   React.useEffect(() => {
     if (error) {
-      toast.error("Registration failed", {
-        description: error
-      });
+      // Handle error
     }
   }, [error]);
 
@@ -135,13 +130,27 @@ export function AddStudentModal({ isOpen, setIsOpen, refetchStudents }: Props) {
     console.log('-------------------------');
   }, [cohort, cohorts, cohortOptions]);
 
+  useEffect(() => {
+    if (isSuccess) {
+      toast.success("Student registered successfully!");
+      setTimeout(() => {
+        setIsOpen(false);
+        if (refetchStudents) refetchStudents();
+      }, 1000);
+    }
+  }, [isSuccess, setIsOpen, refetchStudents]);
+
+  React.useEffect(() => {
+    if (error) {
+      toast.error("Registration failed: " + error);
+    }
+  }, [error]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     // Validate required fields
     if (!firstname.trim() || !lastname.trim() || !studentAddress.trim() || track === "" || cohort === "") {
-      toast.error("Please fill in all required fields");
       return;
     }
 

@@ -6,24 +6,25 @@ import "../libraries/Event.sol";
 import "../libraries/LibAppStorage.sol";
 
 contract AdminFacet {
-    LibAppStorage.Layout layout;
-
     modifier validDates(uint256 startDate, uint256 endDate) {
         require(startDate < endDate, Error.END_DATE_MUST_BE_GREATER_THAN_START());
         _;
     }
 
     modifier onlyAdmin() {
+        LibAppStorage.Layout storage layout = LibAppStorage.layout();
         require(layout.admins[msg.sender] || msg.sender == layout.superAdmin, Error.UNAUTHORIZED_ACCESS());
         _;
     }
 
     modifier onlySuperAdmin() {
+        LibAppStorage.Layout storage layout = LibAppStorage.layout();
         require(msg.sender == layout.superAdmin, Error.UNAUTHORIZED_ACCESS());
         _;
     }
 
     modifier studentExist(address _studentWalletAddress) {
+        LibAppStorage.Layout storage layout = LibAppStorage.layout();
         require(
             _studentWalletAddress != address(0) && layout.student[_studentWalletAddress].isActive,
             Error.STUDENT_DOES_NOT_EXIST()
@@ -32,6 +33,7 @@ contract AdminFacet {
     }
 
     function addAdmin(address adminAddress) external onlySuperAdmin returns (bool) {
+        LibAppStorage.Layout storage layout = LibAppStorage.layout();
         require(adminAddress != address(0), Error.INVALID_ADDRESS());
         require(!layout.admins[adminAddress], "Admin already exists");
 
@@ -42,6 +44,7 @@ contract AdminFacet {
     }
 
     function removeAdmin(address adminAddress) external onlySuperAdmin returns (bool) {
+        LibAppStorage.Layout storage layout = LibAppStorage.layout();
         require(layout.admins[adminAddress], "Admin does not exist");
 
         layout.admins[adminAddress] = false;
@@ -65,6 +68,7 @@ contract AdminFacet {
         studentExist(_studentWalletAddress)
         returns (bool)
     {
+        LibAppStorage.Layout storage layout = LibAppStorage.layout();
         layout.studentScore[_studentWalletAddress].push(_studentScore);
         layout.student[_studentWalletAddress].finalScore += _studentScore;
         int256 score = layout.student[_studentWalletAddress].finalScore;
@@ -73,6 +77,7 @@ contract AdminFacet {
     }
 
     function registerStudent(LibAppStorage.studentDetails calldata newStudent) external onlyAdmin {
+        LibAppStorage.Layout storage layout = LibAppStorage.layout();
         require(bytes(newStudent.email).length > 0, "Email is required");
         string memory usernameConstruct = newStudent.username;
 
@@ -90,6 +95,7 @@ contract AdminFacet {
     }
 
     function addStudentToCohort(uint8 _cohortId, address _student, LibAppStorage.Track _track) public onlyAdmin {
+        LibAppStorage.Layout storage layout = LibAppStorage.layout();
         require(_cohortId > 0 && _cohortId <= layout.cohortCount, Error.INVALID_COHORT_ID());
         LibAppStorage.Cohort storage cohort = layout.cohorts[_cohortId];
 
@@ -111,14 +117,17 @@ contract AdminFacet {
     }
 
     function disableStudent(address _studentAddress) public onlyAdmin {
+        LibAppStorage.Layout storage layout = LibAppStorage.layout();
         layout.student[_studentAddress].isActive = false;
     }
 
     function enableStudent(address _studentAddress) public onlyAdmin {
+        LibAppStorage.Layout storage layout = LibAppStorage.layout();
         layout.student[_studentAddress].isActive = true;
     }
 
     function replaceStudentWallet(address oldAddress, address newAddress) external onlyAdmin {
+        LibAppStorage.Layout storage layout = LibAppStorage.layout();
         require(oldAddress != address(0) && newAddress != address(0), Error.INVALID_ADDRESS());
         require(layout.student[oldAddress].isActive, Error.STUDENT_DOES_NOT_EXIST());
         require(!layout.student[newAddress].isActive, Error.STUDENT_DOES_NOT_EXIST());
@@ -148,18 +157,49 @@ contract AdminFacet {
     }
 
     function isStudentActive(address student) external view returns (bool) {
+        LibAppStorage.Layout storage layout = LibAppStorage.layout();
         return layout.student[student].isActive;
     }
 
     function getAllAdmins() external view returns (address[] memory) {
+        LibAppStorage.Layout storage layout = LibAppStorage.layout();
         return layout.adminList;
     }
 
+    function getAttendanceDatesForStudent(address student, uint8 cohortId, LibAppStorage.Track track)
+        external
+        view
+        onlyAdmin
+        returns (uint256[] memory attendanceDates)
+    {
+        LibAppStorage.Layout storage layout = LibAppStorage.layout();
+        LibAppStorage.Cohort storage cohort = layout.cohorts[cohortId];
+        require(cohort.cohortId != 0, Error.COHORT_DOES_NOT_EXIST());
+
+        uint256 cohortStartDay = cohort.startDate / 1 days;
+        uint256 cohortEndDay = cohort.endDate / 1 days;
+
+        uint256[] memory tempDates = new uint256[](cohortEndDay - cohortStartDay + 1);
+        uint256 count = 0;
+        for (uint256 day = cohortStartDay; day <= cohortEndDay; day++) {
+            if (layout.attendance[cohortId][track][day][student]) {
+                tempDates[count] = day;
+                count++;
+            }
+        }
+        attendanceDates = new uint256[](count);
+        for (uint256 i = 0; i < count; i++) {
+            attendanceDates[i] = tempDates[i];
+        }
+    }
+
     function superAdmin() public view returns (address) {
+        LibAppStorage.Layout storage layout = LibAppStorage.layout();
         return layout.superAdmin;
     }
 
     function replaceAdmin(address oldAdmin, address newAdmin) external onlySuperAdmin returns (bool) {
+        LibAppStorage.Layout storage layout = LibAppStorage.layout();
         require(oldAdmin != address(0) && newAdmin != address(0), Error.INVALID_ADDRESS());
         require(layout.admins[oldAdmin], "Old admin does not exist");
         require(!layout.admins[newAdmin], "New admin already exists");

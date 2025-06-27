@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useLogAttendance } from "@/hooks/useLogAttendance";
 import { useGetStudent } from "@/hooks/useGetStudent";
-import { useGetAttendanceByCohortAndTrack } from "@/hooks/useGetAttendance";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -27,7 +26,6 @@ import {
   AlertCircle,
   Loader2,
   User,
-  Calendar,
 } from "lucide-react";
 
 export default function TestAttendancePage() {

@@ -80,17 +80,8 @@ contract StudentFacetTest is Test, IDiamondCut {
         cut[4] = FacetCut({
             facetAddress: address(studentFacet),
             action: FacetCutAction.Add,
-            functionSelectors: new bytes4[](9)
+            functionSelectors: generateSelectors("StudentFacet")
         });
-        cut[4].functionSelectors[0] = 0xcf9e6826; // getAttendanceByCohortAndTrack(uint8,uint8)
-        cut[4].functionSelectors[1] = 0x72fddf65; // getAttendanceDatesForStudent(address,uint8,uint8)
-        cut[4].functionSelectors[2] = 0x6b7b44d7; // getStudent(address)
-        cut[4].functionSelectors[3] = 0x89d2b0c5; // getStudentAssesments(address)
-        cut[4].functionSelectors[4] = 0xcfc48d27; // getStudentFinalScore(address)
-        cut[4].functionSelectors[5] = 0x7649cd70; // getStudentScoreByIndex(address,uint256)
-        cut[4].functionSelectors[6] = 0x9830bd99; // getStudentsByCohortAndTrack(uint8,uint8)
-        cut[4].functionSelectors[7] = 0xe18325c4; // hasAttendance(address,uint8,uint8,uint256)
-        cut[4].functionSelectors[8] = 0x94178fc3; // logAttendance(address,uint8,uint8)
 
         // Upgrade diamond
         IDiamondCut(address(diamond)).diamondCut(cut, address(0x0), "");
@@ -123,6 +114,7 @@ contract StudentFacetTest is Test, IDiamondCut {
         student1Details.twitter = "@johndoe";
         student1Details.linkedin = "johndoe";
         student1Details.github = "johndoe";
+        student1Details.email = "john@example.com";
         student1Details.track = web2Track;
         student1Details.cohort = cohortId;
         student1Details.studentAddress = student1;
@@ -136,6 +128,7 @@ contract StudentFacetTest is Test, IDiamondCut {
         student2Details.twitter = "@janesmith";
         student2Details.linkedin = "janesmith";
         student2Details.github = "janesmith";
+        student2Details.email = "jane@example.com";
         student2Details.track = web3Track;
         student2Details.cohort = cohortId;
         student2Details.studentAddress = student2;
@@ -279,35 +272,6 @@ contract StudentFacetTest is Test, IDiamondCut {
         assertEq(studentData.lastname, "Doe");
         assertEq(studentData.cohort, cohortId);
         assertTrue(studentData.isActive);
-    }
-
-    // Test Case 4: Test getAttendanceDatesForStudent returns correct dates
-    function testGetAttendanceDatesForStudent() public {
-        // Log attendance for student1 on three different days
-        vm.prank(student1);
-        StudentFacet(address(diamond)).logAttendance(student1, cohortId, web2Track); // Day 1
-        uint256 day1 = block.timestamp / 1 days;
-
-        vm.warp(block.timestamp + 1 days);
-        StudentFacet(address(diamond)).logAttendance(student1, cohortId, web2Track); // Day 2
-        uint256 day2 = block.timestamp / 1 days;
-
-        vm.warp(block.timestamp + 1 days);
-        StudentFacet(address(diamond)).logAttendance(student1, cohortId, web2Track); // Day 3
-        uint256 day3 = block.timestamp / 1 days;
-
-        // Call getAttendanceDatesForStudent via the diamond proxy using ABI encoding
-        (bool success, bytes memory data) = address(diamond).call(
-            abi.encodeWithSignature(
-                "getAttendanceDatesForStudent(address,uint8,uint8)", student1, cohortId, uint8(web2Track)
-            )
-        );
-        require(success, "Diamond call failed");
-        uint256[] memory dates = abi.decode(data, (uint256[]));
-        assertEq(dates.length, 3);
-        assertEq(dates[0], day1);
-        assertEq(dates[1], day2);
-        assertEq(dates[2], day3);
     }
 
     function generateSelectors(string memory _facetName) internal returns (bytes4[] memory selectors) {

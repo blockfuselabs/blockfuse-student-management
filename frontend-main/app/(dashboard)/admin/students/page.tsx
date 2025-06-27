@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Table } from "@/components/shared/Table";
 import { AddStudentModal } from "@/components/modals/AddStudentModal";
 import { AddStudentsExcelModal } from "@/components/modals/AddStudentsExcelModal";
+import { AddScoreModal } from "@/components/modals/AddScoreModal";
 import { Student, studentColumns } from "@/components/tables/StudentColumns";
 import { useGetCohorts } from "@/lib/hooks/useGetCohorts";
 import {
@@ -18,6 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { RefreshCw } from "lucide-react";
 
 const statusTabs = [
   { label: "All", value: "all" },
@@ -47,12 +49,15 @@ function mapStudentDetailsToStudent(
     email: trackLabel, // Show track instead of email
     cohort: cohortName,
     status: s.isActive ? "active" : "suspended", // You may want to improve this mapping
+    finalScore: Number(s.finalScore), // Convert bigint to number
   };
 }
 
 const StudentsPage = () => {
   const [addStudentModalOpen, setAddStudentModalOpen] = useState(false);
   const [addExcelModalOpen, setAddExcelModalOpen] = useState(false);
+  const [addScoreModalOpen, setAddScoreModalOpen] = useState(false);
+  const [selectedStudentAddress, setSelectedStudentAddress] = useState<string>("");
   const [selectedTab, setSelectedTab] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCohort, setSelectedCohort] = useState<string>("all");
@@ -122,6 +127,18 @@ const StudentsPage = () => {
     ];
   }, [mappedStudents]);
 
+  // Handler for opening add score modal
+  const handleAddScore = (studentAddress: string) => {
+    setSelectedStudentAddress(studentAddress);
+    setAddScoreModalOpen(true);
+  };
+
+  // Handler for closing add score modal
+  const handleCloseAddScore = () => {
+    setAddScoreModalOpen(false);
+    setSelectedStudentAddress("");
+  };
+
   const handleResetFilters = () => {
     setSelectedTab("all");
     setSearchTerm("");
@@ -141,6 +158,15 @@ const StudentsPage = () => {
           </p>
         </div>
         <div className="flex gap-2">
+          <Button
+            size="lg"
+            variant="outline"
+            className="flex text-base h-[44px] w-[44px] gap-1 items-center"
+            onClick={() => setRefreshKey((k) => k + 1)}
+            disabled={isLoadingStudents}
+          >
+            <RefreshCw className={`h-4 w-4 ${isLoadingStudents ? "animate-spin" : ""}`} />
+          </Button>
           <Button
             size="lg"
             className="flex text-base h-[44px] w-[130px] gap-1 items-center"
@@ -295,7 +321,7 @@ const StudentsPage = () => {
       <div className="mt-2 w-full">
         <Table
           data={filteredStudents}
-          columns={studentColumns}
+          columns={studentColumns(handleAddScore)}
           title=""
           searchable={false}
           exportable={false}
@@ -310,6 +336,12 @@ const StudentsPage = () => {
       <AddStudentsExcelModal
         isOpen={addExcelModalOpen}
         setIsOpen={setAddExcelModalOpen}
+      />
+      <AddScoreModal
+        isOpen={addScoreModalOpen}
+        setIsOpen={handleCloseAddScore}
+        studentAddress={selectedStudentAddress}
+        refetchStudents={() => setRefreshKey((k) => k + 1)}
       />
     </div>
   );

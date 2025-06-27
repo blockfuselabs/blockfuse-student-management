@@ -3,26 +3,20 @@ const path = require("path/posix");
 
 const args = process.argv.slice(2);
 
-if (args.length != 2) {
+if (args.length != 1) {
   console.log(`please supply the correct parameters:
     facetName
-    artifactFolderPath
   `);
   process.exit(1);
 }
 
-async function printSelectors(
-  contractName,
-  artifactFolderPath = "../artifacts/contracts/facets"
-) {
+async function printSelectors(contractName, artifactFolderPath = "../out") {
   const contractFilePath = path.join(
     artifactFolderPath,
     `${contractName}.sol`,
     `${contractName}.json`
   );
-  const resolvedPath = path.resolve(contractFilePath);
-  console.log("Absolute contractFilePath:", resolvedPath); // Debug log
-  const contractArtifact = require(resolvedPath);
+  const contractArtifact = require(contractFilePath);
   const abi = contractArtifact.abi;
   const bytecode = contractArtifact.bytecode;
   const target = new ethers.ContractFactory(abi, bytecode);

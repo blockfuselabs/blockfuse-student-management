@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useWriteContract, useWaitForTransactionReceipt } from "wagmi";
+import { useState, useEffect } from "react";
+import { useWriteContract, useTransaction } from "wagmi";
 import StudentFacetABI from "@/lib/contract/StudentFacet.json";
 import { CONTRACT_ADDRESS } from "@/lib/contract/address";
 
@@ -15,14 +15,34 @@ export const useLogAttendance = () => {
 
   const {
     writeContract,
-    data: hash,
-    isPending,
+    data: writeData,
+    isError: isWriteError,
     error: writeError,
   } = useWriteContract();
 
-  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
-    hash,
+  const {
+    isLoading: isTransactionLoading,
+    isSuccess,
+    isError: isTransactionError,
+  } = useTransaction({
+    hash: writeData,
   });
+
+  // Handle transaction success
+  useEffect(() => {
+    if (isSuccess) {
+      console.log("Attendance logged successfully!");
+    }
+  }, [isSuccess]);
+
+  // Handle transaction errors
+  useEffect(() => {
+    if (isWriteError || isTransactionError) {
+      const errorMessage = writeError?.message || "Transaction failed";
+      console.log("Transaction error:", errorMessage);
+      setError(errorMessage);
+    }
+  }, [isWriteError, isTransactionError, writeError]);
 
   const logAttendance = async (params: LogAttendanceParams) => {
     try {
@@ -35,39 +55,26 @@ export const useLogAttendance = () => {
         throw new Error("Contract write function not available");
       }
 
-      // Call the contract function with the correct parameters
+      // Call the contract function with 3 arguments
       await writeContract({
-        address: CONTRACT_ADDRESS,
+        address: CONTRACT_ADDRESS as `0x${string}`,
         abi: StudentFacetABI.abi,
         functionName: "logAttendance",
         args: [params.studentAddress, params.cohortId, params.track],
       });
-
-      console.log("Attendance logging transaction submitted");
     } catch (err) {
-      console.error("Error logging attendance:", err);
+      console.log("Error logging attendance:", err);
       setError(err instanceof Error ? err.message : "Failed to log attendance");
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Handle transaction success/error
-  if (isSuccess) {
-    console.log("Attendance logged successfully!");
-  }
-
-  if (writeError) {
-    console.error("Transaction error:", writeError.message);
-    setError(writeError.message);
-  }
-
   return {
     logAttendance,
-    isLoading: isLoading || isPending || isConfirming,
+    isLoading: isLoading || isTransactionLoading,
     isSuccess,
     error,
     resetError: () => setError(null),
-    transactionHash: hash,
   };
 };

@@ -2,7 +2,6 @@ import {
   LayoutDashboard,
   Users,
   GraduationCap,
-  UserCog,
   Settings,
   Shield,
   BookOpen,

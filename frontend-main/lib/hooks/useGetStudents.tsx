@@ -18,7 +18,8 @@ export interface StudentDetails {
 }
 
 export function useGetStudentsForCohorts(
-  cohorts: { id: string | number; tracks: number[]; name: string }[]
+  cohorts: { id: string | number; tracks: number[]; name: string }[],
+  refreshKey?: number
 ) {
   const publicClient = usePublicClient();
   const [students, setStudents] = useState<StudentDetails[]>([]);
@@ -93,7 +94,7 @@ export function useGetStudentsForCohorts(
     return () => {
       cancelled = true;
     };
-  }, [cohorts, publicClient]);
+  }, [cohorts, publicClient, refreshKey]);
 
   return { students, isLoading, error };
 }

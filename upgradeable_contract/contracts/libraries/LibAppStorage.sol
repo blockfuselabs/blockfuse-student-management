@@ -49,6 +49,7 @@ library LibAppStorage {
         mapping(uint8 => mapping(Track => mapping(uint256 => mapping(address => bool)))) attendance;
         mapping(uint8 => mapping(Track => AttendanceRecord[])) attendanceRecords;
         mapping(address => AttendanceRecord[]) individualAttendanceRecord;
+        
         address superAdmin;
     }
 

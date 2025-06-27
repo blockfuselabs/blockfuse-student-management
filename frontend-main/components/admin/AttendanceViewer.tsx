@@ -38,15 +38,14 @@ import {
   CheckCircle,
   XCircle,
 } from "lucide-react";
-import { useContractRead } from 'wagmi';
-import StudentFacetABI from '@/lib/contract/StudentFacet.json';
-import { CONTRACT_ADDRESS as STUDENT_FACET_ADDRESS } from '@/lib/contract/address';
 import { useGetCohorts } from '../../lib/hooks/useGetCohorts';
+import { useGetAttendanceDatesForStudent } from "@/lib/hooks/useGetAttendance";
 
 export default function AttendanceViewer() {
   const isMounted = useIsMounted();
   const [cohortId, setCohortId] = useState("");
   const [track, setTrack] = useState("");
+  const [selectedStudent, setSelectedStudent] = useState<string | null>(null);
 
   // Fetch cohorts
   const {
@@ -72,12 +71,12 @@ export default function AttendanceViewer() {
       shouldCallAttendance ? Number(cohortId) : 0,
       shouldCallAttendance ? Number(track) : 0
     );
-  
+
   console.log(attendance)
 
-  const formatDate = (timestamp: number) => {
+  const formatDate = (timestamp: number | bigint) => {
     if (!isMounted) return "Loading...";
-    return new Date(timestamp * 1000).toLocaleDateString("en-US", {
+    return new Date(Number(timestamp) * 1000).toLocaleDateString("en-US", {
       year: "numeric",
       month: "short",
       day: "numeric",
@@ -89,6 +88,15 @@ export default function AttendanceViewer() {
   const getTrackName = (trackNumber: number) => {
     return trackNumber === 0 ? "Web2" : trackNumber === 1 ? "Web3" : `Track ${trackNumber}`;
   };
+
+  // Map students and attendance counts for table
+  let tableData: { address: string; attendanceCount: number }[] = [];
+  if (attendance && Array.isArray(attendance[0]) && Array.isArray(attendance[1])) {
+    tableData = attendance[0].map((address: string, i: number) => ({
+      address,
+      attendanceCount: Number(attendance[1][i] ?? 0),
+    }));
+  }
 
   // Don't render until mounted to prevent hydration mismatch
   if (!isMounted) {
@@ -275,7 +283,7 @@ export default function AttendanceViewer() {
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold">
-                      {attendance.students?.length || 0}
+                      {attendance[0]?.length || 0}
                     </div>
                     <p className="text-xs text-muted-foreground">
                       in Cohort {cohortId} - {getTrackName(Number(track))}
@@ -292,7 +300,7 @@ export default function AttendanceViewer() {
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold">
-                      {attendance.dates?.length || 0}
+                      {attendance[1]?.length || 0}
                     </div>
                     <p className="text-xs text-muted-foreground">
                       days with attendance records
@@ -309,10 +317,8 @@ export default function AttendanceViewer() {
                   </CardHeader>
                   <CardContent>
                     <div className="text-sm font-bold">
-                      {attendance.dates && attendance.dates.length > 0
-                        ? formatDate(
-                          attendance.dates[attendance.dates.length - 1]
-                        )
+                      {attendance[1] && attendance[1].length > 0
+                        ? formatDate(Number(attendance[1][attendance[1].length - 1]))
                         : "No records"}
                     </div>
                     <p className="text-xs text-muted-foreground">
@@ -330,7 +336,7 @@ export default function AttendanceViewer() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {attendance.students && attendance.students.length > 0 ? (
+                  {tableData.length > 0 ? (
                     <Table>
                       <TableHeader>
                         <TableRow>
@@ -341,12 +347,13 @@ export default function AttendanceViewer() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {attendance.students.map((studentAddress) => (
+                        {tableData.map(({ address, attendanceCount }) => (
                           <StudentRow
-                            key={studentAddress}
-                            studentAddress={studentAddress}
-                            cohortId={cohortId}
-                            track={track}
+                            key={address}
+                            studentAddress={address}
+                            attendanceCount={attendanceCount}
+                            isSelected={selectedStudent === address}
+                            onSelect={() => setSelectedStudent(address)}
                           />
                         ))}
                       </TableBody>
@@ -360,24 +367,19 @@ export default function AttendanceViewer() {
                 </CardContent>
               </Card>
 
-              {/* Attendance Dates */}
-              {attendance.dates && attendance.dates.length > 0 && (
+              {/* Attendance Dates for selected student with count > 1 */}
+              {selectedStudent && (
                 <Card>
                   <CardHeader>
                     <CardTitle className="text-lg">Attendance Dates</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
-                      {attendance.dates.map((date, index) => (
-                        <Badge
-                          key={index}
-                          variant="outline"
-                          className="text-xs"
-                        >
-                          {formatDate(date)}
-                        </Badge>
-                      ))}
-                    </div>
+                    <StudentAttendanceDates
+                      studentAddress={selectedStudent}
+                      cohortId={cohortId}
+                      track={track}
+                      attendanceCount={tableData.find(s => s.address === selectedStudent)?.attendanceCount || 0}
+                    />
                   </CardContent>
                 </Card>
               )}
@@ -415,26 +417,18 @@ export default function AttendanceViewer() {
 // Student Row Component
 function StudentRow({
   studentAddress,
-  cohortId,
-  track,
+  attendanceCount,
+  isSelected,
+  onSelect,
 }: {
   studentAddress: string;
-  cohortId: number;
-  track: number;
+  attendanceCount: number;
+  isSelected: boolean;
+  onSelect: () => void;
 }) {
   const { student, isLoading } = useGetStudent(studentAddress);
-  const { data: attendanceDates, isLoading: isAttendanceLoading } = useContractRead({
-    address: STUDENT_FACET_ADDRESS,
-    abi: StudentFacetABI.abi,
-    functionName: 'getAttendanceDatesForStudent',
-    args: [studentAddress, cohortId, track],
-    watch: true,
-  });
-
-  console.log('student debug', student)
-
   return (
-    <TableRow>
+    <TableRow onClick={onSelect} className={isSelected ? "bg-blue-50" : ""} style={{ cursor: "pointer" }}>
       <TableCell className="font-mono text-sm">
         {studentAddress.slice(0, 6)}...{studentAddress.slice(-4)}
       </TableCell>
@@ -467,17 +461,28 @@ function StudentRow({
         )}
       </TableCell>
       <TableCell>
-        {isAttendanceLoading ? (
-          <Loader2 className="h-4 w-4 animate-spin" />
-        ) : (
-          <Badge variant="outline">
-            {attendanceDates ? attendanceDates.length : 0}
-            {attendanceDates && attendanceDates.length > 0 && (
-              <span title={attendanceDates.map((day: number) => new Date(day * 86400 * 1000).toLocaleDateString()).join(', ')} style={{ marginLeft: 6, cursor: 'pointer' }}>🗓️</span>
-            )}
-          </Badge>
-        )}
+        <Badge variant="outline">{attendanceCount}</Badge>
       </TableCell>
     </TableRow>
+  );
+}
+
+// Component to render attendance dates for a student
+function StudentAttendanceDates({ studentAddress, cohortId, track, attendanceCount }: { studentAddress: string; cohortId: number; track: number; attendanceCount: number }) {
+  const { attendanceDates, isLoading } = useGetAttendanceDatesForStudent(studentAddress, Number(cohortId), Number(track));
+
+  if (attendanceCount === 0) {
+    return <div>No attendance taken for this student.</div>;
+  }
+  if (isLoading) return <div>Loading attendance dates...</div>;
+  if (!attendanceDates || attendanceDates.length === 0) return <div>No attendance dates found.</div>;
+  return (
+    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
+      {attendanceDates.map((date, index) => (
+        <Badge key={index} variant="outline" className="text-xs">
+          {new Date(Number(date) * 86400 * 1000).toLocaleDateString()}
+        </Badge>
+      ))}
+    </div>
   );
 }
