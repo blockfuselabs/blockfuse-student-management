@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Table } from "@/components/shared/Table";
 import { AddStudentModal } from "@/components/modals/AddStudentModal";
 import { AddStudentsExcelModal } from "@/components/modals/AddStudentsExcelModal";
+import { AddScoreModal } from "@/components/modals/AddScoreModal";
 import { Student, studentColumns } from "@/components/tables/StudentColumns";
 import { useGetCohorts } from "@/lib/hooks/useGetCohorts";
 import {
@@ -18,6 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { RefreshCw } from "lucide-react";
 
 const statusTabs = [
   { label: "All", value: "all" },
@@ -47,16 +49,20 @@ function mapStudentDetailsToStudent(
     email: trackLabel, // Show track instead of email
     cohort: cohortName,
     status: s.isActive ? "active" : "suspended", // You may want to improve this mapping
+    finalScore: Number(s.finalScore), // Convert bigint to number
   };
 }
 
 const StudentsPage = () => {
   const [addStudentModalOpen, setAddStudentModalOpen] = useState(false);
   const [addExcelModalOpen, setAddExcelModalOpen] = useState(false);
+  const [addScoreModalOpen, setAddScoreModalOpen] = useState(false);
+  const [selectedStudentAddress, setSelectedStudentAddress] = useState<string>("");
   const [selectedTab, setSelectedTab] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCohort, setSelectedCohort] = useState<string>("all");
   const [selectedTrack, setSelectedTrack] = useState<string>("all");
+  const [refreshKey, setRefreshKey] = useState(0);
 
   // Get all cohorts
   const { cohorts } = useGetCohorts();
@@ -65,7 +71,7 @@ const StudentsPage = () => {
   const {
     students: allOnChainStudents,
     error: studentsError,
-  } = useGetStudentsForCohorts(cohorts);
+  } = useGetStudentsForCohorts(cohorts, refreshKey);
 
   // Map on-chain students to table format
   const mappedStudents = useMemo(() => {
@@ -120,6 +126,18 @@ const StudentsPage = () => {
     ];
   }, [mappedStudents]);
 
+  // Handler for opening add score modal
+  const handleAddScore = (studentAddress: string) => {
+    setSelectedStudentAddress(studentAddress);
+    setAddScoreModalOpen(true);
+  };
+
+  // Handler for closing add score modal
+  const handleCloseAddScore = () => {
+    setAddScoreModalOpen(false);
+    setSelectedStudentAddress("");
+  };
+
   const handleResetFilters = () => {
     setSelectedTab("all");
     setSearchTerm("");
@@ -139,6 +157,15 @@ const StudentsPage = () => {
           </p>
         </div>
         <div className="flex gap-2">
+          <Button
+            size="lg"
+            variant="outline"
+            className="flex text-base h-[44px] w-[44px] gap-1 items-center"
+            onClick={() => setRefreshKey((k) => k + 1)}
+            disabled={isLoadingStudents}
+          >
+            <RefreshCw className={`h-4 w-4 ${isLoadingStudents ? "animate-spin" : ""}`} />
+          </Button>
           <Button
             size="lg"
             className="flex text-base h-[44px] w-[130px] gap-1 items-center"
@@ -165,10 +192,9 @@ const StudentsPage = () => {
             <button
               key={tab.value}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors focus:outline-none
-                ${
-                  selectedTab === tab.value
-                    ? "bg-black text-white"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                ${selectedTab === tab.value
+                  ? "bg-black text-white"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                 }
               `}
               onClick={() => setSelectedTab(tab.value)}
@@ -241,32 +267,32 @@ const StudentsPage = () => {
           selectedTrack !== "all" ||
           selectedTab !== "all" ||
           searchTerm) && (
-          <div className="flex items-center gap-2 text-sm text-gray-600">
-            <span>Active filters:</span>
-            {selectedCohort !== "all" && (
-              <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                Cohort:{" "}
-                {cohortOptions.find((c) => c.value === selectedCohort)?.label}
-              </span>
-            )}
-            {selectedTrack !== "all" && (
-              <span className="bg-green-100 text-green-800 px-2 py-1 rounded">
-                Track:{" "}
-                {trackOptions.find((t) => t.value === selectedTrack)?.label}
-              </span>
-            )}
-            {selectedTab !== "all" && (
-              <span className="bg-purple-100 text-purple-800 px-2 py-1 rounded">
-                Status: {statusTabs.find((t) => t.value === selectedTab)?.label}
-              </span>
-            )}
-            {searchTerm && (
-              <span className="bg-orange-100 text-orange-800 px-2 py-1 rounded">
-                Search: &ldquo;{searchTerm}&rdquo;
-              </span>
-            )}
-          </div>
-        )}
+            <div className="flex items-center gap-2 text-sm text-gray-600">
+              <span>Active filters:</span>
+              {selectedCohort !== "all" && (
+                <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                  Cohort:{" "}
+                  {cohortOptions.find((c) => c.value === selectedCohort)?.label}
+                </span>
+              )}
+              {selectedTrack !== "all" && (
+                <span className="bg-green-100 text-green-800 px-2 py-1 rounded">
+                  Track:{" "}
+                  {trackOptions.find((t) => t.value === selectedTrack)?.label}
+                </span>
+              )}
+              {selectedTab !== "all" && (
+                <span className="bg-purple-100 text-purple-800 px-2 py-1 rounded">
+                  Status: {statusTabs.find((t) => t.value === selectedTab)?.label}
+                </span>
+              )}
+              {searchTerm && (
+                <span className="bg-orange-100 text-orange-800 px-2 py-1 rounded">
+                  Search: &ldquo;{searchTerm}&rdquo;
+                </span>
+              )}
+            </div>
+          )}
       </div>
 
       {/* Loading and Error States */}
@@ -289,7 +315,7 @@ const StudentsPage = () => {
       <div className="mt-2 w-full">
         <Table
           data={filteredStudents}
-          columns={studentColumns}
+          columns={studentColumns(handleAddScore)}
           title=""
           searchable={false}
           exportable={false}
@@ -299,10 +325,17 @@ const StudentsPage = () => {
       <AddStudentModal
         isOpen={addStudentModalOpen}
         setIsOpen={setAddStudentModalOpen}
+        refetchStudents={() => setRefreshKey((k) => k + 1)}
       />
       <AddStudentsExcelModal
         isOpen={addExcelModalOpen}
         setIsOpen={setAddExcelModalOpen}
+      />
+      <AddScoreModal
+        isOpen={addScoreModalOpen}
+        setIsOpen={handleCloseAddScore}
+        studentAddress={selectedStudentAddress}
+        refetchStudents={() => setRefreshKey((k) => k + 1)}
       />
     </div>
   );

@@ -104,7 +104,7 @@ contract DiamondDeployer is Test, IDiamondCut {
 
     function testDeployerOfTheContractIsSuperAdmin() public view {
         //    vm.startPrank(superAdmin);
-        console.log("superAdmin address in test: ", boundCohortFacet.getSuperAdmin());
+        // console.log("superAdmin address in test: ", boundCohortFacet.getSuperAdmin());
     }
 
     function testReplaceStudentWallet() public {
@@ -126,6 +126,7 @@ contract DiamondDeployer is Test, IDiamondCut {
         student.twitter = "@johndoe";
         student.linkedin = "johndoe";
         student.github = "johndoe";
+        student.email = "john@example.com";
         student.track = LibAppStorage.Track.web2;
         student.cohort = cohortId;
         student.studentAddress = studentOld;

@@ -2,7 +2,6 @@ import {
   LayoutDashboard,
   Users,
   GraduationCap,
-  UserCog,
   Settings,
   Shield,
   BookOpen,
@@ -29,11 +28,6 @@ export const adminRoutes = {
       title: "Students",
       href: "/admin/students",
       icon: Users,
-    },
-    {
-      title: "Mentors",
-      href: "/admin/mentors",
-      icon: UserCog,
     },
     {
       title: "Attendance",

@@ -20,7 +20,7 @@ const LoginPage = () => {
   } = useUserRole();
   const router = useRouter();
   const { isConnected, isConnecting: wagmiIsConnecting } = useAccount();
-  console.log(isAdmin,isStudent,isSuperAdmin,roleLoading)
+  console.log(isAdmin, isStudent, isSuperAdmin, roleLoading)
   useEffect(() => {
     if (isConnected && !roleLoading && !isRoleChecking) {
       setIsRoleChecking(true); // Simulate blockchain role checking delay
@@ -44,7 +44,7 @@ const LoginPage = () => {
 
       checkRoleAndRedirect();
     }
-  }, [isConnected, roleLoading, isAdmin, isStudent, isSuperAdmin, router]);
+  }, [isConnected, roleLoading, isAdmin, isStudent, isSuperAdmin, router, isRoleChecking]);
 
   // Combine loading states
   const isLoading = wagmiIsConnecting || roleLoading || isRoleChecking;
@@ -217,16 +217,14 @@ const LoginPage = () => {
                     onClick={connected ? openAccountModal : openConnectModal}
                     className={`
                       w-full py-3 px-6 rounded-2xl font-semibold text-lg transition-all duration-300 transform
-                      ${
-                        isLoading
-                          ? "bg-gray-400 cursor-not-allowed"
-                          : "bg-gradient-to-r  from-[#9537EA] to-[#9537EA] hover:from-[#800895] hover:to-[#a015b9]hover:scale-105 hover:shadow-xl active:scale-95"
+                      ${isLoading
+                        ? "bg-gray-400 cursor-not-allowed"
+                        : "bg-gradient-to-r  from-[#9537EA] to-[#9537EA] hover:from-[#800895] hover:to-[#a015b9]hover:scale-105 hover:shadow-xl active:scale-95"
                       }
                       text-white shadow-lg
-                      ${
-                        isHovered && !isLoading
-                          ? "shadow-2xl shadow-blue-500/25"
-                          : ""
+                      ${isHovered && !isLoading
+                        ? "shadow-2xl shadow-blue-500/25"
+                        : ""
                       }
                     `}
                   >

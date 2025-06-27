@@ -29,6 +29,11 @@ export function AddCohortModal({ isOpen, setIsOpen, onCohortAdded }: Props) {
   const [endDate, setEndDate] = React.useState<Date | undefined>();
   const { createCohort, isLoading, isSuccess, error, resetState } = useCreateCohort();
 
+  // Calculate date range: 2 years ago to 2 years ahead
+  const currentYear = new Date().getFullYear();
+  const fromDate = new Date(currentYear - 2, 0, 1); // January 1st, 2 years ago
+  const toDate = new Date(currentYear + 2, 11, 31); // December 31st, 2 years ahead
+
   // Reset form and hook state when modal opens/closes
   React.useEffect(() => {
     if (!isOpen) {
@@ -103,6 +108,10 @@ export function AddCohortModal({ isOpen, setIsOpen, onCohortAdded }: Props) {
                   selected={startDate}
                   onSelect={setStartDate}
                   captionLayout="dropdown"
+                  fromDate={fromDate}
+                  toDate={toDate}
+                  fromYear={fromDate.getFullYear()}
+                  toYear={toDate.getFullYear()}
                 />
               </PopoverContent>
             </Popover>
@@ -134,6 +143,10 @@ export function AddCohortModal({ isOpen, setIsOpen, onCohortAdded }: Props) {
                   selected={endDate}
                   onSelect={setEndDate}
                   captionLayout="dropdown"
+                  fromDate={startDate || fromDate}
+                  toDate={toDate}
+                  fromYear={(startDate || fromDate).getFullYear()}
+                  toYear={toDate.getFullYear()}
                 />
               </PopoverContent>
             </Popover>

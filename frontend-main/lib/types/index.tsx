@@ -13,6 +13,7 @@ export interface RegisterStudentParams {
   track: Track;
   cohort: number;
   studentAddress: string;
+  email: string;
 }
 
 export interface RegisterStudentState {

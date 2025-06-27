@@ -69,6 +69,9 @@ export const useRegisterStudent = () => {
     if (!params.studentAddress?.trim()) {
       errors.push("Student address is required");
     }
+    if (!params.email?.trim()) {
+      errors.push("Email is required");
+    }
 
     // Address validation (basic Ethereum address format)
     const addressRegex = /^0x[a-fA-F0-9]{40}$/;
@@ -77,9 +80,9 @@ export const useRegisterStudent = () => {
     }
 
     // Social media URL validation (optional but should be valid if provided)
-  
 
-    
+
+
 
     // Track validation - updated for new track structure
     if (params.track < 0 || params.track > 1) {
@@ -136,6 +139,7 @@ export const useRegisterStudent = () => {
         const studentDetails = {
           firstname: formattedParams.firstname.trim(),
           lastname: formattedParams.lastname.trim(),
+          email: formattedParams.email.trim(),
           username: username,
           twitter: formattedParams.twitter || "",
           linkedin: formattedParams.linkedin || "",

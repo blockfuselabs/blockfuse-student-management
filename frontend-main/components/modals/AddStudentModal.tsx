@@ -11,21 +11,23 @@ import { Input } from "@/components/ui/input";
 import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 import { useRegisterStudent } from "@/lib/hooks/useRegisterStudent";
 import { useGetCohorts } from "@/lib/hooks/useGetCohorts";
-import { useCallback } from "react";
-import { toast } from "sonner"; 
+import { useCallback, useEffect } from "react";
+import { toast } from "sonner";
 
 type Props = {
   isOpen: boolean;
   setIsOpen: (open: boolean) => void;
+  refetchStudents?: () => void;
 };
 
-export function AddStudentModal({ isOpen, setIsOpen }: Props) {
+export function AddStudentModal({ isOpen, setIsOpen, refetchStudents }: Props) {
   // Form state
   const [firstname, setFirstname] = React.useState("");
   const [lastname, setLastname] = React.useState("");
   const [twitter, setTwitter] = React.useState("");
   const [linkedin, setLinkedin] = React.useState("");
   const [github, setGithub] = React.useState("");
+  const [email, setEmail] = React.useState("");
 
   // Define Track type - should match your contract enum
   type Track = 0 | 1; // 0 = web2, 1 = web3
@@ -41,6 +43,16 @@ export function AddStudentModal({ isOpen, setIsOpen }: Props) {
   // Get real cohort data and filter out completed cohorts
   const { cohorts, isLoading: isLoadingCohorts } = useGetCohorts();
 
+  const {
+    registerStudent,
+    isLoading,
+    isSuccess,
+    error,
+    reset,
+    transactionHash,
+    isConfirming
+  } = useRegisterStudent();
+
   const handleClose = useCallback(() => {
     setIsOpen(false);
     // Reset form state
@@ -52,9 +64,13 @@ export function AddStudentModal({ isOpen, setIsOpen }: Props) {
     setTrack("");
     setCohort("");
     setStudentAddress("");
-    // Reset hook state
-    reset();
-  });
+    setEmail("");
+    // Reset hook state if defined
+    if (typeof reset === 'function') reset();
+    // Refetch students if provided
+    if (typeof refetchStudents === 'function') refetchStudents();
+  }, [setIsOpen, reset, refetchStudents]);
+
   // Filter out completed cohorts and create options
   const cohortOptions = React.useMemo(() => {
     return cohorts
@@ -64,16 +80,6 @@ export function AddStudentModal({ isOpen, setIsOpen }: Props) {
         label: `${cohort.name} (${cohort.status}) - ${cohort.startDate} to ${cohort.endDate}`
       }));
   }, [cohorts]);
-
-  const {
-    registerStudent,
-    isLoading,
-    isSuccess,
-    error,
-    reset,
-    transactionHash,
-    isConfirming
-  } = useRegisterStudent();
 
   // Set track options from cohorts array when cohort changes
   React.useEffect(() => {
@@ -96,9 +102,6 @@ export function AddStudentModal({ isOpen, setIsOpen }: Props) {
   // Handle successful registration
   React.useEffect(() => {
     if (isSuccess && transactionHash) {
-      toast.success("Student registered successfully!", {
-        description: `Transaction: ${transactionHash.slice(0, 10)}...`
-      });
       handleClose();
     }
   }, [handleClose, isSuccess, transactionHash]);
@@ -106,9 +109,7 @@ export function AddStudentModal({ isOpen, setIsOpen }: Props) {
   // Handle errors
   React.useEffect(() => {
     if (error) {
-      toast.error("Registration failed", {
-        description: error
-      });
+      // Handle error
     }
   }, [error]);
 
@@ -129,13 +130,27 @@ export function AddStudentModal({ isOpen, setIsOpen }: Props) {
     console.log('-------------------------');
   }, [cohort, cohorts, cohortOptions]);
 
+  useEffect(() => {
+    if (isSuccess) {
+      toast.success("Student registered successfully!");
+      setTimeout(() => {
+        setIsOpen(false);
+        if (refetchStudents) refetchStudents();
+      }, 1000);
+    }
+  }, [isSuccess, setIsOpen, refetchStudents]);
+
+  React.useEffect(() => {
+    if (error) {
+      toast.error("Registration failed: " + error);
+    }
+  }, [error]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     // Validate required fields
     if (!firstname.trim() || !lastname.trim() || !studentAddress.trim() || track === "" || cohort === "") {
-      toast.error("Please fill in all required fields");
       return;
     }
 
@@ -143,6 +158,7 @@ export function AddStudentModal({ isOpen, setIsOpen }: Props) {
       await registerStudent({
         firstname: firstname.trim(),
         lastname: lastname.trim(),
+        email: email.trim(),
         twitter: twitter.trim(),
         linkedin: linkedin.trim(),
         github: github.trim(),
@@ -278,6 +294,22 @@ export function AddStudentModal({ isOpen, setIsOpen }: Props) {
             {cohort && trackOptions.length === 0 && (
               <div className="text-xs text-red-500 mt-1">No tracks available for this cohort. Please add tracks first.</div>
             )}
+          </div>
+
+          {/* Email */}
+          <div>
+            <label className="block text-sm font-medium mb-1 text-gray-700">
+              Email <span className="text-red-500">*</span>
+            </label>
+            <Input
+              type="email"
+              placeholder="Enter email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="rounded-md border-gray-300 text-gray-900 w-full"
+              disabled={isSubmitting}
+              required
+            />
           </div>
 
           {/* Social Media Fields */}
