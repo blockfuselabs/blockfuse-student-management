@@ -1,0 +1,138 @@
+{
+    "abi": [
+        {
+            "type": "function",
+            "name": "addAdminWithUsername",
+            "inputs": [
+                {
+                    "name": "adminAddress",
+                    "type": "address",
+                    "internalType": "address"
+                },
+                {
+                    "name": "username",
+                    "type": "string",
+                    "internalType": "string"
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "",
+                    "type": "bool",
+                    "internalType": "bool"
+                }
+            ],
+            "stateMutability": "nonpayable"
+        },
+        {
+            "type": "function",
+            "name": "getAdminUsername",
+            "inputs": [
+                {
+                    "name": "adminAddress",
+                    "type": "address",
+                    "internalType": "address"
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "",
+                    "type": "string",
+                    "internalType": "string"
+                }
+            ],
+            "stateMutability": "view"
+        },
+        {
+            "type": "function",
+            "name": "getAllAdminsWithUsernames",
+            "inputs": [],
+            "outputs": [
+                {
+                    "name": "addresses",
+                    "type": "address[]",
+                    "internalType": "address[]"
+                },
+                {
+                    "name": "usernames",
+                    "type": "string[]",
+                    "internalType": "string[]"
+                }
+            ],
+            "stateMutability": "view"
+        },
+        {
+            "type": "function",
+            "name": "setAdminUsername",
+            "inputs": [
+                {
+                    "name": "adminAddress",
+                    "type": "address",
+                    "internalType": "address"
+                },
+                {
+                    "name": "username",
+                    "type": "string",
+                    "internalType": "string"
+                }
+            ],
+            "outputs": [],
+            "stateMutability": "nonpayable"
+        },
+        {
+            "type": "function",
+            "name": "setMyUsername",
+            "inputs": [
+                {
+                    "name": "username",
+                    "type": "string",
+                    "internalType": "string"
+                }
+            ],
+            "outputs": [],
+            "stateMutability": "nonpayable"
+        },
+        {
+            "type": "event",
+            "name": "AdminAdded",
+            "inputs": [
+                {
+                    "name": "adminAdded",
+                    "type": "address",
+                    "indexed": false,
+                    "internalType": "address"
+                }
+            ],
+            "anonymous": false
+        },
+        {
+            "type": "event",
+            "name": "AdminUsernameSet",
+            "inputs": [
+                {
+                    "name": "adminAddress",
+                    "type": "address",
+                    "indexed": true,
+                    "internalType": "address"
+                },
+                {
+                    "name": "username",
+                    "type": "string",
+                    "indexed": false,
+                    "internalType": "string"
+                }
+            ],
+            "anonymous": false
+        },
+        {
+            "type": "error",
+            "name": "INVALID_ADDRESS",
+            "inputs": []
+        },
+        {
+            "type": "error",
+            "name": "UNAUTHORIZED_ACCESS",
+            "inputs": []
+        }
+    ]
+}
