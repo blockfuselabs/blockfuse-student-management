@@ -40,6 +40,8 @@ import {
 import { useGetCohorts } from '../../lib/hooks/useGetCohorts';
 import { useGetAttendanceDatesForStudent } from "@/lib/hooks/useGetAttendance";
 import { useAccount } from "wagmi";
+import { Calendar as UiCalendar } from "@/components/ui/calendar";
+import { useGetStudentsByCohortTrackAndDay } from "@/lib/hooks/useStudentFacet";
 
 export default function AttendanceViewer() {
   const isMounted = useIsMounted();
@@ -47,6 +49,7 @@ export default function AttendanceViewer() {
   const [cohortId, setCohortId] = useState("");
   const [track, setTrack] = useState("");
   const [selectedStudent, setSelectedStudent] = useState<string | null>(null);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
 
   // Fetch cohorts
   const {
@@ -72,6 +75,23 @@ export default function AttendanceViewer() {
       shouldCallAttendance ? Number(cohortId) : 0,
       shouldCallAttendance ? Number(track) : 0
     );
+
+  // Calculate the day number from the selected date and cohort start date
+  let selectedDay: number | null = null;
+  let cohortStartDate: number | null = null;
+  if (selectedCohort && selectedDate) {
+    cohortStartDate = Math.floor(new Date(selectedCohort.startDate).getTime() / 86400000);
+    const pickedDay = Math.floor(selectedDate.getTime() / 86400000);
+    selectedDay = pickedDay - cohortStartDate;
+  }
+
+  const {
+    data: studentsAndAttendance,
+  } = useGetStudentsByCohortTrackAndDay(
+    cohortId && track && selectedDay !== null ? Number(cohortId) : 0,
+    cohortId && track && selectedDay !== null ? Number(track) : 0,
+    cohortId && track && selectedDay !== null ? selectedDay! : 0
+  );
 
   console.log("Connected wallet address:", connectedAddress);
   console.log(attendance)
@@ -238,6 +258,18 @@ export default function AttendanceViewer() {
                 </SelectContent>
               </Select>
             </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="date">Select Date</Label>
+              <UiCalendar
+                mode="single"
+                selected={selectedDate}
+                onSelect={setSelectedDate}
+                disabled={!cohortId || !track}
+                fromDate={selectedCohort ? new Date(selectedCohort.startDate) : undefined}
+                toDate={selectedCohort ? new Date(selectedCohort.endDate) : undefined}
+              />
+            </div>
           </div>
 
           {/* Error Alert */}
@@ -380,6 +412,47 @@ export default function AttendanceViewer() {
               <p>Please select a cohort and track to view attendance data.</p>
             </div>
           ) : null}
+
+          {/* Attendance for selected day */}
+          {selectedDay !== null && studentsAndAttendance && (
+            <Card className="mt-6">
+              <CardHeader>
+                <CardTitle>Attendance for {selectedDate?.toLocaleDateString()}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Student</TableHead>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Present?</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {(studentsAndAttendance[0] as { studentAddress: string; firstname: string; lastname: string; isActive: boolean }[]).map((student, i) => (
+                      <TableRow key={student.studentAddress}>
+                        <TableCell>{student.studentAddress.slice(0, 6)}...{student.studentAddress.slice(-4)}</TableCell>
+                        <TableCell>{student.firstname} {student.lastname}</TableCell>
+                        <TableCell>
+                          <Badge variant={student.isActive ? "default" : "secondary"}>
+                            {student.isActive ? "Active" : "Inactive"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {studentsAndAttendance[1][i] ? (
+                            <Badge variant="success">Present</Badge>
+                          ) : (
+                            <Badge variant="destructive">Absent</Badge>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          )}
         </CardContent>
       </Card>
     </div>

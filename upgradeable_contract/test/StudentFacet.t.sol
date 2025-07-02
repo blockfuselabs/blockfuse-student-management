@@ -274,6 +274,34 @@ contract StudentFacetTest is Test, IDiamondCut {
         assertTrue(studentData.isActive);
     }
 
+    // Test Case: getStudentsByCohortTrackAndDay returns correct data
+    function testGetStudentsByCohortTrackAndDay() public {
+        // Log attendance for student1 on day 1
+        vm.prank(student1);
+        StudentFacet(address(diamond)).logAttendance(student1, cohortId, web2Track);
+        uint256 day1 = block.timestamp / 1 days;
+
+        // Move to next day and do not log attendance
+        vm.warp(block.timestamp + 1 days);
+        uint256 day2 = block.timestamp / 1 days;
+
+        // Call the new function for day1
+        (LibAppStorage.studentDetails[] memory students, bool[] memory attendance) =
+            StudentFacet(address(diamond)).getStudentsByCohortTrackAndDay(cohortId, web2Track, day1);
+        assertEq(students.length, 1);
+        assertEq(attendance.length, 1);
+        assertEq(students[0].studentAddress, student1);
+        assertTrue(attendance[0]);
+
+        // Call the new function for day2 (no attendance)
+        (students, attendance) =
+            StudentFacet(address(diamond)).getStudentsByCohortTrackAndDay(cohortId, web2Track, day2);
+        assertEq(students.length, 1);
+        assertEq(attendance.length, 1);
+        assertEq(students[0].studentAddress, student1);
+        assertFalse(attendance[0]);
+    }
+
     function generateSelectors(string memory _facetName) internal returns (bytes4[] memory selectors) {
         string[] memory cmd = new string[](3);
         cmd[0] = "node";

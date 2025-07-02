@@ -58,14 +58,6 @@ export function useEnableStudent() {
   });
 }
 
-export function useReplaceStudentWallet() {
-  return useWriteContract({
-    address: CONTRACT_ADDRESS as `0x${string}`,
-    abi: DiamondABI.abi,
-    functionName: "replaceStudentWallet",
-  });
-}
-
 export function useIsStudentActive(student: string) {
   return useReadContract({
     address: CONTRACT_ADDRESS as `0x${string}`,

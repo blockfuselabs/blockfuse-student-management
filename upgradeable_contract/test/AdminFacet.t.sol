@@ -578,6 +578,53 @@ contract AdminFacetTest is Test, IDiamondCut {
         assertEq(dates[2], day3);
     }
 
+    // Test Case: Attendance migration on wallet replacement
+    function testAttendanceMigrationOnWalletReplacement() public {
+        // Setup: Add admin and register student
+        vm.prank(superAdmin);
+        AdminFacet(address(diamond)).addAdmin(admin1);
+
+        vm.prank(admin1);
+        LibAppStorage.studentDetails memory studentDetails;
+        studentDetails.firstname = "John";
+        studentDetails.lastname = "Doe";
+        studentDetails.username = "johndoe";
+        studentDetails.email = "john@example.com";
+        studentDetails.track = web2Track;
+        studentDetails.cohort = cohortId;
+        studentDetails.studentAddress = student1;
+        AdminFacet(address(diamond)).registerStudent(studentDetails);
+
+        // Log attendance for 2 days
+        vm.prank(student1);
+        StudentFacet(address(diamond)).logAttendance(student1, cohortId, web2Track);
+        uint256 day1 = block.timestamp / 1 days;
+        vm.warp(block.timestamp + 1 days + 1);
+        vm.prank(student1);
+        StudentFacet(address(diamond)).logAttendance(student1, cohortId, web2Track);
+        uint256 day2 = block.timestamp / 1 days;
+
+        // Replace wallet
+        address newStudentAddress = mkaddr("newStudentAddress2");
+        vm.prank(admin1);
+        AdminFacet(address(diamond)).replaceStudentWallet(student1, newStudentAddress);
+
+        // Attendance for old address should be gone, new address should have both days
+        assertFalse(StudentFacet(address(diamond)).hasAttendance(student1, cohortId, web2Track, day1));
+        assertFalse(StudentFacet(address(diamond)).hasAttendance(student1, cohortId, web2Track, day2));
+        assertTrue(StudentFacet(address(diamond)).hasAttendance(newStudentAddress, cohortId, web2Track, day1));
+        assertTrue(StudentFacet(address(diamond)).hasAttendance(newStudentAddress, cohortId, web2Track, day2));
+
+        // Individual attendance record for new address should have 2 records
+        LibAppStorage.AttendanceRecord[] memory records =
+            StudentFacet(address(diamond)).getIndividualAttendanceRecord(newStudentAddress);
+        assertEq(records.length, 2);
+        assertEq(records[0].date, day1);
+        assertEq(records[1].date, day2);
+        assertEq(records[0].studentAddress, newStudentAddress);
+        assertEq(records[1].studentAddress, newStudentAddress);
+    }
+
     function generateSelectors(string memory _facetName) internal returns (bytes4[] memory selectors) {
         string[] memory cmd = new string[](3);
         cmd[0] = "node";
