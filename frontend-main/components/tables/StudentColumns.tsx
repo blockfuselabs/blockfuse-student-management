@@ -21,86 +21,89 @@ export type Student = {
   finalScore: number;
 };
 
-export const studentColumns = (onAddScore?: (studentAddress: string) => void) => [
-  {
-    header: "Name",
-    accessor: "name" as const,
-  },
-  {
-    header: "Track",
-    accessor: "email" as const,
-  },
-  {
-    header: "Cohort",
-    accessor: "cohort" as const,
-  },
-  {
-    header: "Final Score",
-    accessor: "finalScore" as const,
-    render: (item: Student) => (
-      <span className="font-medium text-gray-900">
-        {item.finalScore}
-      </span>
-    ),
-  },
-  {
-    header: "Status",
-    accessor: "status" as const,
-    render: (item: Student) => (
-      <span
-        className={`px-2 py-1 rounded-full text-xs font-medium ${item.status === "active"
-          ? "bg-green-100 text-green-800"
-          : item.status === "graduated"
-            ? "bg-blue-100 text-blue-800"
-            : item.status === "evicted"
-              ? "bg-red-100 text-red-800"
-              : "bg-yellow-100 text-yellow-800"
-          }`}
-      >
-        {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
-      </span>
-    ),
-  },
-  {
-    header: "Actions",
-    accessor: "id" as const,
-    render: (item: Student) => (
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="h-8 w-8 p-0">
-            <span className="sr-only">Open menu</span>
-            <MoreHorizontal className="h-4 w-4" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem
-            className="flex items-center gap-2 cursor-pointer"
-            onClick={() => console.log("Edit", item.id)}
-          >
-            <Pencil className="h-4 w-4" />
-            Edit
-          </DropdownMenuItem>
-          {onAddScore && (
+export const studentColumns = (
+  onAddScore?: (studentAddress: string) => void,
+  onEdit?: (studentAddress: string) => void
+) => [
+    {
+      header: "Name",
+      accessor: "name" as const,
+    },
+    {
+      header: "Track",
+      accessor: "email" as const,
+    },
+    {
+      header: "Cohort",
+      accessor: "cohort" as const,
+    },
+    {
+      header: "Final Score",
+      accessor: "finalScore" as const,
+      render: (item: Student) => (
+        <span className="font-medium text-gray-900">
+          {item.finalScore}
+        </span>
+      ),
+    },
+    {
+      header: "Status",
+      accessor: "status" as const,
+      render: (item: Student) => (
+        <span
+          className={`px-2 py-1 rounded-full text-xs font-medium ${item.status === "active"
+            ? "bg-green-100 text-green-800"
+            : item.status === "graduated"
+              ? "bg-blue-100 text-blue-800"
+              : item.status === "evicted"
+                ? "bg-red-100 text-red-800"
+                : "bg-yellow-100 text-yellow-800"
+            }`}
+        >
+          {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
+        </span>
+      ),
+    },
+    {
+      header: "Actions",
+      accessor: "id" as const,
+      render: (item: Student) => (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="h-8 w-8 p-0">
+              <span className="sr-only">Open menu</span>
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
             <DropdownMenuItem
-              className="flex items-center gap-2 cursor-pointer text-blue-600 focus:text-blue-600"
-              onClick={() => onAddScore(item.id)}
+              className="flex items-center gap-2 cursor-pointer"
+              onClick={() => onEdit && onEdit(item.id)}
             >
-              <Star className="h-4 w-4" />
-              Add Score
+              <Pencil className="h-4 w-4" />
+              Edit
             </DropdownMenuItem>
-          )}
-          <DropdownMenuItem
-            className="flex items-center gap-2 cursor-pointer text-red-600 focus:text-red-600"
-            onClick={() => console.log("Delete", item.id)}
-          >
-            <Trash2 className="h-4 w-4" />
-            Delete
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    ),
-  },
-];
+            {onAddScore && (
+              <DropdownMenuItem
+                className="flex items-center gap-2 cursor-pointer text-blue-600 focus:text-blue-600"
+                onClick={() => onAddScore(item.id)}
+              >
+                <Star className="h-4 w-4" />
+                Add Score
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuItem
+              className="flex items-center gap-2 cursor-pointer text-red-600 focus:text-red-600"
+              onClick={() => console.log("Delete", item.id)}
+            >
+              <Trash2 className="h-4 w-4" />
+              Delete
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      ),
+    },
+  ];
 
 export type Admin = {
   id: string;

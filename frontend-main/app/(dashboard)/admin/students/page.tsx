@@ -20,6 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { RefreshCw } from "lucide-react";
+import { ReplaceStudentWalletModal } from "@/components/modals/ReplaceStudentWalletModal";
 
 const statusTabs = [
   { label: "All", value: "all" },
@@ -63,6 +64,8 @@ const StudentsPage = () => {
   const [selectedCohort, setSelectedCohort] = useState<string>("all");
   const [selectedTrack, setSelectedTrack] = useState<string>("all");
   const [refreshKey, setRefreshKey] = useState(0);
+  const [replaceWalletModalOpen, setReplaceWalletModalOpen] = useState(false);
+  const [replaceWalletOldAddress, setReplaceWalletOldAddress] = useState<string>("");
 
   // Get all cohorts
   const { cohorts } = useGetCohorts();
@@ -144,6 +147,11 @@ const StudentsPage = () => {
     setSearchTerm("");
     setSelectedCohort("all");
     setSelectedTrack("all");
+  };
+
+  const handleEditStudent = (studentAddress: string) => {
+    setReplaceWalletOldAddress(studentAddress);
+    setReplaceWalletModalOpen(true);
   };
 
   return (
@@ -321,10 +329,12 @@ const StudentsPage = () => {
       <div className="mt-2 w-full">
         <Table
           data={filteredStudents}
-          columns={studentColumns(handleAddScore)}
+          columns={studentColumns(handleAddScore, handleEditStudent)}
           title=""
           searchable={false}
           exportable={false}
+          isLoading={isLoadingStudents}
+          error={studentsError}
         />
       </div>
 
@@ -342,6 +352,12 @@ const StudentsPage = () => {
         setIsOpen={handleCloseAddScore}
         studentAddress={selectedStudentAddress}
         refetchStudents={() => setRefreshKey((k) => k + 1)}
+      />
+      <ReplaceStudentWalletModal
+        open={replaceWalletModalOpen}
+        onClose={() => setReplaceWalletModalOpen(false)}
+        oldAddress={replaceWalletOldAddress}
+        onSuccess={() => setRefreshKey((k) => k + 1)}
       />
     </div>
   );
