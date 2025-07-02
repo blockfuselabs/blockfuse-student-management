@@ -16,4 +16,5 @@ library Event {
     event AttendanceLogged(uint256 indexed cohortId, address indexed student, string indexed track, uint256 date);
     event StudentWalletReplaced(address indexed oldAddress, address indexed newAddress);
     event AdminReplaced(address indexed oldAdmin, address indexed newAdmin);
+    event AdminUsernameSet(address indexed adminAddress, string username);
 }
