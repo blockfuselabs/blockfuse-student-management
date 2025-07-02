@@ -8,26 +8,33 @@ import { cn } from "@/lib/utils";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { Loader2 } from "lucide-react";
 import { useAccount } from "wagmi";
+import { useUserRole } from "@/lib/hooks/useUserRole";
 
 const DashboardSidebar = () => {
   const pathname = usePathname();
   const [isHovered, setIsHovered] = useState(false);
   const { isConnecting: wagmiIsConnecting } = useAccount();
   const isLoading = wagmiIsConnecting;
+  const {
+    isSuperAdmin,
+    isAdmin,
+    isStudent,
+    isLoading: roleLoading,
+  } = useUserRole();
 
   return (
     <div className="w-[16%] px-5 py-6 h-full border-r border-black/10 flex flex-col relative overflow-hidden">
       {/* Background Image */}
-      <div 
+      <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{
-          backgroundImage: "url('/image2.jpg')" 
+          backgroundImage: "url('/image2.jpg')",
         }}
       />
-      
+
       {/* Black Tint Overlay */}
       <div className="absolute inset-0 bg-[#121113]/95" />
-      
+
       {/* Content - positioned relative to appear above background */}
       <div className="relative z-10 flex flex-col h-full">
         {/* Logo and Title Section */}
@@ -38,9 +45,24 @@ const DashboardSidebar = () => {
               Blockfuse Labs
             </h1>
             <div>
-              <span className="py-0.5 mt-0.5 px-3 text-[10px] bg-[#DE24FF]/20 text-[#DE24FF] border border-[#DE24FF] rounded-full ">
-                Super Admin
-              </span>
+              {roleLoading ? (
+                <span className="py-0.5 mt-0.5 px-3 text-[10px] bg-gray-200 text-gray-600 border border-gray-300 rounded-full flex items-center gap-1">
+                  <Loader2 className="w-3 h-3 animate-spin inline-block mr-1" />{" "}
+                  Loading...
+                </span>
+              ) : isSuperAdmin ? (
+                <span className="py-0.5 mt-0.5 px-3 text-[10px] bg-[#DE24FF]/20 text-[#DE24FF] border border-[#DE24FF] rounded-full ">
+                  Super Admin
+                </span>
+              ) : isAdmin ? (
+                <span className="py-0.5 mt-0.5 px-3 text-[10px] bg-blue-200 text-blue-700 border border-blue-400 rounded-full ">
+                  Admin
+                </span>
+              ) : isStudent ? (
+                <span className="py-0.5 mt-0.5 px-3 text-[10px] bg-green-200 text-green-700 border border-green-400 rounded-full ">
+                  Student
+                </span>
+              ) : null}
             </div>
           </div>
         </div>

@@ -37,8 +37,9 @@ export function AddStudentModal({ isOpen, setIsOpen, refetchStudents }: Props) {
   const [cohort, setCohort] = React.useState<number | "">("");
   const [studentAddress, setStudentAddress] = React.useState("");
 
-
-  const [trackOptions, setTrackOptions] = React.useState<{ value: number; label: string }[]>([]);
+  const [trackOptions, setTrackOptions] = React.useState<
+    { value: number; label: string }[]
+  >([]);
 
   // Get real cohort data and filter out completed cohorts
   const { cohorts, isLoading: isLoadingCohorts } = useGetCohorts();
@@ -50,7 +51,7 @@ export function AddStudentModal({ isOpen, setIsOpen, refetchStudents }: Props) {
     error,
     reset,
     transactionHash,
-    isConfirming
+    isConfirming,
   } = useRegisterStudent();
 
   const handleClose = useCallback(() => {
@@ -66,18 +67,18 @@ export function AddStudentModal({ isOpen, setIsOpen, refetchStudents }: Props) {
     setStudentAddress("");
     setEmail("");
     // Reset hook state if defined
-    if (typeof reset === 'function') reset();
+    if (typeof reset === "function") reset();
     // Refetch students if provided
-    if (typeof refetchStudents === 'function') refetchStudents();
+    if (typeof refetchStudents === "function") refetchStudents();
   }, [setIsOpen, reset, refetchStudents]);
 
   // Filter out completed cohorts and create options
   const cohortOptions = React.useMemo(() => {
     return cohorts
-      .filter(cohort => cohort.status !== "completed")
-      .map(cohort => ({
+      .filter((cohort) => cohort.status !== "completed")
+      .map((cohort) => ({
         value: parseInt(cohort.id),
-        label: `${cohort.name} (${cohort.status}) - ${cohort.startDate} to ${cohort.endDate}`
+        label: `${cohort.name} (${cohort.status}) - ${cohort.startDate} to ${cohort.endDate}`,
       }));
   }, [cohorts]);
 
@@ -87,7 +88,9 @@ export function AddStudentModal({ isOpen, setIsOpen, refetchStudents }: Props) {
       setTrackOptions([]);
       return;
     }
-    const selectedCohort = cohorts.find(c => parseInt(c.id) === Number(cohort));
+    const selectedCohort = cohorts.find(
+      (c) => parseInt(c.id) === Number(cohort)
+    );
     if (selectedCohort && Array.isArray(selectedCohort.tracks)) {
       const options = selectedCohort.tracks.map((track) => ({
         value: track,
@@ -101,56 +104,59 @@ export function AddStudentModal({ isOpen, setIsOpen, refetchStudents }: Props) {
 
   // Handle successful registration
   React.useEffect(() => {
-    if (isSuccess && transactionHash) {
-      handleClose();
+    if (isSuccess && isOpen) {
+      toast.success("Student registered successfully!");
+      setTimeout(() => {
+        setIsOpen(false);
+        if (refetchStudents) refetchStudents();
+        if (typeof reset === "function") reset(); // Reset after closing
+      }, 1000);
     }
-  }, [handleClose, isSuccess, transactionHash]);
+  }, [isSuccess, isOpen, setIsOpen, refetchStudents, reset]);
 
   // Handle errors
   React.useEffect(() => {
-    if (error) {
-      // Handle error
+    if (error && isOpen) {
+      toast.error("Registration failed: " + error);
+      if (typeof reset === "function") reset(); // Reset after showing error
     }
-  }, [error]);
+  }, [error, isOpen, reset]);
 
   // Debug: Log all information about the selected cohort when it changes
   React.useEffect(() => {
     if (!cohort) return;
     // Find the cohort object from the cohorts array
-    const selectedCohortObj = cohorts.find(c => parseInt(c.id) === Number(cohort));
+    const selectedCohortObj = cohorts.find(
+      (c) => parseInt(c.id) === Number(cohort)
+    );
     // Find the cohort option from cohortOptions
-    const selectedCohortOption = cohortOptions.find(opt => opt.value === Number(cohort));
-    console.log('--- Cohort Debug Info ---');
-    console.log('Selected cohort value:', cohort);
-    console.log('Type of selected cohort:', typeof cohort);
-    console.log('Selected cohort object from cohorts:', selectedCohortObj);
-    console.log('Selected cohort option from cohortOptions:', selectedCohortOption);
-    console.log('All cohortOptions:', cohortOptions);
-    console.log('All cohorts:', cohorts);
-    console.log('-------------------------');
+    const selectedCohortOption = cohortOptions.find(
+      (opt) => opt.value === Number(cohort)
+    );
+    console.log("--- Cohort Debug Info ---");
+    console.log("Selected cohort value:", cohort);
+    console.log("Type of selected cohort:", typeof cohort);
+    console.log("Selected cohort object from cohorts:", selectedCohortObj);
+    console.log(
+      "Selected cohort option from cohortOptions:",
+      selectedCohortOption
+    );
+    console.log("All cohortOptions:", cohortOptions);
+    console.log("All cohorts:", cohorts);
+    console.log("-------------------------");
   }, [cohort, cohorts, cohortOptions]);
-
-  useEffect(() => {
-    if (isSuccess) {
-      toast.success("Student registered successfully!");
-      setTimeout(() => {
-        setIsOpen(false);
-        if (refetchStudents) refetchStudents();
-      }, 1000);
-    }
-  }, [isSuccess, setIsOpen, refetchStudents]);
-
-  React.useEffect(() => {
-    if (error) {
-      toast.error("Registration failed: " + error);
-    }
-  }, [error]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     // Validate required fields
-    if (!firstname.trim() || !lastname.trim() || !studentAddress.trim() || track === "" || cohort === "") {
+    if (
+      !firstname.trim() ||
+      !lastname.trim() ||
+      !studentAddress.trim() ||
+      track === "" ||
+      cohort === ""
+    ) {
       return;
     }
 
@@ -250,7 +256,9 @@ export function AddStudentModal({ isOpen, setIsOpen, refetchStudents }: Props) {
             </label>
             <select
               value={cohort}
-              onChange={(e) => setCohort(e.target.value === "" ? "" : Number(e.target.value))}
+              onChange={(e) =>
+                setCohort(e.target.value === "" ? "" : Number(e.target.value))
+              }
               className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               disabled={isSubmitting}
               required
@@ -278,12 +286,16 @@ export function AddStudentModal({ isOpen, setIsOpen, refetchStudents }: Props) {
             </label>
             <select
               value={track}
-              onChange={(e) => setTrack(e.target.value === "" ? "" : Number(e.target.value))}
+              onChange={(e) =>
+                setTrack(e.target.value === "" ? "" : Number(e.target.value))
+              }
               className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               disabled={isSubmitting || !cohort}
               required
             >
-              <option value="" disabled>Select Track</option>
+              <option value="" disabled>
+                Select Track
+              </option>
               {trackOptions.map((option) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
@@ -292,7 +304,9 @@ export function AddStudentModal({ isOpen, setIsOpen, refetchStudents }: Props) {
             </select>
             {/* Show message if no tracks available for selected cohort */}
             {cohort && trackOptions.length === 0 && (
-              <div className="text-xs text-red-500 mt-1">No tracks available for this cohort. Please add tracks first.</div>
+              <div className="text-xs text-red-500 mt-1">
+                No tracks available for this cohort. Please add tracks first.
+              </div>
             )}
           </div>
 
@@ -349,7 +363,9 @@ export function AddStudentModal({ isOpen, setIsOpen, refetchStudents }: Props) {
             <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-md">
               <AlertCircle className="h-4 w-4 text-red-500 flex-shrink-0 mt-0.5" />
               <div className="flex-1">
-                <p className="text-sm font-medium text-red-800">Registration Error</p>
+                <p className="text-sm font-medium text-red-800">
+                  Registration Error
+                </p>
                 <p className="text-sm text-red-700 mt-1">{error}</p>
               </div>
             </div>
@@ -360,16 +376,10 @@ export function AddStudentModal({ isOpen, setIsOpen, refetchStudents }: Props) {
             <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-md">
               <Loader2 className="h-4 w-4 text-blue-500 animate-spin flex-shrink-0" />
               <span className="text-sm text-blue-700">
-                {isConfirming ? "Confirming transaction..." : "Processing registration..."}
+                {isConfirming
+                  ? "Confirming transaction..."
+                  : "Processing registration..."}
               </span>
-            </div>
-          )}
-
-          {/* Success Display */}
-          {isSuccess && (
-            <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-md">
-              <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0" />
-              <span className="text-sm text-green-700">Student registered successfully!</span>
             </div>
           )}
 
