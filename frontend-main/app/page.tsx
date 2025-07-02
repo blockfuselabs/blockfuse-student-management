@@ -40,20 +40,6 @@ const LandingPage = () => {
     <div className="w-full min-h-screen overflow-hidden bg-gradient-to-r from-[#1B1720] via-[#1B1720] to-[#0e0d1c] text-white relative">
       <div className="container mx-auto h-screen relative">
         <span className="size-8 bg-white rounded-full absolute top-20 right-[27rem]"></span>
-        <nav className="w-full flex items-center justify-between py-6">
-          <div className="w-1/2 flex justify-between">
-            <Image src="/images/logo-two.svg" alt="" height={50} width={50} />
-            <ul className="flex items-center gap-6 text-gray-400 cursor-pointer">
-              <li>Home</li>
-              <li>features</li>
-              <li>How to use</li>
-              <li>More info</li>
-            </ul>
-          </div>
-          <button className="absolute right-0 py-2 px-10 rounded-l-full rounded-t-full bg-[#fff] text-black">
-            Signin
-          </button>
-        </nav>
 
         <div className="h-full grow flex items-center">
           <div className="w-[40%] flex flex-col gap-6 relative">
@@ -64,7 +50,7 @@ const LandingPage = () => {
               initial="hidden"
               animate="visible"
             >
-              Your Modern <br /> Student Management Dapp
+              Your Modern <br /> Student Management System
             </motion.h1>
             <motion.p
               className="text-lg text-gray-300"
@@ -72,8 +58,10 @@ const LandingPage = () => {
               initial="hidden"
               animate="visible"
             >
-              Lorem ipsum, dolor sit amet consectetur adipisicing elit. Pariatur
-              nisi quam ducimus distinctio distinctio distinctio.
+              Revolutionize blockchain education at Blockfuse Labs with our
+              decentralized student management platform. Track learning
+              progress, verify achievements, and manage your blockchain hub with
+              transparent, secure technology.
             </motion.p>
 
             <div className="flex gap-6">
@@ -107,7 +95,7 @@ const LandingPage = () => {
               ))}
             </div>
 
-            <motion.div
+            {/* <motion.div
               className="flex"
               variants={statsVariants}
               initial="hidden"
@@ -136,7 +124,7 @@ const LandingPage = () => {
                   </p>
                 </div>
               </div>
-            </motion.div>
+            </motion.div> */}
           </div>
 
           {/* ...rest of your image grid code remains unchanged... */}

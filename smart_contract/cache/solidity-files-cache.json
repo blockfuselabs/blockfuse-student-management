@@ -1,0 +1,116 @@
+{
+  "_format": "hh-sol-cache-2",
+  "files": {
+    "/home/james/BlockfuseLabProjects/blockfuse-student-management/smart_contract/contracts/BlockFuseSMS.sol": {
+      "lastModificationDate": 1750429970049,
+      "contentHash": "e99429cb3191dc7d4db73f38d2a02488",
+      "sourceName": "contracts/BlockFuseSMS.sol",
+      "solcConfig": {
+        "version": "0.8.28",
+        "settings": {
+          "evmVersion": "paris",
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../library/Event.sol",
+        "../library/Error.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.28"
+      ],
+      "artifacts": [
+        "BlockFuseSMS"
+      ]
+    },
+    "/home/james/BlockfuseLabProjects/blockfuse-student-management/smart_contract/library/Error.sol": {
+      "lastModificationDate": 1750417235697,
+      "contentHash": "3d0a400daa813db2dc94e03bf880735c",
+      "sourceName": "library/Error.sol",
+      "solcConfig": {
+        "version": "0.8.28",
+        "settings": {
+          "evmVersion": "paris",
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.28"
+      ],
+      "artifacts": [
+        "Error"
+      ]
+    },
+    "/home/james/BlockfuseLabProjects/blockfuse-student-management/smart_contract/library/Event.sol": {
+      "lastModificationDate": 1750417235697,
+      "contentHash": "ab23ba5cc2f34da6a87eee8d0e60d2f6",
+      "sourceName": "library/Event.sol",
+      "solcConfig": {
+        "version": "0.8.28",
+        "settings": {
+          "evmVersion": "paris",
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.28"
+      ],
+      "artifacts": [
+        "Event"
+      ]
+    }
+  }
+}
