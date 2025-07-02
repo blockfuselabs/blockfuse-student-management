@@ -74,3 +74,16 @@ export function useGetStudent(studentAddress: string) {
     args: [studentAddress],
   });
 }
+
+export function useGetStudentsByCohortTrackAndDay(
+  cohortId: number,
+  track: number,
+  day: number
+) {
+  return useReadContract({
+    address: CONTRACT_ADDRESS as `0x${string}`,
+    abi: StudentAbi.abi,
+    functionName: "getStudentsByCohortTrackAndDay",
+    args: [cohortId, track, day],
+  });
+}

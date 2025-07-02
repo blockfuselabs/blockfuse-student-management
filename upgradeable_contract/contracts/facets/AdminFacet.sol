@@ -147,6 +147,28 @@ contract AdminFacet {
             students[idx] = newAddress;
         }
 
+        // --- MIGRATE ATTENDANCE ---
+        LibAppStorage.Cohort storage cohort = layout.cohorts[cohortId];
+        uint256 cohortStartDay = cohort.startDate / 1 days;
+        uint256 cohortEndDay = cohort.endDate / 1 days;
+        for (uint256 day = cohortStartDay; day <= cohortEndDay; day++) {
+            if (layout.attendance[cohortId][track][day][oldAddress]) {
+                layout.attendance[cohortId][track][day][newAddress] = true;
+                delete layout.attendance[cohortId][track][day][oldAddress];
+            }
+        }
+
+        // --- MIGRATE INDIVIDUAL ATTENDANCE RECORDS ---
+        LibAppStorage.AttendanceRecord[] storage oldRecords = layout.individualAttendanceRecord[oldAddress];
+        for (uint256 i = 0; i < oldRecords.length; i++) {
+            LibAppStorage.AttendanceRecord memory record = oldRecords[i];
+            // Update the studentAddress in the record
+            record.studentAddress = newAddress;
+            layout.individualAttendanceRecord[newAddress].push(record);
+        }
+        // Delete old records
+        delete layout.individualAttendanceRecord[oldAddress];
+
         layout.student[newAddress] = layout.student[oldAddress];
         layout.student[newAddress].isActive = true;
         layout.student[newAddress].studentAddress = newAddress;
