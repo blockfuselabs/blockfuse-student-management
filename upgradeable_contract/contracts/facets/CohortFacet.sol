@@ -12,7 +12,6 @@ contract CohortFacet {
         require(startDate < endDate, Error.END_DATE_MUST_BE_GREATER_THAN_START());
         _;
     }
-
     modifier onlySuperAdmin() {
         require(msg.sender == layout.superAdmin, Error.UNAUTHORIZED_ACCESS());
         _;

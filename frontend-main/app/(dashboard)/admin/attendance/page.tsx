@@ -3,12 +3,8 @@
 import { useState } from "react";
 import LogAttendance from "@/components/admin/LogAttendance";
 import AttendanceViewer from "@/components/admin/AttendanceViewer";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
-  Calendar,
-  Users,
-  Clock,
   CheckCircle,
   Eye,
   ScanQrCode,

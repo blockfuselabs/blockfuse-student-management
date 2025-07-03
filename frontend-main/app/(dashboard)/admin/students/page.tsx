@@ -74,6 +74,7 @@ const StudentsPage = () => {
   const {
     students: allOnChainStudents,
     error: studentsError,
+    isLoading: isLoadingStudents,
   } = useGetStudentsForCohorts(cohorts, refreshKey);
 
   // Map on-chain students to table format

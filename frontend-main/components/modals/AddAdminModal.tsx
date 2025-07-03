@@ -7,7 +7,9 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useAddAdmin } from "@/lib/hooks/useAddAdmin";
+import { useAddAdminWithUsername } from "@/lib/hooks/useAdminUsernameFacet";
+import AdminUsernameFacetAbi from "@/lib/contract/AdminUsernameFacet.json";
+import { CONTRACT_ADDRESS } from "@/lib/contract/address";
 
 type Props = {
   isOpen: boolean;
@@ -17,21 +19,22 @@ type Props = {
 
 export function AddAdminModal({ isOpen, setIsOpen, onAdminAdded }: Props) {
   const [address, setAddress] = React.useState("");
-  const { addAdmin, isLoading, isSuccess, error, resetState } = useAddAdmin();
+  const [username, setUsername] = React.useState("");
+  const { writeContract, isPending, isSuccess, isError, error, reset } = useAddAdminWithUsername();
+  const isLoading = isPending;
 
   // Reset form and hook state when modal opens/closes
   React.useEffect(() => {
     if (!isOpen) {
       setAddress("");
-      resetState();
+      setUsername("");
+      if (typeof reset === "function") reset();
     }
-  }, [isOpen, resetState]);
+  }, [isOpen, reset]);
 
   // Handle success - close modal and refresh list
   React.useEffect(() => {
     if (isSuccess) {
-      console.log("Transaction successful, closing modal and refreshing data");
-      
       // Small delay to ensure blockchain state is updated
       setTimeout(() => {
         setIsOpen(false);
@@ -43,19 +46,27 @@ export function AddAdminModal({ isOpen, setIsOpen, onAdminAdded }: Props) {
     }
   }, [isSuccess, setIsOpen, onAdminAdded]);
 
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!address.trim()) {
+    const trimmedAddress = address.trim();
+    const trimmedUsername = username.trim();
+    if (!trimmedAddress || !trimmedUsername) {
       return;
     }
-
     try {
-      await addAdmin({ adminAddress: address });
+      writeContract({
+        address: CONTRACT_ADDRESS as `0x${string}`,
+        abi: AdminUsernameFacetAbi.abi,
+        functionName: "addAdminWithUsername",
+        args: [trimmedAddress, trimmedUsername],
+      });
     } catch (err) {
       console.error("Error adding admin:", err);
+      // Optionally show a toast or set a local error state
     }
   };
+
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -83,10 +94,33 @@ export function AddAdminModal({ isOpen, setIsOpen, onAdminAdded }: Props) {
               Enter the Ethereum wallet address of the admin to be added
             </p>
           </div>
+          <div>
+            <label className="block text-sm font-medium mb-1 text-gray-700">
+              Admin Username
+            </label>
+            <Input
+              type="text"
+              placeholder="Enter username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              className="rounded-md border-gray-300 text-gray-900 w-full focus:outline-none focus:ring-0 focus:border-gray-300"
+              required
+              disabled={isLoading}
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Enter a username for the admin
+            </p>
+          </div>
 
-          {error && (
+          {isError && (
             <div className="text-red-600 text-sm bg-red-50 p-2 rounded-md">
-              {error}
+              {error?.message ||
+                (typeof error === "string" ? error : "") ||
+                "Failed to add admin"}
+              <br />
+              <span className="text-xs text-gray-500">
+                Check console for details.
+              </span>
             </div>
           )}
 
@@ -100,7 +134,7 @@ export function AddAdminModal({ isOpen, setIsOpen, onAdminAdded }: Props) {
             type="submit"
             size={"lg"}
             className="w-full rounded-md bg-black text-white hover:bg-gray-800 transition disabled:opacity-50 disabled:cursor-not-allowed"
-            disabled={!address.trim() || isLoading}
+            disabled={!address.trim() || !username.trim() || isLoading}
           >
             {isLoading ? "Adding Admin..." : "Add Admin"}
           </Button>

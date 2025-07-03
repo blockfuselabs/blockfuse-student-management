@@ -1,0 +1,56 @@
+{
+  "_format": "hh-sol-artifact-1",
+  "contractName": "Error",
+  "sourceName": "library/Error.sol",
+  "abi": [
+    {
+      "inputs": [],
+      "name": "ALREADY_MARKED_ATTENDANCE",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "COHORT_DOES_NOT_EXIST",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "END_DATE_MUST_BE_GREATER_THAN_START",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "INVALID_COHORT_ID",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "INVALID_TRACK",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "STUDENT_DOES_NOT_EXIST",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "STUDENT_IS_NOT_ACTIVE",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "TRACK_DOES_NOT_EXIST_IN_COHORT",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "UNAUTHORIZED_ACCESS",
+      "type": "error"
+    }
+  ],
+  "bytecode": "0x60566050600b82828239805160001a6073146043577f4e487b7100000000000000000000000000000000000000000000000000000000600052600060045260246000fd5b30600052607381538281f3fe73000000000000000000000000000000000000000030146080604052600080fdfea26469706673582212208bd8315131aad7d9affbdbdd4a63732ec34673eb93781430915fa75050c699de64736f6c634300081c0033",
+  "deployedBytecode": "0x73000000000000000000000000000000000000000030146080604052600080fdfea26469706673582212208bd8315131aad7d9affbdbdd4a63732ec34673eb93781430915fa75050c699de64736f6c634300081c0033",
+  "linkReferences": {},
+  "deployedLinkReferences": {}
+}
