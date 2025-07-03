@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Table } from "@/components/shared/Table";
 import { AddAdminModal } from "@/components/modals/AddAdminModal";
@@ -9,6 +9,9 @@ import { useGetAdmins } from "@/lib/hooks/useGetAdmins";
 import { RefreshCw } from "lucide-react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { useReadContract } from "wagmi";
+import AdminUsernameFacetAbi from "@/lib/contract/AdminUsernameFacet.json";
+import { CONTRACT_ADDRESS } from "@/lib/contract/address";
 
 const statusTabs = [
   { label: "All", value: "all" },
@@ -16,11 +19,47 @@ const statusTabs = [
   { label: "Inactive", value: "inactive" },
 ];
 
+// Placeholder for ReplaceAdminWalletModal
+const ReplaceAdminWalletModal = ({
+  open,
+  onClose,
+  admin,
+  onSuccess,
+}: {
+  open: boolean;
+  onClose: () => void;
+  admin: any;
+  onSuccess: () => void;
+}) => {
+  // TODO: Implement actual logic
+  return open ? (
+    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-30 z-50">
+      <div className="bg-white p-6 rounded shadow-xl">
+        <h2 className="text-lg font-semibold mb-2">Replace Wallet Address</h2>
+        <p>
+          Replace wallet for:{" "}
+          <span className="font-mono">{admin?.username || admin?.address}</span>
+        </p>
+        <button
+          className="mt-4 px-4 py-2 bg-gray-800 text-white rounded"
+          onClick={onClose}
+        >
+          Close
+        </button>
+      </div>
+    </div>
+  ) : null;
+};
+
 const AdminsPage = () => {
   const [addAdminModalOpen, setAddAdminModalOpen] = useState(false);
   const [selectedTab, setSelectedTab] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [refreshKey, setRefreshKey] = useState(0);
+
+  // State for replace wallet modal
+  const [replaceWalletModalOpen, setReplaceWalletModalOpen] = useState(false);
+  const [selectedAdmin, setSelectedAdmin] = useState<Admin | null>(null);
 
   // Fetch admins from blockchain
   const {
@@ -32,12 +71,35 @@ const AdminsPage = () => {
 
   console.log(blockchainAdmins);
 
-  // Transform blockchain data to match our Admin type
-  const adminsData: Admin[] = blockchainAdmins.map((admin, index) => ({
-    id: index.toString(),
-    address: admin.address,
-    isActive: admin.isActive,
-  }));
+  // Fetch usernames for admins
+  const { data: adminsWithUsernames } = useReadContract({
+    address: CONTRACT_ADDRESS as `0x${string}`,
+    abi: AdminUsernameFacetAbi.abi,
+    functionName: "getAllAdminsWithUsernames",
+  });
+
+  // Merge usernames into admins
+  let adminsData: Admin[] = blockchainAdmins.map((admin, index) => {
+    let username = undefined;
+    if (
+      adminsWithUsernames &&
+      Array.isArray(adminsWithUsernames[0]) &&
+      Array.isArray(adminsWithUsernames[1])
+    ) {
+      const addrIndex = (adminsWithUsernames[0] as string[]).findIndex(
+        (addr) => addr.toLowerCase() === admin.address.toLowerCase()
+      );
+      if (addrIndex !== -1) {
+        username = (adminsWithUsernames[1] as string[])[addrIndex];
+      }
+    }
+    return {
+      id: index.toString(),
+      address: admin.address,
+      isActive: admin.isActive,
+      username,
+    };
+  });
 
   const filteredAdmins = adminsData.filter((admin) => {
     const matchesTab =
@@ -60,7 +122,7 @@ const AdminsPage = () => {
   const handleRefresh = useCallback(async () => {
     console.log("Refreshing admins data...");
     setRefreshKey((prev) => prev + 1);
-    
+
     // Also trigger manual refetch
     if (refetch) {
       await refetch();
@@ -74,7 +136,7 @@ const AdminsPage = () => {
       position: "top-right",
       autoClose: 3000,
     });
-    
+
     // Refresh the data
     await handleRefresh();
   }, [handleRefresh]);
@@ -86,10 +148,15 @@ const AdminsPage = () => {
       position: "top-right",
       autoClose: 3000,
     });
-    
+
     // Refresh the data
     await handleRefresh();
   }, [handleRefresh]);
+
+  const handleReplaceWallet = (admin: Admin) => {
+    setSelectedAdmin(admin);
+    setReplaceWalletModalOpen(true);
+  };
 
   if (error) {
     return (
@@ -193,7 +260,7 @@ const AdminsPage = () => {
         ) : (
           <Table
             data={filteredAdmins}
-            columns={adminColumns(handleAdminRemoved)}
+            columns={adminColumns(handleAdminRemoved, handleReplaceWallet)}
             title=""
             searchable={false}
             exportable={false}
@@ -205,6 +272,13 @@ const AdminsPage = () => {
         isOpen={addAdminModalOpen}
         setIsOpen={setAddAdminModalOpen}
         onAdminAdded={handleAdminAdded}
+      />
+
+      <ReplaceAdminWalletModal
+        open={replaceWalletModalOpen}
+        onClose={() => setReplaceWalletModalOpen(false)}
+        admin={selectedAdmin}
+        onSuccess={handleRefresh}
       />
     </div>
   );

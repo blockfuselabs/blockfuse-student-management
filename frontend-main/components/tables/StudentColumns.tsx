@@ -25,99 +25,101 @@ export const studentColumns = (
   onAddScore?: (studentAddress: string) => void,
   onEdit?: (studentAddress: string) => void
 ) => [
-    {
-      header: "Name",
-      accessor: "name" as const,
-    },
-    {
-      header: "Track",
-      accessor: "email" as const,
-    },
-    {
-      header: "Cohort",
-      accessor: "cohort" as const,
-    },
-    {
-      header: "Final Score",
-      accessor: "finalScore" as const,
-      render: (item: Student) => (
-        <span className="font-medium text-gray-900">
-          {item.finalScore}
-        </span>
-      ),
-    },
-    {
-      header: "Status",
-      accessor: "status" as const,
-      render: (item: Student) => (
-        <span
-          className={`px-2 py-1 rounded-full text-xs font-medium ${item.status === "active"
+  {
+    header: "Name",
+    accessor: "name" as const,
+  },
+  {
+    header: "Track",
+    accessor: "email" as const,
+  },
+  {
+    header: "Cohort",
+    accessor: "cohort" as const,
+  },
+  {
+    header: "Final Score",
+    accessor: "finalScore" as const,
+    render: (item: Student) => (
+      <span className="font-medium text-gray-900">{item.finalScore}</span>
+    ),
+  },
+  {
+    header: "Status",
+    accessor: "status" as const,
+    render: (item: Student) => (
+      <span
+        className={`px-2 py-1 rounded-full text-xs font-medium ${
+          item.status === "active"
             ? "bg-green-100 text-green-800"
             : item.status === "graduated"
-              ? "bg-blue-100 text-blue-800"
-              : item.status === "evicted"
-                ? "bg-red-100 text-red-800"
-                : "bg-yellow-100 text-yellow-800"
-            }`}
-        >
-          {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
-        </span>
-      ),
-    },
-    {
-      header: "Actions",
-      accessor: "id" as const,
-      render: (item: Student) => (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
+            ? "bg-blue-100 text-blue-800"
+            : item.status === "evicted"
+            ? "bg-red-100 text-red-800"
+            : "bg-yellow-100 text-yellow-800"
+        }`}
+      >
+        {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
+      </span>
+    ),
+  },
+  {
+    header: "Actions",
+    accessor: "id" as const,
+    render: (item: Student) => (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" className="h-8 w-8 p-0">
+            <span className="sr-only">Open menu</span>
+            <MoreHorizontal className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem
+            className="flex items-center gap-2 cursor-pointer"
+            onClick={() => onEdit && onEdit(item.id)}
+          >
+            <Pencil className="h-4 w-4" />
+            Edit
+          </DropdownMenuItem>
+          {onAddScore && (
             <DropdownMenuItem
-              className="flex items-center gap-2 cursor-pointer"
-              onClick={() => onEdit && onEdit(item.id)}
+              className="flex items-center gap-2 cursor-pointer text-blue-600 focus:text-blue-600"
+              onClick={() => onAddScore(item.id)}
             >
-              <Pencil className="h-4 w-4" />
-              Edit
+              <Star className="h-4 w-4" />
+              Add Score
             </DropdownMenuItem>
-            {onAddScore && (
-              <DropdownMenuItem
-                className="flex items-center gap-2 cursor-pointer text-blue-600 focus:text-blue-600"
-                onClick={() => onAddScore(item.id)}
-              >
-                <Star className="h-4 w-4" />
-                Add Score
-              </DropdownMenuItem>
-            )}
-            <DropdownMenuItem
-              className="flex items-center gap-2 cursor-pointer text-red-600 focus:text-red-600"
-              onClick={() => console.log("Delete", item.id)}
-            >
-              <Trash2 className="h-4 w-4" />
-              Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      ),
-    },
-  ];
+          )}
+          <DropdownMenuItem
+            className="flex items-center gap-2 cursor-pointer text-red-600 focus:text-red-600"
+            onClick={() => console.log("Delete", item.id)}
+          >
+            <Trash2 className="h-4 w-4" />
+            Delete
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    ),
+  },
+];
 
 export type Admin = {
   id: string;
   address: string;
   isActive: boolean;
+  username?: string;
 };
 
 // Separate component for admin actions to use hooks properly
 const AdminActions = ({
   admin,
   onAdminRemoved,
+  onReplaceWallet,
 }: {
   admin: Admin;
   onAdminRemoved?: () => void;
+  onReplaceWallet?: (admin: Admin) => void;
 }) => {
   const { writeContract: removeAdmin, isPending: isRemoving } =
     useRemoveAdmin();
@@ -178,6 +180,15 @@ const AdminActions = ({
           <Pencil className="h-4 w-4" />
           View Details
         </DropdownMenuItem>
+        {onReplaceWallet && (
+          <DropdownMenuItem
+            className="flex items-center gap-2 cursor-pointer text-blue-600 focus:text-blue-600"
+            onClick={() => onReplaceWallet(admin)}
+          >
+            <Shield className="h-4 w-4" />
+            Replace Wallet Address
+          </DropdownMenuItem>
+        )}
         {admin.isActive ? (
           <DropdownMenuItem
             className="flex items-center gap-2 cursor-pointer text-red-600 focus:text-red-600"
@@ -202,7 +213,21 @@ const AdminActions = ({
   );
 };
 
-export const adminColumns = (onAdminRemoved?: () => void) => [
+export const adminColumns = (
+  onAdminRemoved?: () => void,
+  onReplaceWallet?: (admin: Admin) => void
+) => [
+  {
+    header: "Name",
+    accessor: "username" as const,
+    render: (item: Admin) => (
+      <span className="font-medium text-gray-900">
+        {item.username || (
+          <span className="italic text-gray-400">No username</span>
+        )}
+      </span>
+    ),
+  },
   {
     header: "Wallet Address",
     accessor: "address" as const,
@@ -217,10 +242,11 @@ export const adminColumns = (onAdminRemoved?: () => void) => [
     accessor: "isActive" as const,
     render: (item: Admin) => (
       <span
-        className={`px-2 py-1 rounded-full text-xs font-medium ${item.isActive
-          ? "bg-green-100 text-green-800"
-          : "bg-gray-100 text-gray-800"
-          }`}
+        className={`px-2 py-1 rounded-full text-xs font-medium ${
+          item.isActive
+            ? "bg-green-100 text-green-800"
+            : "bg-gray-100 text-gray-800"
+        }`}
       >
         {item.isActive ? "Active" : "Inactive"}
       </span>
@@ -230,7 +256,11 @@ export const adminColumns = (onAdminRemoved?: () => void) => [
     header: "Actions",
     accessor: "id" as const,
     render: (item: Admin) => (
-      <AdminActions admin={item} onAdminRemoved={onAdminRemoved} />
+      <AdminActions
+        admin={item}
+        onAdminRemoved={onAdminRemoved}
+        onReplaceWallet={onReplaceWallet}
+      />
     ),
   },
 ];
