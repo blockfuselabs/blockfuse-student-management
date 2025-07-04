@@ -30,10 +30,10 @@ const buttonVariants = {
   }),
 };
 
-const statsVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0, transition: { delay: 0.7, duration: 0.7 } },
-};
+// const statsVariants = {
+//   hidden: { opacity: 0, y: 20 },
+//   visible: { opacity: 1, y: 0, transition: { delay: 0.7, duration: 0.7 } },
+// };
 
 const LandingPage = () => {
   return (

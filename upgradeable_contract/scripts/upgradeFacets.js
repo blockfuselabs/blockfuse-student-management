@@ -3,34 +3,29 @@ const { getSelectors, FacetCutAction } = require("./libraries/diamond.js");
 
 async function upgradeFacets() {
   const diamondAddress = "0x9D498B7f357D4899139Ec5aB133Bf5B2052B7368";
-
-  // Deploy new AdminFacet
-  const AdminFacet = await ethers.getContractFactory("AdminFacet");
-  const adminFacet = await AdminFacet.deploy();
-  await adminFacet.deployed();
-  console.log("AdminFacet deployed:", adminFacet.address);
-
-  // Deploy new StudentFacet
-  const StudentFacet = await ethers.getContractFactory("StudentFacet");
-  const studentFacet = await StudentFacet.deploy();
-  await studentFacet.deployed();
-  console.log("StudentFacet deployed:", studentFacet.address);
-
-  const diamondCut = await ethers.getContractAt("IDiamondCut", diamondAddress);
-
-  const cut = [
-    {
-      facetAddress: adminFacet.address,
-      action: FacetCutAction.Replace,
-      functionSelectors: getSelectors(adminFacet),
-    },
-    {
-      facetAddress: studentFacet.address,
-      action: FacetCutAction.Replace,
-      functionSelectors: getSelectors(studentFacet),
-    },
+  const facetNames = [
+    "AdminFacet",
+    "StudentFacet",
+    "CohortFacet",
+    "AdminUsernameFacet",
   ];
 
+  const cut = [];
+
+  for (const name of facetNames) {
+    const Facet = await ethers.getContractFactory(name);
+    const facet = await Facet.deploy();
+    await facet.deployed();
+    const selectors = getSelectors(facet);
+    console.log(`${name}: Adding to diamond cut with address ${facet.address}`);
+    cut.push({
+      facetAddress: facet.address,
+      action: FacetCutAction.Replace,
+      functionSelectors: selectors,
+    });
+  }
+
+  const diamondCut = await ethers.getContractAt("IDiamondCut", diamondAddress);
   const tx = await diamondCut.diamondCut(
     cut,
     ethers.constants.AddressZero,

@@ -35,6 +35,7 @@ async function deployDiamond() {
     "AdminFacet",
     "StudentFacet",
     "CohortFacet",
+    
   ];
   const cut = [];
   for (const FacetName of FacetNames) {
