@@ -11,6 +11,7 @@ import { useRouter } from "next/navigation";
 const LoginPage = () => {
   const [isHovered, setIsHovered] = useState(false);
   const [isRoleChecking, setIsRoleChecking] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
   const isMounted = useIsMounted();
   const {
     isAdmin,
@@ -20,19 +21,30 @@ const LoginPage = () => {
   } = useUserRole();
   const router = useRouter();
   const { isConnected, isConnecting: wagmiIsConnecting } = useAccount();
-  console.log(isAdmin, isStudent, isSuperAdmin, roleLoading)
+  console.log(isAdmin, isStudent, isSuperAdmin, roleLoading);
   useEffect(() => {
+    // Only redirect if connected, role loading is complete, and we haven't checked yet
     if (isConnected && !roleLoading && !isRoleChecking) {
-      setIsRoleChecking(true); // Simulate blockchain role checking delay
+      setIsRoleChecking(true);
+
       const checkRoleAndRedirect = async () => {
         try {
-          // Role checking is handled by useUserRole hook
+          // Add a longer delay to ensure blockchain state is fully updated
+          await new Promise((resolve) => setTimeout(resolve, 800));
+
+          // Double-check the role state after delay
           if (isSuperAdmin || isAdmin) {
-            router.push("/admin");
+            console.log("Redirecting to admin dashboard...");
+            setIsRedirecting(true);
+            setTimeout(() => router.push("/admin"), 500);
           } else if (isStudent) {
-            router.push("/student");
+            console.log("Redirecting to student dashboard...");
+            setIsRedirecting(true);
+            setTimeout(() => router.push("/student"), 500);
           } else {
-            router.push("/unauthorized");
+            console.log("User has no role, redirecting to unauthorized...");
+            setIsRedirecting(true);
+            setTimeout(() => router.push("/unauthorized"), 500);
           }
         } catch (error) {
           console.error("Error checking role:", error);
@@ -44,7 +56,15 @@ const LoginPage = () => {
 
       checkRoleAndRedirect();
     }
-  }, [isConnected, roleLoading, isAdmin, isStudent, isSuperAdmin, router, isRoleChecking]);
+  }, [
+    isConnected,
+    roleLoading,
+    isAdmin,
+    isStudent,
+    isSuperAdmin,
+    router,
+    isRoleChecking,
+  ]);
 
   // Combine loading states
   const isLoading = wagmiIsConnecting || roleLoading || isRoleChecking;
@@ -56,7 +76,7 @@ const LoginPage = () => {
         <div className="w-full md:w-1/2 h-full flex items-center justify-center bg-gradient-to-br from-gray-50 to-white relative overflow-hidden">
           <div className="relative z-10 w-full max-w-md px-8">
             <div className="text-center mb-8">
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-[#800895] to-[#a015b9] rounded-2xl mb-6 shadow-lg">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-[#800895] to-[#a015b9] rounded-2xl mb-6 shadow-lg animate-pulse">
                 <Wallet className="w-8 h-8 text-white" />
               </div>
               <h1 className="text-2xl md:text-3xl font-semibold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent mb-2">
@@ -85,7 +105,7 @@ const LoginPage = () => {
               <div className="w-full py-3 px-6 rounded-2xl font-semibold text-lg bg-gradient-to-r from-[#9537EA] to-[#9537EA] text-white shadow-lg">
                 <div className="flex items-center justify-center gap-3">
                   <Loader2 className="w-5 h-5 text-white animate-spin" />
-                  <span>Loading...</span>
+                  <span>Initializing...</span>
                 </div>
               </div>
             </div>
@@ -96,7 +116,11 @@ const LoginPage = () => {
   }
 
   return (
-    <div className="w-full flex flex-row h-screen min-h-screen overflow-hidden">
+    <div
+      className={`w-full flex flex-row h-screen min-h-screen overflow-hidden transition-all duration-500 ease-in-out ${
+        isRedirecting ? "opacity-0 scale-95" : "opacity-100 scale-100"
+      }`}
+    >
       {/* Left Side - Image with Overlay */}
       <div className="hidden md:flex md:w-1/2 h-full relative">
         <div
@@ -217,14 +241,16 @@ const LoginPage = () => {
                     onClick={connected ? openAccountModal : openConnectModal}
                     className={`
                       w-full py-3 px-6 rounded-2xl font-semibold text-lg transition-all duration-300 transform
-                      ${isLoading
-                        ? "bg-gray-400 cursor-not-allowed"
-                        : "bg-gradient-to-r  from-[#9537EA] to-[#9537EA] hover:from-[#800895] hover:to-[#a015b9]hover:scale-105 hover:shadow-xl active:scale-95"
+                      ${
+                        isLoading
+                          ? "bg-gray-400 cursor-not-allowed"
+                          : "bg-gradient-to-r  from-[#9537EA] to-[#9537EA] hover:from-[#800895] hover:to-[#a015b9]hover:scale-105 hover:shadow-xl active:scale-95"
                       }
                       text-white shadow-lg
-                      ${isHovered && !isLoading
-                        ? "shadow-2xl shadow-blue-500/25"
-                        : ""
+                      ${
+                        isHovered && !isLoading
+                          ? "shadow-2xl shadow-blue-500/25"
+                          : ""
                       }
                     `}
                   >
@@ -232,10 +258,14 @@ const LoginPage = () => {
                       {isLoading ? (
                         <>
                           <Loader2 className="w-5 h-5 text-white animate-spin" />
-                          <span>
+                          <span className="animate-pulse">
                             {wagmiIsConnecting
-                              ? "Connecting..."
-                              : "Checking Role..."}
+                              ? "Connecting to wallet..."
+                              : roleLoading
+                              ? "Verifying your role..."
+                              : isRoleChecking
+                              ? "Preparing your dashboard..."
+                              : "Loading..."}
                           </span>
                         </>
                       ) : connected ? (

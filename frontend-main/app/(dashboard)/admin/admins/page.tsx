@@ -6,12 +6,15 @@ import { Table } from "@/components/shared/Table";
 import { AddAdminModal } from "@/components/modals/AddAdminModal";
 import { Admin, adminColumns } from "@/components/tables/StudentColumns";
 import { useGetAdmins } from "@/lib/hooks/useGetAdmins";
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, AlertTriangle } from "lucide-react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useReadContract } from "wagmi";
 import AdminUsernameFacetAbi from "@/lib/contract/AdminUsernameFacet.json";
 import { CONTRACT_ADDRESS } from "@/lib/contract/address";
+import { useUserRole } from "@/lib/hooks/useUserRole";
+import { useRouter } from "next/navigation";
+import { useIsMounted } from "@/lib/hooks/useIsMounted";
 
 const statusTabs = [
   { label: "All", value: "all" },
@@ -24,11 +27,10 @@ const ReplaceAdminWalletModal = ({
   open,
   onClose,
   admin,
-  onSuccess,
 }: {
   open: boolean;
   onClose: () => void;
-  admin: any;
+  admin: Admin | null;
   onSuccess: () => void;
 }) => {
   // TODO: Implement actual logic
@@ -61,6 +63,11 @@ const AdminsPage = () => {
   const [replaceWalletModalOpen, setReplaceWalletModalOpen] = useState(false);
   const [selectedAdmin, setSelectedAdmin] = useState<Admin | null>(null);
 
+  // Access control
+  const { isSuperAdmin, isLoading: roleLoading } = useUserRole();
+  const router = useRouter();
+  const isMounted = useIsMounted();
+
   // Fetch admins from blockchain
   const {
     admins: blockchainAdmins,
@@ -69,28 +76,138 @@ const AdminsPage = () => {
     refetch,
   } = useGetAdmins(refreshKey);
 
+  // Fetch usernames for admins - add refreshKey to force refetch when needed
+  const { data: adminsWithUsernames, refetch: refetchUsernames } =
+    useReadContract({
+      address: CONTRACT_ADDRESS as `0x${string}`,
+      abi: AdminUsernameFacetAbi.abi,
+      functionName: "getAllAdminsWithUsernames",
+      query: {
+        enabled: isSuperAdmin, // Only fetch if user is super admin
+        staleTime: 0, // Always consider data stale to allow refetching
+      },
+    });
+
+  // Redirect non-super admins
+  useEffect(() => {
+    if (isMounted && !roleLoading && !isSuperAdmin) {
+      router.push("/admin");
+    }
+  }, [isMounted, roleLoading, isSuperAdmin, router]);
+
+  // Auto-refetch usernames when refreshKey changes
+  useEffect(() => {
+    if (isSuperAdmin && refetchUsernames) {
+      refetchUsernames();
+    }
+  }, [refreshKey, isSuperAdmin, refetchUsernames]);
+
+  // Refresh function
+  const handleRefresh = useCallback(async () => {
+    console.log("Refreshing admins data...");
+    setRefreshKey((prev) => prev + 1);
+
+    // Also trigger manual refetch for admins
+    if (refetch) {
+      await refetch();
+    }
+
+    // Also trigger manual refetch for usernames
+    if (refetchUsernames) {
+      await refetchUsernames();
+    }
+  }, [refetch, refetchUsernames]);
+
+  // Handle admin added - enhanced with toast notification
+  const handleAdminAdded = useCallback(async () => {
+    console.log("Admin added callback triggered");
+    toast.success("Admin added successfully!", {
+      position: "top-right",
+      autoClose: 3000,
+    });
+
+    // Small delay to ensure blockchain state is updated
+    setTimeout(async () => {
+      // Refresh the data
+      await handleRefresh();
+    }, 1000);
+  }, [handleRefresh]);
+
+  // Handle admin removed
+  const handleAdminRemoved = useCallback(async () => {
+    console.log("Admin removed callback triggered");
+    toast.success("Admin removed successfully!", {
+      position: "top-right",
+      autoClose: 3000,
+    });
+
+    // Small delay to ensure blockchain state is updated
+    setTimeout(async () => {
+      // Refresh the data
+      await handleRefresh();
+    }, 1000);
+  }, [handleRefresh]);
+
+  const handleReplaceWallet = (admin: Admin) => {
+    setSelectedAdmin(admin);
+    setReplaceWalletModalOpen(true);
+  };
+
+  // Show loading while checking permissions
+  if (!isMounted || roleLoading) {
+    return (
+      <div className="p-6 h-screen bg-white rounded-xl">
+        <div className="flex items-center justify-center h-full">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black mx-auto mb-2"></div>
+            <p className="text-gray-600">Checking permissions...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show access denied for non-super admins
+  if (!isSuperAdmin) {
+    return (
+      <div className="p-6 h-screen bg-white rounded-xl">
+        <div className="flex items-center justify-center h-full">
+          <div className="text-center">
+            <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+            <h2 className="text-xl font-semibold text-red-600 mb-2">
+              Access Denied
+            </h2>
+            <p className="text-gray-600 mb-4">
+              Only super admins can access the admins management section.
+            </p>
+            <Button onClick={() => router.push("/admin")} variant="outline">
+              Back to Dashboard
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   console.log(blockchainAdmins);
 
-  // Fetch usernames for admins
-  const { data: adminsWithUsernames } = useReadContract({
-    address: CONTRACT_ADDRESS as `0x${string}`,
-    abi: AdminUsernameFacetAbi.abi,
-    functionName: "getAllAdminsWithUsernames",
-  });
-
   // Merge usernames into admins
-  let adminsData: Admin[] = blockchainAdmins.map((admin, index) => {
+  const adminsData: Admin[] = blockchainAdmins.map((admin, index) => {
     let username = undefined;
     if (
       adminsWithUsernames &&
+      Array.isArray(adminsWithUsernames) &&
+      adminsWithUsernames.length >= 2 &&
       Array.isArray(adminsWithUsernames[0]) &&
       Array.isArray(adminsWithUsernames[1])
     ) {
-      const addrIndex = (adminsWithUsernames[0] as string[]).findIndex(
+      const addresses = adminsWithUsernames[0] as string[];
+      const usernames = adminsWithUsernames[1] as string[];
+      const addrIndex = addresses.findIndex(
         (addr) => addr.toLowerCase() === admin.address.toLowerCase()
       );
       if (addrIndex !== -1) {
-        username = (adminsWithUsernames[1] as string[])[addrIndex];
+        username = usernames[addrIndex];
       }
     }
     return {
@@ -117,46 +234,6 @@ const AdminsPage = () => {
 
     return matchesTab && matchesSearch;
   });
-
-  // Refresh function
-  const handleRefresh = useCallback(async () => {
-    console.log("Refreshing admins data...");
-    setRefreshKey((prev) => prev + 1);
-
-    // Also trigger manual refetch
-    if (refetch) {
-      await refetch();
-    }
-  }, [refetch]);
-
-  // Handle admin added - enhanced with toast notification
-  const handleAdminAdded = useCallback(async () => {
-    console.log("Admin added callback triggered");
-    toast.success("Admin added successfully!", {
-      position: "top-right",
-      autoClose: 3000,
-    });
-
-    // Refresh the data
-    await handleRefresh();
-  }, [handleRefresh]);
-
-  // Handle admin removed
-  const handleAdminRemoved = useCallback(async () => {
-    console.log("Admin removed callback triggered");
-    toast.success("Admin removed successfully!", {
-      position: "top-right",
-      autoClose: 3000,
-    });
-
-    // Refresh the data
-    await handleRefresh();
-  }, [handleRefresh]);
-
-  const handleReplaceWallet = (admin: Admin) => {
-    setSelectedAdmin(admin);
-    setReplaceWalletModalOpen(true);
-  };
 
   if (error) {
     return (
@@ -192,9 +269,14 @@ const AdminsPage = () => {
 
       <div className="flex w-full justify-between items-center">
         <div>
-          <h1 className="text-xl font-semibold text-gray-900 mb-1">
-            Admins Management
-          </h1>
+          <div className="flex items-center gap-2 mb-1">
+            <h1 className="text-xl font-semibold text-gray-900">
+              Admins Management
+            </h1>
+            <span className="px-2 py-1 text-xs bg-purple-100 text-purple-700 border border-purple-300 rounded-full">
+              Super Admin Only
+            </span>
+          </div>
           <p className="text-gray-400 mt-1">
             Add, organize, and manage admins by status.
           </p>

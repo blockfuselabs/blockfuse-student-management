@@ -20,8 +20,8 @@ type Props = {
 export function AddAdminModal({ isOpen, setIsOpen, onAdminAdded }: Props) {
   const [address, setAddress] = React.useState("");
   const [username, setUsername] = React.useState("");
-  const { writeContract, isPending, isSuccess, isError, error, reset } = useAddAdminWithUsername();
-  const isLoading = isPending;
+  const { writeContract, isLoading, isSuccess, isError, error, reset } =
+    useAddAdminWithUsername();
 
   // Reset form and hook state when modal opens/closes
   React.useEffect(() => {
@@ -32,7 +32,7 @@ export function AddAdminModal({ isOpen, setIsOpen, onAdminAdded }: Props) {
     }
   }, [isOpen, reset]);
 
-  // Handle success - close modal and refresh list
+  // Handle success - close modal and refresh list only after transaction is confirmed
   React.useEffect(() => {
     if (isSuccess) {
       // Small delay to ensure blockchain state is updated
@@ -46,7 +46,6 @@ export function AddAdminModal({ isOpen, setIsOpen, onAdminAdded }: Props) {
     }
   }, [isSuccess, setIsOpen, onAdminAdded]);
 
-  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const trimmedAddress = address.trim();
@@ -66,7 +65,6 @@ export function AddAdminModal({ isOpen, setIsOpen, onAdminAdded }: Props) {
       // Optionally show a toast or set a local error state
     }
   };
-
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -114,9 +112,7 @@ export function AddAdminModal({ isOpen, setIsOpen, onAdminAdded }: Props) {
 
           {isError && (
             <div className="text-red-600 text-sm bg-red-50 p-2 rounded-md">
-              {error?.message ||
-                (typeof error === "string" ? error : "") ||
-                "Failed to add admin"}
+              {error || "Failed to add admin"}
               <br />
               <span className="text-xs text-gray-500">
                 Check console for details.

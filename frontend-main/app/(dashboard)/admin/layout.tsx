@@ -19,8 +19,6 @@ const Layout = ({ children }: Props) => {
   const { isAdmin, isSuperAdmin, isLoading: roleLoading } = useUserRole();
   const [hasCheckedRole, setHasCheckedRole] = useState(false);
 
-
-
   // Reset hasCheckedRole when wallet disconnects
   useEffect(() => {
     if (!isConnected && hasCheckedRole) {
@@ -29,22 +27,25 @@ const Layout = ({ children }: Props) => {
   }, [isConnected, hasCheckedRole]);
 
   useEffect(() => {
-   
     // Handle immediate disconnection
     if (isMounted && !isConnected) {
       router.push("/login");
       return;
     }
 
-    // Only proceed if mounted, connected, role loading is complete, and we haven't checked yet
-    if (isMounted && isConnected && !roleLoading && !hasCheckedRole) {
-      setHasCheckedRole(true);
+    // Only proceed if mounted, connected, and role loading is complete
+    if (isMounted && isConnected && !roleLoading) {
+      // If we haven't checked role yet, set the flag
+      if (!hasCheckedRole) {
+        setHasCheckedRole(true);
+      }
 
+      // Only redirect if user is not an admin or super admin
       if (!isAdmin && !isSuperAdmin) {
         router.push("/unauthorized");
-      } else if(isAdmin || isSuperAdmin) {
-         router.push("/admin");
       }
+      // If user is admin or super admin, they can stay on admin pages
+      // No need to redirect to /admin since they're already in admin layout
     } else {
       console.log("Still loading or not mounted yet");
     }
@@ -62,13 +63,15 @@ const Layout = ({ children }: Props) => {
   if (!isMounted || roleLoading || !hasCheckedRole) {
     console.log("Showing loading state");
     return (
-      <div className="w-full h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-gray-600" />
+      <div className="w-full h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-white">
+        <div className="text-center animate-pulse">
+          <div className="w-16 h-16 bg-gradient-to-br from-[#800895] to-[#a015b9] rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
+            <Loader2 className="w-8 h-8 animate-spin text-white" />
+          </div>
           <h2 className="text-xl font-semibold text-gray-800 mb-2">
-            Loading...
+            Welcome to Blockfuse Labs
           </h2>
-          <p className="text-gray-600">Checking authentication</p>
+          <p className="text-gray-600">Setting up your admin dashboard...</p>
         </div>
       </div>
     );
@@ -82,7 +85,7 @@ const Layout = ({ children }: Props) => {
 
   console.log("Rendering admin dashboard");
   return (
-    <main className="w-full h-screen overflow-hidden flex">
+    <main className="w-full h-screen overflow-hidden flex animate-in fade-in duration-500 slide-in-from-bottom-4">
       <DashboardSidebar />
       <div className="flex-1 flex flex-col min-h-full overflow-auto bg-white">
         <DashboardNav />
