@@ -1,10 +1,9 @@
 "use client";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { useAccount } from "wagmi";
 import { useRouter } from "next/navigation";
-import { useUserRole } from "@/lib/hooks/useUserRole";
 import { useIsMounted } from "@/lib/hooks/useIsMounted";
 import { Loader2 } from "lucide-react";
 import { useDisconnect } from "wagmi";
@@ -18,15 +17,6 @@ const Layout = ({ children }: Props) => {
   const { disconnect } = useDisconnect();
   const router = useRouter();
   const isMounted = useIsMounted();
-  const { isStudent, isLoading: roleLoading } = useUserRole();
-  const [hasCheckedRole, setHasCheckedRole] = useState(false);
-
-  // Reset hasCheckedRole when wallet disconnects
-  useEffect(() => {
-    if (!isConnected && hasCheckedRole) {
-      setHasCheckedRole(false);
-    }
-  }, [isConnected, hasCheckedRole]);
 
   useEffect(() => {
     // Handle immediate disconnection
@@ -34,23 +24,7 @@ const Layout = ({ children }: Props) => {
       router.push("/login");
       return;
     }
-
-    // Only proceed if mounted, connected, and role loading is complete
-    if (isMounted && isConnected && !roleLoading) {
-      // If we haven't checked role yet, set the flag
-      if (!hasCheckedRole) {
-        setHasCheckedRole(true);
-      }
-
-      // Only redirect if user is not a student
-      if (!isStudent) {
-        router.push("/unauthorized");
-      }
-      // If user is a student, they can stay on student pages
-    } else {
-      console.log("Still loading or not mounted yet");
-    }
-  }, [isMounted, isConnected, isStudent, roleLoading, hasCheckedRole, router]);
+  }, [isMounted, isConnected, router]);
 
   const handleDisconnect = () => {
     disconnect();
@@ -58,7 +32,7 @@ const Layout = ({ children }: Props) => {
   };
 
   // Show loading while checking authentication
-  if (!isMounted || roleLoading || !hasCheckedRole) {
+  if (!isMounted) {
     return (
       <div className="w-full h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-white">
         <div className="text-center animate-pulse">
@@ -74,9 +48,9 @@ const Layout = ({ children }: Props) => {
     );
   }
 
-  // Don't render dashboard if not authenticated
-  if (!isConnected || !isStudent) {
-    console.log("Not rendering student dashboard - not authenticated");
+  // Don't render dashboard if not connected
+  if (!isConnected) {
+    console.log("Not rendering student dashboard - not connected");
     return null;
   }
 

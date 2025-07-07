@@ -1,10 +1,9 @@
 "use client";
 import DashboardNav from "@/components/shared/DashboardNav";
 import DashboardSidebar from "@/components/shared/DashboardSidebar";
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { useAccount } from "wagmi";
 import { useRouter } from "next/navigation";
-import { useUserRole } from "@/lib/hooks/useUserRole";
 import { useIsMounted } from "@/lib/hooks/useIsMounted";
 import { Loader2 } from "lucide-react";
 
@@ -16,15 +15,6 @@ const Layout = ({ children }: Props) => {
   const { isConnected } = useAccount();
   const router = useRouter();
   const isMounted = useIsMounted();
-  const { isAdmin, isSuperAdmin, isLoading: roleLoading } = useUserRole();
-  const [hasCheckedRole, setHasCheckedRole] = useState(false);
-
-  // Reset hasCheckedRole when wallet disconnects
-  useEffect(() => {
-    if (!isConnected && hasCheckedRole) {
-      setHasCheckedRole(false);
-    }
-  }, [isConnected, hasCheckedRole]);
 
   useEffect(() => {
     // Handle immediate disconnection
@@ -32,35 +22,10 @@ const Layout = ({ children }: Props) => {
       router.push("/login");
       return;
     }
-
-    // Only proceed if mounted, connected, and role loading is complete
-    if (isMounted && isConnected && !roleLoading) {
-      // If we haven't checked role yet, set the flag
-      if (!hasCheckedRole) {
-        setHasCheckedRole(true);
-      }
-
-      // Only redirect if user is not an admin or super admin
-      if (!isAdmin && !isSuperAdmin) {
-        router.push("/unauthorized");
-      }
-      // If user is admin or super admin, they can stay on admin pages
-      // No need to redirect to /admin since they're already in admin layout
-    } else {
-      console.log("Still loading or not mounted yet");
-    }
-  }, [
-    isMounted,
-    isConnected,
-    isAdmin,
-    isSuperAdmin,
-    roleLoading,
-    hasCheckedRole,
-    router,
-  ]);
+  }, [isMounted, isConnected, router]);
 
   // Show loading while checking authentication
-  if (!isMounted || roleLoading || !hasCheckedRole) {
+  if (!isMounted) {
     console.log("Showing loading state");
     return (
       <div className="w-full h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-white">
@@ -77,9 +42,9 @@ const Layout = ({ children }: Props) => {
     );
   }
 
-  // Don't render dashboard if not authenticated
-  if (!isConnected || (!isAdmin && !isSuperAdmin)) {
-    console.log("Not rendering dashboard - not authenticated");
+  // Don't render dashboard if not connected
+  if (!isConnected) {
+    console.log("Not rendering dashboard - not connected");
     return null;
   }
 

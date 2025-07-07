@@ -30,8 +30,6 @@ interface UserRoleData {
   error?: string;
 }
 
-// Your contract configuration
-
 export const useUserRole = (): UserRoleData => {
   const isMounted = useIsMounted();
   const { address: userAddress, isConnected } = useAccount();
@@ -40,8 +38,9 @@ export const useUserRole = (): UserRoleData => {
     isSuperAdmin: false,
     isStudent: false,
     userType: "unknown",
-    isLoading: true,
+    isLoading: true, // Start with loading true
   });
+  const [hasStartedLoading, setHasStartedLoading] = useState(false);
 
   // Check if user is admin using getAllAdmins function
   const {
@@ -52,6 +51,7 @@ export const useUserRole = (): UserRoleData => {
     address: CONTRACT_ADDRESS,
     abi: DiamondABI.abi,
     functionName: "getAllAdmins",
+    enabled: isConnected && !!userAddress, // Only run when connected
   });
 
   // Get super admin address
@@ -63,6 +63,7 @@ export const useUserRole = (): UserRoleData => {
     address: CONTRACT_ADDRESS,
     abi: DiamondABI.abi,
     functionName: "getSuperAdmin",
+    enabled: isConnected && !!userAddress, // Only run when connected
   });
 
   // Get student data using StudentFacet - only call if we have a user address
@@ -75,6 +76,7 @@ export const useUserRole = (): UserRoleData => {
     abi: DiamondABI.abi,
     functionName: "getStudent",
     args: userAddress ? [userAddress] : undefined,
+    enabled: isConnected && !!userAddress, // Only run when connected
   });
 
   useEffect(() => {
@@ -87,6 +89,7 @@ export const useUserRole = (): UserRoleData => {
     console.log("Is Mounted:", isMounted);
     console.log("User Address:", userAddress);
     console.log("Is Connected:", isConnected);
+    console.log("Has Started Loading:", hasStartedLoading);
     console.log("Contract Address:", CONTRACT_ADDRESS);
     console.log("Admin Addresses:", adminAddresses);
     console.log("Super Admin Address:", superAdminAddress);
@@ -100,6 +103,7 @@ export const useUserRole = (): UserRoleData => {
       isStudentLoading,
     });
 
+    // If not connected, set to default state with loading false
     if (!userAddress || !isConnected) {
       console.log("User not connected, setting default state");
       setUserRole({
@@ -109,24 +113,35 @@ export const useUserRole = (): UserRoleData => {
         userType: "unknown",
         isLoading: false,
       });
+      setHasStartedLoading(false);
       return;
     }
 
-    const isLoading = isAdminLoading || isSuperAdminLoading || isStudentLoading;
+    // Mark that we've started the loading process
+    if (!hasStartedLoading) {
+      console.log("Starting loading process...");
+      setHasStartedLoading(true);
+      setUserRole(prev => ({ ...prev, isLoading: true }));
+      return;
+    }
 
-    if (isLoading) {
+    // Check if any contract calls are still loading
+    const isAnyLoading = isAdminLoading || isSuperAdminLoading || isStudentLoading;
+
+    if (isAnyLoading) {
       console.log("Still loading contract data...");
       setUserRole((prev) => ({ ...prev, isLoading: true }));
       return;
     }
+
+    // All contract calls are complete, now determine roles
+    console.log("All contract calls complete, determining roles...");
 
     // Check if user is super admin
     const isSuperAdmin =
       typeof superAdminAddress === "string" &&
       superAdminAddress.toLowerCase() === userAddress.toLowerCase();
     console.log("Is Super Admin:", isSuperAdmin);
-    console.log("Super Admin Address from contract:", superAdminAddress);
-    console.log("User Address:", userAddress);
 
     // Check if user is regular admin by checking if their address is in the admin list
     const isRegularAdmin =
@@ -136,8 +151,6 @@ export const useUserRole = (): UserRoleData => {
           adminAddr.toLowerCase() === userAddress.toLowerCase()
       );
     console.log("Is Regular Admin:", isRegularAdmin);
-    console.log("Admin Addresses from contract:", adminAddresses);
-    console.log("User Address:", userAddress);
 
     // Check if user is admin (super admin or regular admin)
     const isAdmin = isSuperAdmin || isRegularAdmin;
@@ -155,14 +168,6 @@ export const useUserRole = (): UserRoleData => {
         studentDetails.isActive // Make sure student is active
     );
     console.log("Is Student:", isStudent);
-    console.log("Student Data Details:", {
-      hasStudentData: Boolean(studentDetails),
-      studentAddress: studentDetails?.studentAddress,
-      isActive: studentDetails?.isActive,
-      addressMatch:
-        studentDetails?.studentAddress?.toLowerCase() ===
-        userAddress?.toLowerCase(),
-    });
 
     // Determine user type
     let userType: "admin" | "super_admin" | "student" | "unknown" = "unknown";
@@ -188,39 +193,17 @@ export const useUserRole = (): UserRoleData => {
       isStudent,
       userType,
       studentData: studentDetails || undefined,
-      isLoading: false,
+      isLoading: false, // Set loading to false since all calls are complete
       error,
     };
 
     console.log("Final Role State:", finalRole);
     setUserRole(finalRole);
-
-    // Log any contract errors in detail
-    if (adminError) {
-      console.error("Admin contract call error:", {
-        message: adminError.message,
-        name: adminError.name,
-        cause: adminError.cause,
-      });
-    }
-    if (superAdminError) {
-      console.error("Super Admin contract call error:", {
-        message: superAdminError.message,
-        name: superAdminError.name,
-        cause: superAdminError.cause,
-      });
-    }
-    if (studentError) {
-      console.error("Student contract call error:", {
-        message: studentError.message,
-        name: studentError.name,
-        cause: studentError.cause,
-      });
-    }
   }, [
     isMounted,
     userAddress,
     isConnected,
+    hasStartedLoading,
     adminAddresses,
     superAdminAddress,
     studentData,
