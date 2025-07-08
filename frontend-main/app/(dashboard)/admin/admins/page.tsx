@@ -16,15 +16,15 @@ import { useUserRole } from "@/lib/hooks/useUserRole";
 import { useRouter } from "next/navigation";
 import { useIsMounted } from "@/lib/hooks/useIsMounted";
 
-const statusTabs = [
-  { label: "All", value: "all" },
-  { label: "Active", value: "active" },
-  { label: "Inactive", value: "inactive" },
-];
+// const statusTabs = [
+//   { label: "All", value: "all" },
+//   { label: "Active", value: "active" },
+//   { label: "Inactive", value: "inactive" },
+// ];
 
 const AdminsPage = () => {
   const [addAdminModalOpen, setAddAdminModalOpen] = useState(false);
-  const [selectedTab, setSelectedTab] = useState("all");
+  // const [selectedTab, setSelectedTab] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -193,20 +193,11 @@ const AdminsPage = () => {
   });
 
   const filteredAdmins = adminsData.filter((admin) => {
-    const matchesTab =
-      selectedTab === "all"
-        ? true
-        : selectedTab === "active"
-        ? admin.isActive
-        : selectedTab === "inactive"
-        ? !admin.isActive
-        : true;
-
     const matchesSearch = admin.address
       .toLowerCase()
       .includes(searchTerm.toLowerCase());
 
-    return matchesTab && matchesSearch;
+    return matchesSearch;
   });
 
   if (error) {
@@ -266,8 +257,8 @@ const AdminsPage = () => {
       </div>
 
       {/* Tabs and Search */}
-      <div className="flex items-center justify-between mt-7 mb-2 w-full gap-2">
-        <div className="flex gap-2">
+      <div className="mt-7 mb-2 w-full gap-2">
+        {/* <div className="flex gap-2">
           {statusTabs.map((tab) => (
             <button
               key={tab.value}
@@ -283,7 +274,7 @@ const AdminsPage = () => {
               {tab.label}
             </button>
           ))}
-        </div>
+        </div> */}
         <input
           type="text"
           placeholder="Search by wallet address..."

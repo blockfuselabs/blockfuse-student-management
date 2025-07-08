@@ -6,11 +6,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "../ui/button";
 import { MoreHorizontal, Pencil, Trash2, Shield, Star } from "lucide-react";
-import { useRemoveAdmin, useAddAdmin } from "@/lib/hooks/useAdminFacet";
+import { useDeactivateAdmin } from "@/lib/hooks/useDeactivateAdminTx";
+import { useActivateAdmin } from "@/lib/hooks/useActivateAdminTx";
 import { toast } from "sonner";
-import React from "react";
-import AdminFacetABI from "@/lib/contract/AdminFacet.json";
-import { CONTRACT_ADDRESS } from "@/lib/contract/address";
+import React, { useEffect, useRef } from "react";
 
 export type Student = {
   id: string;
@@ -121,46 +120,66 @@ const AdminActions = ({
   onAdminRemoved?: () => void;
   onReplaceWallet?: (admin: Admin) => void;
 }) => {
-  const { writeContract: removeAdmin, isPending: isRemoving } =
-    useRemoveAdmin();
+  const {
+    deactivateAdmin,
+    isLoading: isDeactivating,
+    isSuccess: isDeactivated,
+    resetState: resetDeactivate,
+  } = useDeactivateAdmin();
 
-  const { writeContract: addAdmin, isPending: isAdding } = useAddAdmin();
+  const {
+    activateAdmin,
+    isLoading: isActivating,
+    isSuccess: isActivated,
+    resetState: resetActivate,
+  } = useActivateAdmin();
 
-  const handleRemoveAdmin = async () => {
-    try {
-      await removeAdmin({
-        address: CONTRACT_ADDRESS as `0x${string}`,
-        abi: AdminFacetABI.abi,
-        functionName: "removeAdmin",
-        args: [admin.address as `0x${string}`],
-      });
-      toast.success("Admin deactivated successfully");
-      // Call the refresh callback if provided
+  const hasShownDeactivateToast = useRef(false);
+  const hasShownActivateToast = useRef(false);
+
+  // Handle deactivation success
+  useEffect(() => {
+    if (isDeactivated && !hasShownDeactivateToast.current) {
+      hasShownDeactivateToast.current = true;
+      toast.success("Admin deactivated successfully!");
       if (onAdminRemoved) {
         onAdminRemoved();
       }
+      resetDeactivate();
+    }
+  }, [isDeactivated, onAdminRemoved, resetDeactivate]);
+
+  // Handle activation success
+  useEffect(() => {
+    if (isActivated && !hasShownActivateToast.current) {
+      hasShownActivateToast.current = true;
+      toast.success("Admin activated successfully!");
+      if (onAdminRemoved) {
+        onAdminRemoved();
+      }
+      resetActivate();
+    }
+  }, [isActivated, onAdminRemoved, resetActivate]);
+
+  const handleRemoveAdmin = async () => {
+    try {
+      hasShownDeactivateToast.current = false;
+      await deactivateAdmin({
+        adminAddress: admin.address,
+      });
     } catch (error) {
       console.error("Error deactivating admin:", error);
-      toast.error("Failed to deactivate admin");
     }
   };
 
   const handleAddAdmin = async () => {
     try {
-      await addAdmin({
-        address: CONTRACT_ADDRESS as `0x${string}`,
-        abi: AdminFacetABI.abi,
-        functionName: "addAdmin",
-        args: [admin.address as `0x${string}`],
+      hasShownActivateToast.current = false;
+      await activateAdmin({
+        adminAddress: admin.address,
       });
-      toast.success("Admin activated successfully");
-      // Call the refresh callback if provided
-      if (onAdminRemoved) {
-        onAdminRemoved();
-      }
     } catch (error) {
       console.error("Error activating admin:", error);
-      toast.error("Failed to activate admin");
     }
   };
 
@@ -193,19 +212,19 @@ const AdminActions = ({
           <DropdownMenuItem
             className="flex items-center gap-2 cursor-pointer text-red-600 focus:text-red-600"
             onClick={handleRemoveAdmin}
-            disabled={isRemoving}
+            disabled={isDeactivating}
           >
             <Trash2 className="h-4 w-4" />
-            {isRemoving ? "Deactivating..." : "Deactivate Admin"}
+            {isDeactivating ? "Deactivating..." : "Deactivate Admin"}
           </DropdownMenuItem>
         ) : (
           <DropdownMenuItem
             className="flex items-center gap-2 cursor-pointer text-green-600 focus:text-green-600"
             onClick={handleAddAdmin}
-            disabled={isAdding}
+            disabled={isActivating}
           >
             <Shield className="h-4 w-4" />
-            {isAdding ? "Activating..." : "Activate Admin"}
+            {isActivating ? "Activating..." : "Activate Admin"}
           </DropdownMenuItem>
         )}
       </DropdownMenuContent>
