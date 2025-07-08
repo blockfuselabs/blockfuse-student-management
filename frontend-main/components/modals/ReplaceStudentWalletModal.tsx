@@ -4,8 +4,6 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useReplaceStudentWalletTx } from "@/lib/hooks/useReplaceStudentWalletTx";
 import { toast } from "react-toastify";
-import { CONTRACT_ADDRESS } from "@/lib/contract/address";
-import DiamondABI from "@/lib/contract/DiamondABI.json";
 
 interface ReplaceStudentWalletModalProps {
   open: boolean;
@@ -27,7 +25,7 @@ export const ReplaceStudentWalletModal: React.FC<ReplaceStudentWalletModalProps>
       setNewAddress("");
       onClose();
       if (onSuccess) onSuccess();
-    } catch (error: any) {
+    } catch (error: Error) {
       toast.error(error?.message || "Failed to replace student wallet");
     } finally {
       setIsSubmitting(false);

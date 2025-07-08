@@ -2,7 +2,7 @@ import React from "react";
 import { Loader2 } from "lucide-react";
 
 // Use Next.js Image for logo if needed
-// import Image from "next/image";
+import Image from "next/image";
 
 interface LoadingSpinnerProps {
  message?: string;
@@ -20,9 +20,11 @@ export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
  return (
   <div className={`flex flex-col items-center justify-center py-8 ${className}`}>
    {showLogo && (
-    <img
+    <Image
      src="/images/logo-two.svg"
      alt="BlockFuse Logo"
+     width={64}
+     height={64}
      className="w-16 h-16 mb-4 animate-pulse"
     />
    )}

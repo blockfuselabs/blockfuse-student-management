@@ -12,9 +12,9 @@ export default function ScanPage() {
   const [error, setError] = useState<string | null>(null);
   const [isScanning, setIsScanning] = useState<boolean>(false);
   const html5QrCodeRef = useRef<Html5Qrcode | null>(null);
-  const  { address } = useAccount()
+  const { address } = useAccount()
 
-  const { logAttendance, isSuccess } =
+  const { logAttendance } =
     useLogAttendance();
 
   useEffect(() => {
@@ -27,7 +27,7 @@ export default function ScanPage() {
         html5QrCodeRef.current &&
         isScanning &&
         html5QrCodeRef.current.getState() !==
-          Html5QrcodeScannerState.NOT_STARTED
+        Html5QrcodeScannerState.NOT_STARTED
       ) {
         html5QrCodeRef.current
           .stop()
@@ -57,7 +57,7 @@ export default function ScanPage() {
           console.log(data)
 
           // this where log attendacne is called
-          
+
           await logAttendance({
             studentAddress: address as string,
             // studentAddress: '0xCe2682E44734b96361BD0d7B0DEC01D2AB82adcF',
@@ -108,7 +108,7 @@ export default function ScanPage() {
       ></div>
       {scanResult && (
         <div className="text-green-600">
-          <p>Data to submit: {scanResult}, wallet address: { address }</p>
+          <p>Data to submit: {scanResult}, wallet address: {address}</p>
         </div>
       )}
       {error && (

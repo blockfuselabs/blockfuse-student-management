@@ -12,7 +12,7 @@ const HydrationTestPage = () => {
 
   useEffect(() => {
     setRenderCount((prev) => prev + 1);
-  });
+  }, []);
 
   useEffect(() => {
     if (isMounted) {

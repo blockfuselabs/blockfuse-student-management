@@ -24,7 +24,6 @@ export function Table<T extends { id: string | number }>({
   title,
   searchable = true,
   exportable = true,
-  isLoading,
 }: TableProps<T>) {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortConfig, setSortConfig] = useState<{

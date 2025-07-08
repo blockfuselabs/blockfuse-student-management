@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 import { useRegisterStudent } from "@/lib/hooks/useRegisterStudent";
 import { useGetCohorts } from "@/lib/hooks/useGetCohorts";
-import { useCallback, useEffect } from "react";
+import { useCallback } from "react";
 import { toast } from "sonner";
 
 type Props = {
@@ -50,7 +50,6 @@ export function AddStudentModal({ isOpen, setIsOpen, refetchStudents }: Props) {
     isSuccess,
     error,
     reset,
-    transactionHash,
     isConfirming,
   } = useRegisterStudent();
 
