@@ -1,5 +1,4 @@
 import { useReadContract, useWalletClient } from "wagmi";
-import DiamondABI from "@/lib/contract/DiamondABI.json";
 import AdminFacetABI from "@/lib/contract/AdminFacet.json";
 import StudentFacetABI from "@/lib/contract/StudentFacet.json";
 import { CONTRACT_ADDRESS } from "@/lib/contract/address";
@@ -13,17 +12,20 @@ export interface AttendanceData {
 
 export const useGetAttendanceByCohortAndTrack = (
   cohortId: number,
-  track: number
+  track: number,
+  day: number
 ) => {
   // Only call the contract if we have valid parameters
   const shouldCallContract = cohortId > 0 && (track === 0 || track === 1);
 
   const { data, isLoading, isError, error, refetch } = useReadContract({
     address: CONTRACT_ADDRESS as `0x${string}`,
-    abi: DiamondABI.abi,
-    functionName: "getAttendanceByCohortAndTrack",
-    args: shouldCallContract ? [cohortId, track] : undefined,
+    abi: StudentFacetABI.abi,
+    functionName: "getStudentsByCohortTrackAndDay",
+    args: shouldCallContract ? [cohortId, track, day] : undefined,
   });
+
+  console.log("Use Attendance Data", data)
 
   return {
     attendance: data as AttendanceData | undefined,
@@ -56,7 +58,7 @@ export const useGetAttendanceDatesForStudent = (
         if (
           walletClient &&
           studentAddress &&
-          studentAddress.trim() !== "" &&
+          studentAddress?.trim() !== "" &&
           cohortId > 0 &&
           (track === 0 || track === 1)
         ) {

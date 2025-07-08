@@ -1,8 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useGetAttendanceByCohortAndTrack } from "@/lib/hooks/useGetAttendance";
-import { useGetStudent } from "@/lib/hooks/useGetStudent";
 import { useIsMounted } from "@/lib/hooks/useIsMounted";
 import { Label } from "@/components/ui/label";
 import {
@@ -41,7 +40,19 @@ import { useGetCohorts } from '../../lib/hooks/useGetCohorts';
 import { useGetAttendanceDatesForStudent } from "@/lib/hooks/useGetAttendance";
 import { useAccount } from "wagmi";
 import { Calendar as UiCalendar } from "@/components/ui/calendar";
-import { useGetStudentsByCohortTrackAndDay } from "@/lib/hooks/useStudentFacet";
+import { toast } from "sonner";
+
+// Define Student type based on attendance data structure
+type Student = {
+  studentAddress: string;
+  firstname: string;
+  lastname: string;
+  email: string;
+  username: string;
+  twitter?: string;
+  isActive?: boolean;
+  // add other fields as needed
+};
 
 export default function AttendanceViewer() {
   const isMounted = useIsMounted();
@@ -50,6 +61,24 @@ export default function AttendanceViewer() {
   const [track, setTrack] = useState("");
   const [selectedStudent, setSelectedStudent] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+  const [selectedDay, setSelectedDay] = useState<number | null>(null);
+
+  // Only call the hook if we have valid parameters
+  const shouldCallAttendance = Boolean(
+    cohortId &&
+    track &&
+    selectedDay !== null &&
+    !isNaN(Number(cohortId)) &&
+    !isNaN(Number(selectedDay)) &&
+    (Number(track) === 0 || Number(track) === 1)
+  );
+
+  const { attendance, isLoading, isError, error } =
+    useGetAttendanceByCohortAndTrack(
+      shouldCallAttendance ? Number(cohortId) : 0,
+      shouldCallAttendance ? Number(track) : 0,
+      shouldCallAttendance ? Number(selectedDay) : 0
+    );
 
   // Fetch cohorts
   const {
@@ -62,36 +91,31 @@ export default function AttendanceViewer() {
   const selectedCohort = cohorts.find((c) => c.id === cohortId);
   const availableTracks = selectedCohort ? selectedCohort.tracks : [];
 
-  // Only call the hook if we have valid parameters
-  const shouldCallAttendance = Boolean(
-    cohortId &&
-    track &&
-    !isNaN(Number(cohortId)) &&
-    (Number(track) === 0 || Number(track) === 1)
-  );
-
-  const { attendance, isLoading, isError, error } =
-    useGetAttendanceByCohortAndTrack(
-      shouldCallAttendance ? Number(cohortId) : 0,
-      shouldCallAttendance ? Number(track) : 0
-    );
-
   // Calculate the day number from the selected date and cohort start date
-  let selectedDay: number | null = null;
-  let cohortStartDate: number | null = null;
-  if (selectedCohort && selectedDate) {
-    cohortStartDate = Math.floor(new Date(selectedCohort.startDate).getTime() / 86400000);
-    const pickedDay = Math.floor(selectedDate.getTime() / 86400000);
-    selectedDay = pickedDay - cohortStartDate;
-  }
+  useEffect(() => {
+    if (selectedCohort && selectedDate) {
+      const cohortStart = new Date(selectedCohort.startDate);
+      const cohortStartDate = Math.floor(Date.UTC(
+        cohortStart.getUTCFullYear(),
+        cohortStart.getUTCMonth(),
+        cohortStart.getUTCDate()
+      ) / 86400000);
 
-  const {
-    data: studentsAndAttendance,
-  } = useGetStudentsByCohortTrackAndDay(
-    cohortId && track && selectedDay !== null ? Number(cohortId) : 0,
-    cohortId && track && selectedDay !== null ? Number(track) : 0,
-    cohortId && track && selectedDay !== null ? selectedDay! : 0
-  );
+      const pickedDay = Math.floor(Date.UTC(
+        selectedDate.getUTCFullYear(),
+        selectedDate.getUTCMonth(),
+        selectedDate.getUTCDate()
+      ) / 86400000);
+      if (cohortStartDate > pickedDay) {
+        toast.info("The selected date is before the cohort's start date. Attendance cannot be shown for this day.");
+        setSelectedDay(null);
+      } else {
+        setSelectedDay(pickedDay);
+      }
+    } else {
+      setSelectedDay(null);
+    }
+  }, [selectedCohort, selectedDate]);
 
   console.log("Connected wallet address:", connectedAddress);
   console.log(attendance)
@@ -100,14 +124,16 @@ export default function AttendanceViewer() {
     return trackNumber === 0 ? "Web2" : trackNumber === 1 ? "Web3" : `Track ${trackNumber}`;
   };
 
-  // Map students and attendance counts for table
-  let tableData: { address: string; attendanceCount: number }[] = [];
+  // Map students and attendance for table
+  let tableData: { student: Student; present: boolean }[] = [];
   if (attendance && Array.isArray(attendance[0]) && Array.isArray(attendance[1])) {
-    tableData = attendance[0].map((address: string, i: number) => ({
-      address,
-      attendanceCount: Number(attendance[1][i] ?? 0),
+    tableData = attendance[0].map((student: Student, i: number) => ({
+      student,
+      present: Boolean(attendance[1][i]),
     }));
   }
+
+
 
   // Don't render until mounted to prevent hydration mismatch
   if (!isMounted) {
@@ -202,10 +228,11 @@ export default function AttendanceViewer() {
     );
   }
 
-  // Reset track when cohort changes
+  // Reset track, selectedDay when cohort changes
   const handleCohortChange = (value: string) => {
     setCohortId(value);
     setTrack("");
+    setSelectedDay(null);
   };
 
   return (
@@ -351,13 +378,13 @@ export default function AttendanceViewer() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {tableData.map(({ address, attendanceCount }) => (
+                        {tableData.map(({ student, present }) => (
                           <StudentRow
-                            key={address}
-                            studentAddress={address}
-                            attendanceCount={attendanceCount}
-                            isSelected={selectedStudent === address}
-                            onSelect={() => setSelectedStudent(address)}
+                            key={student.studentAddress}
+                            student={student}
+                            present={present}
+                            isSelected={selectedStudent === student.studentAddress}
+                            onSelect={() => setSelectedStudent(student.studentAddress)}
                           />
                         ))}
                       </TableBody>
@@ -382,7 +409,7 @@ export default function AttendanceViewer() {
                       studentAddress={selectedStudent}
                       cohortId={cohortId}
                       track={track}
-                      attendanceCount={tableData.find(s => s.address === selectedStudent)?.attendanceCount || 0}
+                      attendanceCount={tableData.find(s => s.student.studentAddress === selectedStudent)?.present ? 1 : 0}
                     />
                   </CardContent>
                 </Card>
@@ -413,7 +440,7 @@ export default function AttendanceViewer() {
             </div>
           ) : null}
 
-          {/* Attendance for selected day */}
+          {/* Attendance for selected day
           {selectedDay !== null && studentsAndAttendance && (
             <Card className="mt-6">
               <CardHeader>
@@ -452,7 +479,7 @@ export default function AttendanceViewer() {
                 </Table>
               </CardContent>
             </Card>
-          )}
+          )} */}
         </CardContent>
       </Card>
     </div>
@@ -460,53 +487,43 @@ export default function AttendanceViewer() {
 }
 
 // Student Row Component
-function StudentRow({
-  studentAddress,
-  attendanceCount,
-  isSelected,
-  onSelect,
-}: {
-  studentAddress: string;
-  attendanceCount: number;
+function StudentRow({ student, present, isSelected, onSelect }: {
+  student: Student;
+  present: boolean;
   isSelected: boolean;
   onSelect: () => void;
 }) {
-  const { student, isLoading } = useGetStudent(studentAddress);
   return (
     <TableRow onClick={onSelect} className={isSelected ? "bg-blue-50" : ""} style={{ cursor: "pointer" }}>
       <TableCell className="font-mono text-sm">
-        {studentAddress.slice(0, 6)}...{studentAddress.slice(-4)}
+        {student.studentAddress.slice(0, 6)}...{student.studentAddress.slice(-4)}
       </TableCell>
       <TableCell>
-        {isLoading ? (
-          <Loader2 className="h-4 w-4 animate-spin" />
-        ) : student ? (
-          <span>
-            {student.firstname} {student.lastname}
-          </span>
+        <span>
+          {student.firstname} {student.lastname}
+        </span>
+      </TableCell>
+      <TableCell>
+        <Badge variant={student.isActive ? "default" : "secondary"}>
+          {student.isActive ? (
+            <>
+              <CheckCircle className="h-3 w-3 mr-1" />
+              Active
+            </>
+          ) : (
+            <>
+              <XCircle className="h-3 w-3 mr-1" />
+              Inactive
+            </>
+          )}
+        </Badge>
+      </TableCell>
+      <TableCell>
+        {present ? (
+          <Badge variant="success">Present</Badge>
         ) : (
-          <span className="text-gray-500">Unknown</span>
+          <Badge variant="destructive">Absent</Badge>
         )}
-      </TableCell>
-      <TableCell>
-        {student && (
-          <Badge variant={student.isActive ? "default" : "secondary"}>
-            {student.isActive ? (
-              <>
-                <CheckCircle className="h-3 w-3 mr-1" />
-                Active
-              </>
-            ) : (
-              <>
-                <XCircle className="h-3 w-3 mr-1" />
-                Inactive
-              </>
-            )}
-          </Badge>
-        )}
-      </TableCell>
-      <TableCell>
-        <Badge variant="outline">{attendanceCount}</Badge>
       </TableCell>
     </TableRow>
   );
