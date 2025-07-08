@@ -4,7 +4,7 @@ const path = require("path");
 
 async function addFacet() {
   const diamondAddress = "0x9D498B7f357D4899139Ec5aB133Bf5B2052B7368";
-  const NewFacet = await ethers.getContractFactory("AdminUsernameFacet");
+  const NewFacet = await ethers.getContractFactory("StudentFacet");
   const newFacet = await NewFacet.deploy();
   await newFacet.deployed();
   console.log("NewFacet deployed:", newFacet.address);
