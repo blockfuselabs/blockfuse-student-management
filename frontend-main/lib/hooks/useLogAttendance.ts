@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
-import { useWriteContract, useTransaction } from "wagmi";
+import { useWriteContract, useWaitForTransactionReceipt } from "wagmi";
 import StudentFacetABI from "@/lib/contract/StudentFacet.json";
 import { CONTRACT_ADDRESS } from "@/lib/contract/address";
+import { toast } from "sonner";
 
 export interface LogAttendanceParams {
   studentAddress: string;
@@ -12,42 +13,57 @@ export interface LogAttendanceParams {
 export const useLogAttendance = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isSuccess, setIsSuccess] = useState(false);
 
   const {
     writeContract,
-    data: writeData,
+    data: hash,
     isError: isWriteError,
     error: writeError,
+    reset: resetWrite,
   } = useWriteContract();
 
   const {
-    isLoading: isTransactionLoading,
-    isSuccess,
-    isError: isTransactionError,
-  } = useTransaction({
-    hash: writeData,
+    isLoading: isConfirming,
+    isSuccess: isConfirmed,
+    isError: isConfirmError,
+    error: confirmError,
+  } = useWaitForTransactionReceipt({
+    hash,
   });
 
-  // Handle transaction success
+  // Reset states when starting a new transaction
   useEffect(() => {
-    if (isSuccess) {
-      console.log("Attendance logged successfully!");
+    if (hash) {
+      setIsSuccess(false);
+      setError(null);
     }
-  }, [isSuccess]);
+  }, [hash]);
+
+  // Handle transaction confirmation
+  useEffect(() => {
+    if (isConfirmed) {
+      setIsSuccess(true);
+      setIsLoading(false);
+    }
+  }, [isConfirmed]);
 
   // Handle transaction errors
   useEffect(() => {
-    if (isWriteError || isTransactionError) {
-      const errorMessage = writeError?.message || "Transaction failed";
-      console.log("Transaction error:", errorMessage);
+    if (isWriteError || isConfirmError) {
+      const errorMessage =
+        writeError?.message || confirmError?.message || "Transaction failed";
       setError(errorMessage);
+      setIsLoading(false);
+      toast.error(errorMessage);
     }
-  }, [isWriteError, isTransactionError, writeError]);
+  }, [isWriteError, isConfirmError, writeError, confirmError]);
 
   const logAttendance = async (params: LogAttendanceParams) => {
     try {
       setIsLoading(true);
       setError(null);
+      setIsSuccess(false);
 
       console.log("Logging attendance with params:", params);
 
@@ -64,17 +80,26 @@ export const useLogAttendance = () => {
       });
     } catch (err) {
       console.log("Error logging attendance:", err);
-      setError(err instanceof Error ? err.message : "Failed to log attendance");
-    } finally {
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to log attendance";
+      setError(errorMessage);
       setIsLoading(false);
+      toast.error(errorMessage);
     }
+  };
+
+  const resetState = () => {
+    setIsLoading(false);
+    setError(null);
+    setIsSuccess(false);
+    resetWrite();
   };
 
   return {
     logAttendance,
-    isLoading: isLoading || isTransactionLoading,
+    isLoading: isLoading || isConfirming,
     isSuccess,
     error,
-    resetError: () => setError(null),
+    resetState,
   };
 };

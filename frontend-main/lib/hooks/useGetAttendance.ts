@@ -1,6 +1,7 @@
 import { useReadContract, useWalletClient } from "wagmi";
 import DiamondABI from "@/lib/contract/DiamondABI.json";
 import AdminFacetABI from "@/lib/contract/AdminFacet.json";
+import StudentFacetABI from "@/lib/contract/StudentFacet.json";
 import { CONTRACT_ADDRESS } from "@/lib/contract/address";
 import { useState, useEffect } from "react";
 import { readContract } from "viem/actions";
@@ -118,7 +119,7 @@ export const useHasAttendance = (
 
   const { data, isLoading, isError, error, refetch } = useReadContract({
     address: CONTRACT_ADDRESS as `0x${string}`,
-    abi: DiamondABI.abi,
+    abi: StudentFacetABI.abi,
     functionName: "hasAttendance",
     args: shouldCallContract
       ? [studentAddress, cohortId, track, day]
