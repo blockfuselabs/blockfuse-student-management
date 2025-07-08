@@ -7,7 +7,7 @@ import {
 import { Button } from "../ui/button";
 import { MoreHorizontal, Pencil, Trash2, Shield, Star } from "lucide-react";
 import { useRemoveAdmin, useAddAdmin } from "@/lib/hooks/useAdminFacet";
-import { toast } from "react-toastify";
+import { toast } from "sonner";
 import React from "react";
 import AdminFacetABI from "@/lib/contract/AdminFacet.json";
 import { CONTRACT_ADDRESS } from "@/lib/contract/address";

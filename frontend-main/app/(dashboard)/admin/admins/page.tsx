@@ -4,11 +4,11 @@ import React, { useState, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Table } from "@/components/shared/Table";
 import { AddAdminModal } from "@/components/modals/AddAdminModal";
+import { ReplaceAdminWalletModal } from "@/components/modals/ReplaceAdminWalletModal";
 import { Admin, adminColumns } from "@/components/tables/StudentColumns";
 import { useGetAdmins } from "@/lib/hooks/useGetAdmins";
 import { RefreshCw, AlertTriangle } from "lucide-react";
-import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import { toast } from "sonner";
 import { useReadContract } from "wagmi";
 import AdminUsernameFacetAbi from "@/lib/contract/AdminUsernameFacet.json";
 import { CONTRACT_ADDRESS } from "@/lib/contract/address";
@@ -21,37 +21,6 @@ const statusTabs = [
   { label: "Active", value: "active" },
   { label: "Inactive", value: "inactive" },
 ];
-
-// Placeholder for ReplaceAdminWalletModal
-const ReplaceAdminWalletModal = ({
-  open,
-  onClose,
-  admin,
-}: {
-  open: boolean;
-  onClose: () => void;
-  admin: Admin | null;
-  onSuccess: () => void;
-}) => {
-  // TODO: Implement actual logic
-  return open ? (
-    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-30 z-50">
-      <div className="bg-white p-6 rounded shadow-xl">
-        <h2 className="text-lg font-semibold mb-2">Replace Wallet Address</h2>
-        <p>
-          Replace wallet for:{" "}
-          <span className="font-mono">{admin?.username || admin?.address}</span>
-        </p>
-        <button
-          className="mt-4 px-4 py-2 bg-gray-800 text-white rounded"
-          onClick={onClose}
-        >
-          Close
-        </button>
-      </div>
-    </div>
-  ) : null;
-};
 
 const AdminsPage = () => {
   const [addAdminModalOpen, setAddAdminModalOpen] = useState(false);
@@ -121,10 +90,7 @@ const AdminsPage = () => {
   // Handle admin added - enhanced with toast notification
   const handleAdminAdded = useCallback(async () => {
     console.log("Admin added callback triggered");
-    toast.success("Admin added successfully!", {
-      position: "top-right",
-      autoClose: 3000,
-    });
+    toast.success("Admin added successfully!");
 
     // Small delay to ensure blockchain state is updated
     setTimeout(async () => {
@@ -136,10 +102,18 @@ const AdminsPage = () => {
   // Handle admin removed
   const handleAdminRemoved = useCallback(async () => {
     console.log("Admin removed callback triggered");
-    toast.success("Admin removed successfully!", {
-      position: "top-right",
-      autoClose: 3000,
-    });
+    toast.success("Admin removed successfully!");
+
+    // Small delay to ensure blockchain state is updated
+    setTimeout(async () => {
+      // Refresh the data
+      await handleRefresh();
+    }, 1000);
+  }, [handleRefresh]);
+
+  // Handle admin wallet replaced
+  const handleAdminWalletReplaced = useCallback(async () => {
+    console.log("Admin wallet replaced callback triggered");
 
     // Small delay to ensure blockchain state is updated
     setTimeout(async () => {
@@ -255,18 +229,6 @@ const AdminsPage = () => {
 
   return (
     <div className="p-6 h-screen bg-white rounded-xl">
-      <ToastContainer
-        position="top-right"
-        autoClose={5000}
-        hideProgressBar={false}
-        newestOnTop
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-      />
-
       <div className="flex w-full justify-between items-center">
         <div>
           <div className="flex items-center gap-2 mb-1">
@@ -360,7 +322,7 @@ const AdminsPage = () => {
         open={replaceWalletModalOpen}
         onClose={() => setReplaceWalletModalOpen(false)}
         admin={selectedAdmin}
-        onSuccess={handleRefresh}
+        onSuccess={handleAdminWalletReplaced}
       />
     </div>
   );
