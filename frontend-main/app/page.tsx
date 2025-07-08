@@ -2,7 +2,7 @@
 import Image from "next/image";
 import React from "react";
 import { Montserrat } from "next/font/google";
-import { motion } from "framer-motion";
+import { motion, cubicBezier } from "framer-motion";
 import Link from "next/link";
 
 const montserrat = Montserrat({ subsets: ["latin"], weight: ["700"] });
@@ -12,7 +12,10 @@ const textVariants = {
   visible: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.8, ease: [0.42, 0, 0.58, 1] },
+    transition: {
+      duration: 0.6,
+      ease: cubicBezier(0.42, 0, 0.58, 1),
+    },
   },
 };
 

@@ -55,7 +55,7 @@ export function useGetStudentsForCohorts(
                 );
 
                 const studentsData = (await publicClient.readContract({
-                  address: CONTRACT_ADDRESS,
+                  address: CONTRACT_ADDRESS as `0x${string}`,
                   abi: StudentFacetABI.abi,
                   functionName: "getStudentsByCohortAndTrack",
                   args: [cohortIdNum, trackNum],

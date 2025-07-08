@@ -6,19 +6,18 @@ import { useAccount } from "wagmi";
 import { useGetAdminUsername } from "@/lib/hooks/useAdminUsernameFacet";
 // import { GraduationCap, BookOpen, UserCog } from "lucide-react";
 
-export const greetUser = () => {
-  const currentHour = new Date().getHours();
-
-  if (currentHour < 12) {
-    return `Good morning `;
-  }
-  if (currentHour < 18) {
-    return `Good afternoon`;
-  }
-  return `Good evening`;
-};
-
 const AdminDashboard = () => {
+  const greetUser = () => {
+    const currentHour = new Date().getHours();
+
+    if (currentHour < 12) {
+      return `Good morning `;
+    }
+    if (currentHour < 18) {
+      return `Good afternoon`;
+    }
+    return `Good evening`;
+  };
   const { isAdmin, isSuperAdmin, isLoading: roleLoading } = useUserRole();
   const { address } = useAccount();
   const { data: adminUsername, isLoading: usernameLoading } =
@@ -48,9 +47,9 @@ const AdminDashboard = () => {
             <br />
           </span>
           <span className="">
-             {namePart}
+            {namePart}
           </span>
-          
+
           &nbsp; 👋🏾.
         </h3>
 

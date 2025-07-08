@@ -46,7 +46,7 @@ export const useGetCohorts = (refreshKey: number = 0) => {
   const isCorrectNetwork = chainId === 11155111; // Sepolia
 
   const { data: cohortCount, refetch: refetchCount } = useReadContract({
-    address: CONTRACT_ADDRESS,
+    address: CONTRACT_ADDRESS as `0x${string}`,
     abi: CohortFacetABI.abi,
     functionName: "getCohortCount",
     query: {
@@ -89,14 +89,14 @@ export const useGetCohorts = (refreshKey: number = 0) => {
       for (let i = 1; i <= Number(cohortCount); i++) {
         try {
           const cohortData = await publicClient.readContract({
-            address: CONTRACT_ADDRESS,
+            address: CONTRACT_ADDRESS as `0x${string}`,
             abi: CohortFacetABI.abi,
             functionName: "getCohort",
             args: [i],
           });
 
           const cohortTracks = await publicClient.readContract({
-            address: CONTRACT_ADDRESS,
+            address: CONTRACT_ADDRESS as `0x${string}`,
             abi: CohortFacetABI.abi,
             functionName: "getCohortTracks",
             args: [i],

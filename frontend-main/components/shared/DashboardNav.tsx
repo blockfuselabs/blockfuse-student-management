@@ -15,10 +15,12 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useAccount } from "wagmi";
 import { useIsMounted } from "@/lib/hooks/useIsMounted";
+import { useRouter } from "next/navigation";
 
 const DashboardNav = () => {
   const isMounted = useIsMounted();
   const { address } = useAccount();
+  const router = useRouter();
 
   const truncateAddress = (addr?: string) => {
     if (!addr) return "";

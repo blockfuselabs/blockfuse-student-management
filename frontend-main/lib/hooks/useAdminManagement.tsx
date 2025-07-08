@@ -75,7 +75,7 @@ export const useAdminManagement = () => {
   // Get active admins (those currently in the list)
   const activeAdmins = admins.filter((admin) => admin.isActive);
 
- 
+
   const inactiveAdmins: typeof admins = []; // This would need to be implemented based on your requirements
 
   return {
@@ -90,7 +90,6 @@ export const useAdminManagement = () => {
     // Actions
     activateAdmin,
     deactivateAdmin,
-    reset,
 
     // Refresh
     refreshAdmins: () => setRefreshKey((prev) => prev + 1),

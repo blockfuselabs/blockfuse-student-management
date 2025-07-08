@@ -19,6 +19,7 @@ interface ExcelStudentRow {
  track: number | string;
  cohort: number | string;
  studentAddress: string;
+ email?: string;
 }
 
 export function AddStudentsExcelModal({ isOpen, setIsOpen }: AddStudentsExcelModalProps) {
@@ -75,6 +76,7 @@ export function AddStudentsExcelModal({ isOpen, setIsOpen }: AddStudentsExcelMod
       track: Number(row.track),
       cohort: Number(row.cohort),
       studentAddress: row.studentAddress,
+      email: row.email || "",
      })
     )
    );

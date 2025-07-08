@@ -11,7 +11,8 @@ export const useRegisterStudent = () => {
   const [state, setState] = useState<RegisterStudentState>({
     isLoading: false,
     isSuccess: false,
-    error: null
+    error: null,
+    transactionHash: undefined,
   });
 
   const {

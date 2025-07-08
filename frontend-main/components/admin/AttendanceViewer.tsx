@@ -73,12 +73,13 @@ export default function AttendanceViewer() {
     (Number(track) === 0 || Number(track) === 1)
   );
 
+  // TODO: Refine the type of attendance to match the contract return type
   const { attendance, isLoading, isError, error } =
     useGetAttendanceByCohortAndTrack(
       shouldCallAttendance ? Number(cohortId) : 0,
       shouldCallAttendance ? Number(track) : 0,
       shouldCallAttendance ? Number(selectedDay) : 0
-    );
+    ) as { attendance: [Student[], boolean[]] | undefined; isLoading: boolean; isError: boolean; error: unknown };
 
   // Fetch cohorts
   const {
@@ -304,7 +305,11 @@ export default function AttendanceViewer() {
             <Alert variant="destructive" className="mb-6">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
-                {error?.message || "Failed to load attendance data"}
+                {typeof error === 'object' && error && 'message' in error
+                  ? (error as { message: string }).message
+                  : typeof error === 'string'
+                    ? error
+                    : "Failed to load attendance data"}
               </AlertDescription>
             </Alert>
           )}
@@ -407,8 +412,8 @@ export default function AttendanceViewer() {
                   <CardContent>
                     <StudentAttendanceDates
                       studentAddress={selectedStudent}
-                      cohortId={cohortId}
-                      track={track}
+                      cohortId={Number(cohortId)}
+                      track={Number(track)}
                       attendanceCount={tableData.find(s => s.student.studentAddress === selectedStudent)?.present ? 1 : 0}
                     />
                   </CardContent>
@@ -439,47 +444,6 @@ export default function AttendanceViewer() {
               <p>Please select a cohort and track to view attendance data.</p>
             </div>
           ) : null}
-
-          {/* Attendance for selected day
-          {selectedDay !== null && studentsAndAttendance && (
-            <Card className="mt-6">
-              <CardHeader>
-                <CardTitle>Attendance for {selectedDate?.toLocaleDateString()}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Student</TableHead>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Present?</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {(studentsAndAttendance[0] as { studentAddress: string; firstname: string; lastname: string; isActive: boolean }[]).map((student, i) => (
-                      <TableRow key={student.studentAddress}>
-                        <TableCell>{student.studentAddress.slice(0, 6)}...{student.studentAddress.slice(-4)}</TableCell>
-                        <TableCell>{student.firstname} {student.lastname}</TableCell>
-                        <TableCell>
-                          <Badge variant={student.isActive ? "default" : "secondary"}>
-                            {student.isActive ? "Active" : "Inactive"}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          {studentsAndAttendance[1][i] ? (
-                            <Badge variant="success">Present</Badge>
-                          ) : (
-                            <Badge variant="destructive">Absent</Badge>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          )} */}
         </CardContent>
       </Card>
     </div>
@@ -520,7 +484,7 @@ function StudentRow({ student, present, isSelected, onSelect }: {
       </TableCell>
       <TableCell>
         {present ? (
-          <Badge variant="success">Present</Badge>
+          <Badge variant="default">Present</Badge>
         ) : (
           <Badge variant="destructive">Absent</Badge>
         )}

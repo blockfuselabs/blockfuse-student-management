@@ -48,10 +48,9 @@ export const useUserRole = (): UserRoleData => {
     isLoading: isAdminLoading,
     error: adminError,
   } = useReadContract({
-    address: CONTRACT_ADDRESS,
+    address: CONTRACT_ADDRESS as `0x${string}`,
     abi: DiamondABI.abi,
     functionName: "getAllAdmins",
-    enabled: isConnected && !!userAddress, // Only run when connected
   });
 
   // Get super admin address
@@ -60,10 +59,9 @@ export const useUserRole = (): UserRoleData => {
     isLoading: isSuperAdminLoading,
     error: superAdminError,
   } = useReadContract({
-    address: CONTRACT_ADDRESS,
+    address: CONTRACT_ADDRESS as `0x${string}`,
     abi: DiamondABI.abi,
     functionName: "getSuperAdmin",
-    enabled: isConnected && !!userAddress, // Only run when connected
   });
 
   // Get student data using StudentFacet - only call if we have a user address
@@ -72,11 +70,10 @@ export const useUserRole = (): UserRoleData => {
     isLoading: isStudentLoading,
     error: studentError,
   } = useReadContract({
-    address: CONTRACT_ADDRESS,
+    address: CONTRACT_ADDRESS as `0x${string}`,
     abi: DiamondABI.abi,
     functionName: "getStudent",
     args: userAddress ? [userAddress] : undefined,
-    enabled: isConnected && !!userAddress, // Only run when connected
   });
 
   useEffect(() => {
@@ -160,12 +157,12 @@ export const useUserRole = (): UserRoleData => {
     const studentDetails = studentData as StudentDetails | null;
     const isStudent = Boolean(
       studentDetails &&
-        studentDetails.studentAddress &&
-        studentDetails.studentAddress.toLowerCase() !==
-          "0x0000000000000000000000000000000000000000" &&
-        studentDetails.studentAddress.toLowerCase() ===
-          userAddress.toLowerCase() &&
-        studentDetails.isActive // Make sure student is active
+      studentDetails.studentAddress &&
+      studentDetails.studentAddress.toLowerCase() !==
+      "0x0000000000000000000000000000000000000000" &&
+      studentDetails.studentAddress.toLowerCase() ===
+      userAddress.toLowerCase() &&
+      studentDetails.isActive // Make sure student is active
     );
     console.log("Is Student:", isStudent);
 

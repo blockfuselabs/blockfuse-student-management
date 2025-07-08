@@ -85,7 +85,10 @@ const PerformanceCard: React.FC<PerformanceCardProps> = ({
                 </Pie>
                 <ChartTooltip
                   content={<ChartTooltipContent />}
-                  formatter={(value, name) => [`${value.toFixed(1)}%`, name]}
+                  formatter={(value, name) => [
+                    typeof value === 'number' ? `${value.toFixed(1)}%` : `${value}%`,
+                    name
+                  ]}
                 />
               </PieChart>
             </ResponsiveContainer>

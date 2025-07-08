@@ -49,8 +49,7 @@ export function AddStudentModal({ isOpen, setIsOpen, refetchStudents }: Props) {
     isLoading,
     isSuccess,
     error,
-    reset,
-    isConfirming,
+    resetError,
   } = useRegisterStudent();
 
   const handleClose = useCallback(() => {
@@ -66,10 +65,10 @@ export function AddStudentModal({ isOpen, setIsOpen, refetchStudents }: Props) {
     setStudentAddress("");
     setEmail("");
     // Reset hook state if defined
-    if (typeof reset === "function") reset();
+    if (typeof resetError === "function") resetError();
     // Refetch students if provided
     if (typeof refetchStudents === "function") refetchStudents();
-  }, [setIsOpen, reset, refetchStudents]);
+  }, [setIsOpen, resetError, refetchStudents]);
 
   // Filter out completed cohorts and create options
   const cohortOptions = React.useMemo(() => {
@@ -108,18 +107,18 @@ export function AddStudentModal({ isOpen, setIsOpen, refetchStudents }: Props) {
       setTimeout(() => {
         setIsOpen(false);
         if (refetchStudents) refetchStudents();
-        if (typeof reset === "function") reset(); // Reset after closing
+        if (typeof resetError === "function") resetError(); // Reset after closing
       }, 1000);
     }
-  }, [isSuccess, isOpen, setIsOpen, refetchStudents, reset]);
+  }, [isSuccess, isOpen, setIsOpen, refetchStudents, resetError]);
 
   // Handle errors
   React.useEffect(() => {
     if (error && isOpen) {
       toast.error("Registration failed: " + error);
-      if (typeof reset === "function") reset(); // Reset after showing error
+      if (typeof resetError === "function") resetError(); // Reset after showing error
     }
-  }, [error, isOpen, reset]);
+  }, [error, isOpen, resetError]);
 
   // Debug: Log all information about the selected cohort when it changes
   React.useEffect(() => {
@@ -185,7 +184,6 @@ export function AddStudentModal({ isOpen, setIsOpen, refetchStudents }: Props) {
 
   const isSubmitting = isLoading || isLoadingCohorts;
   const getLoadingText = () => {
-    if (isConfirming) return "Confirming...";
     if (isLoading) return "Registering...";
     return "Register Student";
   };
@@ -375,9 +373,7 @@ export function AddStudentModal({ isOpen, setIsOpen, refetchStudents }: Props) {
             <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-md">
               <Loader2 className="h-4 w-4 text-blue-500 animate-spin flex-shrink-0" />
               <span className="text-sm text-blue-700">
-                {isConfirming
-                  ? "Confirming transaction..."
-                  : "Processing registration..."}
+                Processing registration...
               </span>
             </div>
           )}

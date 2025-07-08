@@ -25,8 +25,14 @@ export const ReplaceStudentWalletModal: React.FC<ReplaceStudentWalletModalProps>
       setNewAddress("");
       onClose();
       if (onSuccess) onSuccess();
-    } catch (error: Error) {
-      toast.error(error?.message || "Failed to replace student wallet");
+    } catch (error: unknown) {
+      toast.error(
+        typeof error === 'object' && error && 'message' in error
+          ? (error as { message: string }).message
+          : typeof error === 'string'
+            ? error
+            : "Failed to replace student wallet"
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -55,7 +61,7 @@ export const ReplaceStudentWalletModal: React.FC<ReplaceStudentWalletModalProps>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose} disabled={isSubmitting}>Cancel</Button>
-          <Button onClick={handleReplace} disabled={!newAddress || isSubmitting || isPending} loading={isSubmitting || isPending}>
+          <Button onClick={handleReplace} disabled={!newAddress || isSubmitting || isPending}>
             {isSubmitting || isPending ? "Replacing..." : "Replace"}
           </Button>
         </DialogFooter>
