@@ -1,6 +1,7 @@
 import { useReadContract, useWalletClient } from "wagmi";
 import DiamondABI from "@/lib/contract/DiamondABI.json";
 import AdminFacetABI from "@/lib/contract/AdminFacet.json";
+import StudentFacetABI from "@/lib/contract/StudentFacet.json";
 import { CONTRACT_ADDRESS } from "@/lib/contract/address";
 import { useState, useEffect } from "react";
 import { readContract } from "viem/actions";
@@ -118,7 +119,7 @@ export const useHasAttendance = (
 
   const { data, isLoading, isError, error, refetch } = useReadContract({
     address: CONTRACT_ADDRESS as `0x${string}`,
-    abi: DiamondABI.abi,
+    abi: StudentFacetABI.abi,
     functionName: "hasAttendance",
     args: shouldCallContract
       ? [studentAddress, cohortId, track, day]
@@ -131,5 +132,87 @@ export const useHasAttendance = (
     isError: shouldCallContract ? isError : false,
     error: shouldCallContract ? error : undefined,
     refetch,
+  };
+};
+
+export const useGetAttendanceForMultipleStudents = (
+  students: Array<{ studentAddress: string }>,
+  cohortId: number,
+  track: number,
+  day: number
+) => {
+  const { data: walletClient } = useWalletClient();
+  const [attendanceData, setAttendanceData] = useState<Record<string, boolean>>(
+    {}
+  );
+  const [isLoading, setIsLoading] = useState(false);
+  const [isError, setIsError] = useState(false);
+  const [error, setError] = useState<unknown>(null);
+
+  useEffect(() => {
+    const fetchAttendanceForAll = async () => {
+      if (
+        !walletClient ||
+        !students.length ||
+        !cohortId ||
+        day === undefined ||
+        day === null
+      ) {
+        setAttendanceData({});
+        return;
+      }
+
+      setIsLoading(true);
+      setIsError(false);
+      setError(null);
+
+      try {
+        const attendanceResults: Record<string, boolean> = {};
+
+        // Check attendance for each student
+        for (const student of students) {
+          try {
+            const result = await readContract(walletClient, {
+              address: CONTRACT_ADDRESS as `0x${string}`,
+              abi: StudentFacetABI.abi,
+              functionName: "hasAttendance",
+              args: [student.studentAddress, cohortId, track, day],
+            });
+            attendanceResults[student.studentAddress] = result as boolean;
+          } catch (err) {
+            console.error(
+              `Error checking attendance for ${student.studentAddress}:`,
+              err
+            );
+            attendanceResults[student.studentAddress] = false;
+          }
+        }
+
+        setAttendanceData(attendanceResults);
+      } catch (err) {
+        setIsError(true);
+        setError(err);
+        setAttendanceData({});
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchAttendanceForAll();
+  }, [walletClient, students, cohortId, track, day]);
+
+  return {
+    attendanceData,
+    isLoading,
+    isError,
+    error,
+    refetch: () => {
+      if (walletClient) {
+        setAttendanceData({});
+        setIsLoading(true);
+        setIsError(false);
+        setError(null);
+      }
+    },
   };
 };

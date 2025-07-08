@@ -22,16 +22,7 @@ import {
 import { RefreshCw } from "lucide-react";
 import { ReplaceStudentWalletModal } from "@/components/modals/ReplaceStudentWalletModal";
 
-const statusTabs = [
-  { label: "All", value: "all" },
-  { label: "Active", value: "active" },
-  { label: "Graduated", value: "graduated" },
-  { label: "Evicted", value: "evicted" },
-  { label: "Suspended", value: "suspended" },
-];
-
 const trackOptions = [
-  { label: "All Tracks", value: "all" },
   { label: "Web2", value: "0" },
   { label: "Web3", value: "1" },
 ];
@@ -58,14 +49,16 @@ const StudentsPage = () => {
   const [addStudentModalOpen, setAddStudentModalOpen] = useState(false);
   const [addExcelModalOpen, setAddExcelModalOpen] = useState(false);
   const [addScoreModalOpen, setAddScoreModalOpen] = useState(false);
-  const [selectedStudentAddress, setSelectedStudentAddress] = useState<string>("");
-  const [selectedTab, setSelectedTab] = useState("all");
+  const [selectedStudentAddress, setSelectedStudentAddress] =
+    useState<string>("");
+
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCohort, setSelectedCohort] = useState<string>("all");
-  const [selectedTrack, setSelectedTrack] = useState<string>("all");
+  const [selectedCohort, setSelectedCohort] = useState<string>("");
+  const [selectedTrack, setSelectedTrack] = useState<string>("");
   const [refreshKey, setRefreshKey] = useState(0);
   const [replaceWalletModalOpen, setReplaceWalletModalOpen] = useState(false);
-  const [replaceWalletOldAddress, setReplaceWalletOldAddress] = useState<string>("");
+  const [replaceWalletOldAddress, setReplaceWalletOldAddress] =
+    useState<string>("");
 
   // Get all cohorts
   const { cohorts } = useGetCohorts();
@@ -92,16 +85,9 @@ const StudentsPage = () => {
     );
   }, [allOnChainStudents, cohorts]);
 
-
-
-
-  // Filtered students for search, tab, cohort, and track
+  // Filtered students for search, cohort, and track
   const filteredStudents = useMemo(() => {
     return mappedStudents.filter((student) => {
-      // Status filter
-      const matchesTab =
-        selectedTab === "all" ? true : student.status === selectedTab;
-
       // Search filter
       const matchesSearch =
         student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -110,24 +96,21 @@ const StudentsPage = () => {
 
       // Cohort filter
       const matchesCohort =
-        selectedCohort === "all" || student.cohort === selectedCohort;
+        !selectedCohort || student.cohort === selectedCohort;
 
       // Track filter
       const matchesTrack =
-        selectedTrack === "all" ||
+        !selectedTrack ||
         student.email === (selectedTrack === "0" ? "web2" : "web3");
 
-      return matchesTab && matchesSearch && matchesCohort && matchesTrack;
+      return matchesSearch && matchesCohort && matchesTrack;
     });
-  }, [mappedStudents, selectedTab, searchTerm, selectedCohort, selectedTrack]);
+  }, [mappedStudents, searchTerm, selectedCohort, selectedTrack]);
 
   // Get unique cohort names for dropdown
   const cohortOptions = useMemo(() => {
     const uniqueCohorts = [...new Set(mappedStudents.map((s) => s.cohort))];
-    return [
-      { label: "All Cohorts", value: "all" },
-      ...uniqueCohorts.map((cohort) => ({ label: cohort, value: cohort })),
-    ];
+    return uniqueCohorts.map((cohort) => ({ label: cohort, value: cohort }));
   }, [mappedStudents]);
 
   // Handler for opening add score modal
@@ -143,10 +126,9 @@ const StudentsPage = () => {
   };
 
   const handleResetFilters = () => {
-    setSelectedTab("all");
     setSearchTerm("");
-    setSelectedCohort("all");
-    setSelectedTrack("all");
+    setSelectedCohort("");
+    setSelectedTrack("");
   };
 
   const handleEditStudent = (studentAddress: string) => {
@@ -173,7 +155,9 @@ const StudentsPage = () => {
             onClick={() => setRefreshKey((k) => k + 1)}
             disabled={isLoadingStudents}
           >
-            <RefreshCw className={`h-4 w-4 ${isLoadingStudents ? "animate-spin" : ""}`} />
+            <RefreshCw
+              className={`h-4 w-4 ${isLoadingStudents ? "animate-spin" : ""}`}
+            />
           </Button>
           <Button
             size="lg"
@@ -195,24 +179,6 @@ const StudentsPage = () => {
 
       {/* Filters Section */}
       <div className="mt-7 mb-4 space-y-4">
-        {/* Status Tabs */}
-        <div className="flex gap-2">
-          {statusTabs.map((tab) => (
-            <button
-              key={tab.value}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors focus:outline-none
-                ${selectedTab === tab.value
-                  ? "bg-black text-white"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }
-              `}
-              onClick={() => setSelectedTab(tab.value)}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-
         {/* Cohort and Track Selection */}
         <div className="flex items-center gap-4">
           {/* Cohort Dropdown */}
@@ -220,7 +186,7 @@ const StudentsPage = () => {
             <label className="text-sm font-medium text-gray-700">Cohort:</label>
             <Select value={selectedCohort} onValueChange={setSelectedCohort}>
               <SelectTrigger className="w-48">
-                <SelectValue placeholder="Select cohort" />
+                <SelectValue placeholder="Choose a cohort" />
               </SelectTrigger>
               <SelectContent>
                 {cohortOptions.map((cohort) => (
@@ -237,7 +203,7 @@ const StudentsPage = () => {
             <label className="text-sm font-medium text-gray-700">Track:</label>
             <Select value={selectedTrack} onValueChange={setSelectedTrack}>
               <SelectTrigger className="w-32">
-                <SelectValue placeholder="Select track" />
+                <SelectValue placeholder="Choose a track" />
               </SelectTrigger>
               <SelectContent>
                 {trackOptions.map((track) => (
@@ -272,36 +238,28 @@ const StudentsPage = () => {
         </div>
 
         {/* Active Filters Display */}
-        {(selectedCohort !== "all" ||
-          selectedTrack !== "all" ||
-          selectedTab !== "all" ||
-          searchTerm) && (
-            <div className="flex items-center gap-2 text-sm text-gray-600">
-              <span>Active filters:</span>
-              {selectedCohort !== "all" && (
-                <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                  Cohort:{" "}
-                  {cohortOptions.find((c) => c.value === selectedCohort)?.label}
-                </span>
-              )}
-              {selectedTrack !== "all" && (
-                <span className="bg-green-100 text-green-800 px-2 py-1 rounded">
-                  Track:{" "}
-                  {trackOptions.find((t) => t.value === selectedTrack)?.label}
-                </span>
-              )}
-              {selectedTab !== "all" && (
-                <span className="bg-purple-100 text-purple-800 px-2 py-1 rounded">
-                  Status: {statusTabs.find((t) => t.value === selectedTab)?.label}
-                </span>
-              )}
-              {searchTerm && (
-                <span className="bg-orange-100 text-orange-800 px-2 py-1 rounded">
-                  Search: &ldquo;{searchTerm}&rdquo;
-                </span>
-              )}
-            </div>
-          )}
+        {(selectedCohort || selectedTrack || searchTerm) && (
+          <div className="flex items-center gap-2 text-sm text-gray-600">
+            <span>Active filters:</span>
+            {selectedCohort && (
+              <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                Cohort:{" "}
+                {cohortOptions.find((c) => c.value === selectedCohort)?.label}
+              </span>
+            )}
+            {selectedTrack && (
+              <span className="bg-green-100 text-green-800 px-2 py-1 rounded">
+                Track:{" "}
+                {trackOptions.find((t) => t.value === selectedTrack)?.label}
+              </span>
+            )}
+            {searchTerm && (
+              <span className="bg-orange-100 text-orange-800 px-2 py-1 rounded">
+                Search: &ldquo;{searchTerm}&rdquo;
+              </span>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Loading and Error States */}
@@ -324,12 +282,13 @@ const StudentsPage = () => {
       <div className="mt-2 w-full">
         <Table
           data={filteredStudents}
-          columns={studentColumns(handleAddScore, handleEditStudent)}
+          columns={studentColumns(handleAddScore, handleEditStudent, () =>
+            setRefreshKey((k) => k + 1)
+          )}
           title=""
           searchable={false}
           exportable={false}
           isLoading={isLoadingStudents}
-          error={studentsError}
         />
       </div>
 

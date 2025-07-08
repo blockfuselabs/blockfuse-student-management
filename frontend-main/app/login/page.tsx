@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import { Wallet, Shield, Loader2 } from "lucide-react";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
@@ -10,44 +10,180 @@ import { useRouter } from "next/navigation";
 
 const LoginPage = () => {
   const [isHovered, setIsHovered] = useState(false);
-  const [isRoleChecking, setIsRoleChecking] = useState(false);
+  const [authState, setAuthState] = useState({
+    isWalletConnecting: false,
+    isRoleChecking: false,
+    isRedirecting: false,
+    hasCompletedAuth: false,
+  });
+
   const isMounted = useIsMounted();
+  const router = useRouter();
+  const { isConnected, isConnecting: wagmiIsConnecting } = useAccount();
+
+  // Only start using the role hook after wallet is connected and stabilized
+  const shouldCheckRole =
+    isMounted && isConnected && !authState.hasCompletedAuth;
   const {
     isAdmin,
     isStudent,
     isSuperAdmin,
     isLoading: roleLoading,
   } = useUserRole();
-  const router = useRouter();
-  const { isConnected, isConnecting: wagmiIsConnecting } = useAccount();
-  console.log(isAdmin, isStudent, isSuperAdmin, roleLoading)
+
+  // Handle wallet connection state changes
   useEffect(() => {
-    if (isConnected && !roleLoading && !isRoleChecking) {
-      setIsRoleChecking(true); // Simulate blockchain role checking delay
-      const checkRoleAndRedirect = async () => {
-        try {
-          // Role checking is handled by useUserRole hook
-          if (isSuperAdmin || isAdmin) {
-            router.push("/admin");
-          } else if (isStudent) {
-            router.push("/student");
-          } else {
-            router.push("/unauthorized");
-          }
-        } catch (error) {
-          console.error("Error checking role:", error);
-          router.push("/error");
-        } finally {
-          setIsRoleChecking(false);
-        }
-      };
-
-      checkRoleAndRedirect();
+    if (wagmiIsConnecting) {
+      setAuthState((prev) => ({ ...prev, isWalletConnecting: true }));
+    } else if (isConnected) {
+      setAuthState((prev) => ({ ...prev, isWalletConnecting: false }));
+    } else {
+      // Reset all states when wallet disconnects
+      setAuthState({
+        isWalletConnecting: false,
+        isRoleChecking: false,
+        isRedirecting: false,
+        hasCompletedAuth: false,
+      });
     }
-  }, [isConnected, roleLoading, isAdmin, isStudent, isSuperAdmin, router, isRoleChecking]);
+  }, [wagmiIsConnecting, isConnected]);
 
-  // Combine loading states
-  const isLoading = wagmiIsConnecting || roleLoading || isRoleChecking;
+  // Role checking and redirection logic
+  const handleRoleBasedRedirection = useCallback(async () => {
+    if (
+      !shouldCheckRole ||
+      authState.isRoleChecking ||
+      authState.hasCompletedAuth
+    ) {
+      return;
+    }
+
+    console.log("Starting role-based redirection...");
+    console.log("Role states:", {
+      isAdmin,
+      isStudent,
+      isSuperAdmin,
+      roleLoading,
+    });
+
+    // If roles are still loading, don't proceed
+    if (roleLoading) {
+      console.log("Roles still loading, waiting...");
+      return;
+    }
+
+    // Mark that we're checking roles
+    setAuthState((prev) => ({ ...prev, isRoleChecking: true }));
+
+    try {
+      // Add a longer delay to ensure all state is settled and blockchain data is fresh
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
+      // Double-check that we're still connected and roles haven't changed
+      if (!isConnected) {
+        console.log("User disconnected during role check, aborting");
+        setAuthState((prev) => ({ ...prev, isRoleChecking: false }));
+        return;
+      }
+
+      // Check roles in priority order with extra validation
+      if (isSuperAdmin || isAdmin) {
+        console.log("User confirmed as admin, redirecting to admin dashboard");
+        setAuthState((prev) => ({
+          ...prev,
+          isRedirecting: true,
+          hasCompletedAuth: true,
+        }));
+        setTimeout(() => router.push("/admin"), 500);
+      } else if (isStudent) {
+        console.log(
+          "User confirmed as student, redirecting to student dashboard"
+        );
+        setAuthState((prev) => ({
+          ...prev,
+          isRedirecting: true,
+          hasCompletedAuth: true,
+        }));
+        setTimeout(() => router.push("/student"), 500);
+      } else {
+        console.log(
+          "User confirmed to have no valid role, redirecting to unauthorized"
+        );
+        setAuthState((prev) => ({
+          ...prev,
+          isRedirecting: true,
+          hasCompletedAuth: true,
+        }));
+        setTimeout(() => router.push("/unauthorized"), 500);
+      }
+    } catch (error) {
+      console.error("Error during role-based redirection:", error);
+      setAuthState((prev) => ({ ...prev, isRoleChecking: false }));
+    }
+  }, [
+    shouldCheckRole,
+    authState.isRoleChecking,
+    authState.hasCompletedAuth,
+    roleLoading,
+    isAdmin,
+    isStudent,
+    isSuperAdmin,
+    router,
+    isConnected,
+  ]);
+
+  // Trigger role check when appropriate
+  useEffect(() => {
+    if (
+      shouldCheckRole &&
+      !roleLoading &&
+      !authState.isRoleChecking &&
+      !authState.hasCompletedAuth
+    ) {
+      console.log("Triggering role check...");
+      // Small delay to ensure wallet connection is fully stabilized
+      setTimeout(() => {
+        handleRoleBasedRedirection();
+      }, 500);
+    }
+  }, [
+    shouldCheckRole,
+    roleLoading,
+    authState.isRoleChecking,
+    authState.hasCompletedAuth,
+    handleRoleBasedRedirection,
+  ]);
+
+  // Determine current loading state and message
+  const getLoadingState = () => {
+    if (authState.isWalletConnecting || wagmiIsConnecting) {
+      return { isLoading: true, message: "Connecting to wallet..." };
+    }
+    if (isConnected && roleLoading) {
+      return { isLoading: true, message: "Verifying your role..." };
+    }
+    if (authState.isRoleChecking) {
+      return { isLoading: true, message: "Preparing your dashboard..." };
+    }
+    if (authState.isRedirecting) {
+      return { isLoading: true, message: "Redirecting..." };
+    }
+    return { isLoading: false, message: "" };
+  };
+
+  const { isLoading, message } = getLoadingState();
+
+  console.log("Login page state:", {
+    isMounted,
+    isConnected,
+    authState,
+    roleLoading,
+    isAdmin,
+    isStudent,
+    isSuperAdmin,
+    isLoading,
+    message,
+  });
 
   // Don't render until mounted to prevent hydration mismatch
   if (!isMounted) {
@@ -56,7 +192,7 @@ const LoginPage = () => {
         <div className="w-full md:w-1/2 h-full flex items-center justify-center bg-gradient-to-br from-gray-50 to-white relative overflow-hidden">
           <div className="relative z-10 w-full max-w-md px-8">
             <div className="text-center mb-8">
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-[#800895] to-[#a015b9] rounded-2xl mb-6 shadow-lg">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-[#800895] to-[#a015b9] rounded-2xl mb-6 shadow-lg animate-pulse">
                 <Wallet className="w-8 h-8 text-white" />
               </div>
               <h1 className="text-2xl md:text-3xl font-semibold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent mb-2">
@@ -85,7 +221,7 @@ const LoginPage = () => {
               <div className="w-full py-3 px-6 rounded-2xl font-semibold text-lg bg-gradient-to-r from-[#9537EA] to-[#9537EA] text-white shadow-lg">
                 <div className="flex items-center justify-center gap-3">
                   <Loader2 className="w-5 h-5 text-white animate-spin" />
-                  <span>Loading...</span>
+                  <span>Initializing...</span>
                 </div>
               </div>
             </div>
@@ -96,7 +232,11 @@ const LoginPage = () => {
   }
 
   return (
-    <div className="w-full flex flex-row h-screen min-h-screen overflow-hidden">
+    <div
+      className={`w-full flex flex-row h-screen min-h-screen overflow-hidden transition-all duration-500 ease-in-out ${
+        authState.isRedirecting ? "opacity-0 scale-95" : "opacity-100 scale-100"
+      }`}
+    >
       {/* Left Side - Image with Overlay */}
       <div className="hidden md:flex md:w-1/2 h-full relative">
         <div
@@ -217,14 +357,16 @@ const LoginPage = () => {
                     onClick={connected ? openAccountModal : openConnectModal}
                     className={`
                       w-full py-3 px-6 rounded-2xl font-semibold text-lg transition-all duration-300 transform
-                      ${isLoading
-                        ? "bg-gray-400 cursor-not-allowed"
-                        : "bg-gradient-to-r  from-[#9537EA] to-[#9537EA] hover:from-[#800895] hover:to-[#a015b9]hover:scale-105 hover:shadow-xl active:scale-95"
+                      ${
+                        isLoading
+                          ? "bg-gray-400 cursor-not-allowed"
+                          : "bg-gradient-to-r from-[#9537EA] to-[#9537EA] hover:from-[#800895] hover:to-[#a015b9] hover:scale-105 hover:shadow-xl active:scale-95"
                       }
                       text-white shadow-lg
-                      ${isHovered && !isLoading
-                        ? "shadow-2xl shadow-blue-500/25"
-                        : ""
+                      ${
+                        isHovered && !isLoading
+                          ? "shadow-2xl shadow-blue-500/25"
+                          : ""
                       }
                     `}
                   >
@@ -232,11 +374,7 @@ const LoginPage = () => {
                       {isLoading ? (
                         <>
                           <Loader2 className="w-5 h-5 text-white animate-spin" />
-                          <span>
-                            {wagmiIsConnecting
-                              ? "Connecting..."
-                              : "Checking Role..."}
-                          </span>
+                          <span className="animate-pulse">{message}</span>
                         </>
                       ) : connected ? (
                         <span>{account.displayName}</span>

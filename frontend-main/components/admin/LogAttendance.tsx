@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useLogAttendance } from "@/lib/hooks/useLogAttendance";
 import { useGetStudent } from "@/lib/hooks/useGetStudent";
 import { useIsMounted } from "@/lib/hooks/useIsMounted";
+import { useGetCohorts } from "@/lib/hooks/useGetCohorts";
+import { useGetStudentsForCohorts } from "@/lib/hooks/useGetStudents";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -22,8 +23,14 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { CheckCircle, AlertCircle, Loader2, User } from "lucide-react";
-import { Calendar } from "@/components/ui/calendar";
+import {
+  CheckCircle,
+  AlertCircle,
+  Loader2,
+  User,
+  Calendar,
+} from "lucide-react";
+import { Calendar as UiCalendar } from "@/components/ui/calendar";
 import {
   Popover,
   PopoverTrigger,
@@ -31,68 +38,148 @@ import {
 } from "@/components/ui/popover";
 import { format } from "date-fns";
 import { useHasAttendance } from "@/lib/hooks/useGetAttendance";
-import { Calendar as CalendarIcon } from "lucide-react";
+import { toast } from "sonner";
 
 export default function LogAttendance() {
   const isMounted = useIsMounted();
-  const [studentAddress, setStudentAddress] = useState("");
-  const [cohortId, setCohortId] = useState("");
-  const [track, setTrack] = useState("");
-  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
-  const hasAutoFilled = useRef(false);
+  const [selectedCohort, setSelectedCohort] = useState<string>("");
+  const [selectedTrack, setSelectedTrack] = useState<string>("");
+  const [selectedStudent, setSelectedStudent] = useState<string>("");
   const [attendanceDate, setAttendanceDate] = useState<Date | null>(new Date());
   const [duplicateError, setDuplicateError] = useState<string | null>(null);
+  const hasShownSuccessToast = useRef(false);
 
-  const { logAttendance, isLoading, isSuccess, error, resetError } =
+  const { logAttendance, isLoading, isSuccess, error, resetState } =
     useLogAttendance();
+
+  // Get cohorts
+  const { cohorts } = useGetCohorts();
+
+  // Get students for selected cohort and track
+  const selectedCohortData = useMemo(() => {
+    return cohorts.find((c) => c.id === selectedCohort);
+  }, [cohorts, selectedCohort]);
+
+  const cohortForStudents = useMemo(() => {
+    if (!selectedCohortData) return [];
+    return [selectedCohortData];
+  }, [selectedCohortData]);
+
+  const { students: cohortStudents, isLoading: isLoadingStudents } =
+    useGetStudentsForCohorts(cohortForStudents);
+
+  // Filter students by selected track
+  const filteredStudents = useMemo(() => {
+    if (!selectedTrack || !cohortStudents.length) return [];
+    const trackNum = Number(selectedTrack);
+    return cohortStudents.filter((student) => student.track === trackNum);
+  }, [cohortStudents, selectedTrack]);
+
+  // Get selected student details
   const {
     student,
     isLoading: isLoadingStudent,
     isError: isStudentError,
-  } = useGetStudent(studentAddress);
+  } = useGetStudent(selectedStudent);
 
-  // Auto-fill cohort and track when student data is loaded
-  useEffect(() => {
-    if (student && !hasAutoFilled.current) {
-      setCohortId(student.cohort.toString());
-      setTrack(student.track.toString());
-      hasAutoFilled.current = true;
-    }
-  }, [student]);
-
-  // Reset auto-fill flag when student address changes
-  useEffect(() => {
-    hasAutoFilled.current = false;
-  }, [studentAddress]);
-
-  // Convert selected date to Unix day (seconds at midnight UTC)
+  // Convert selected date to day number (same as contract calculation)
   const selectedDay = attendanceDate
-    ? Math.floor(attendanceDate.setHours(0, 0, 0, 0) / 1000)
+    ? Math.floor(attendanceDate.getTime() / (1000 * 60 * 60 * 24))
     : 0;
 
   // Check for duplicate attendance
-  const { hasAttendance, refetch: refetchHasAttendance } = useHasAttendance(
-    studentAddress,
-    Number(cohortId),
-    Number(track),
+  const {
+    hasAttendance,
+    refetch: refetchHasAttendance,
+    isLoading: hasAttendanceLoading,
+    error: hasAttendanceError,
+  } = useHasAttendance(
+    selectedStudent,
+    Number(selectedCohort),
+    Number(selectedTrack),
     selectedDay
   );
 
+  // Debug logging
+  console.log("Attendance check debug:", {
+    selectedStudent,
+    selectedCohort: Number(selectedCohort),
+    selectedTrack: Number(selectedTrack),
+    selectedDay,
+    hasAttendance,
+    hasAttendanceLoading,
+    hasAttendanceError,
+  });
+
+  // Reset student selection when cohort or track changes
+  useEffect(() => {
+    setSelectedStudent("");
+    setDuplicateError(null);
+  }, [selectedCohort, selectedTrack]);
+
+  // Check attendance status when student, cohort, track, or date changes
   useEffect(() => {
     setDuplicateError(null);
-    if (studentAddress && cohortId && track && attendanceDate) {
+    if (selectedStudent && selectedCohort && selectedTrack && attendanceDate) {
       refetchHasAttendance();
     }
-    // eslint-disable-next-line
-  }, [studentAddress, cohortId, track, attendanceDate]);
+  }, [
+    selectedStudent,
+    selectedCohort,
+    selectedTrack,
+    attendanceDate,
+    refetchHasAttendance,
+  ]);
 
   // Refetch attendance status after successful log
   useEffect(() => {
-    if (isSuccess) {
+    if (isSuccess && !hasShownSuccessToast.current) {
+      hasShownSuccessToast.current = true;
       refetchHasAttendance();
+      toast.success("Attendance logged successfully!");
+      // Reset form after success
+      setTimeout(() => {
+        setSelectedStudent("");
+        setDuplicateError(null);
+        resetState();
+        hasShownSuccessToast.current = false;
+      }, 2000);
     }
-    // eslint-disable-next-line
-  }, [isSuccess]);
+  }, [isSuccess, refetchHasAttendance, resetState]);
+
+  // Handle attendance logging
+  const handleLogAttendance = async () => {
+    if (
+      !selectedStudent ||
+      !selectedCohort ||
+      !selectedTrack ||
+      !attendanceDate
+    ) {
+      toast.error("Please select all required fields");
+      return;
+    }
+
+    if (hasAttendance) {
+      setDuplicateError(
+        "Attendance already logged for this student on this day."
+      );
+      return;
+    }
+
+    setDuplicateError(null);
+    resetState();
+    hasShownSuccessToast.current = false;
+
+    try {
+      await logAttendance({
+        studentAddress: selectedStudent,
+        cohortId: Number(selectedCohort),
+        track: Number(selectedTrack),
+      });
+    } catch (error) {
+      console.error("Error logging attendance:", error);
+    }
+  };
 
   // Don't render until mounted to prevent hydration mismatch
   if (!isMounted) {
@@ -117,68 +204,6 @@ export default function LogAttendance() {
     );
   }
 
-  const validateForm = () => {
-    const errors: Record<string, string> = {};
-
-    if (!studentAddress) {
-      errors.studentAddress = "Student address is required";
-    } else if (!/^0x[a-fA-F0-9]{40}$/.test(studentAddress)) {
-      errors.studentAddress = "Invalid Ethereum address format";
-    }
-
-    if (!cohortId) {
-      errors.cohortId = "Cohort ID is required";
-    } else if (
-      isNaN(Number(cohortId)) ||
-      Number(cohortId) < 1 ||
-      Number(cohortId) > 255
-    ) {
-      errors.cohortId = "Cohort ID must be a number between 1 and 255";
-    }
-
-    if (!track) {
-      errors.track = "Track is required";
-    }
-
-    if (!attendanceDate) {
-      errors.attendanceDate = "Attendance date is required";
-    }
-
-    setFormErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setDuplicateError(null);
-    if (!validateForm()) {
-      return;
-    }
-    // Check for duplicate attendance before logging
-    if (hasAttendance) {
-      setDuplicateError(
-        "Attendance already logged for this student on this day."
-      );
-      return;
-    }
-    resetError();
-    await logAttendance({
-      studentAddress,
-      cohortId: Number(cohortId),
-      track: Number(track),
-      // Note: logAttendance does not support custom date, so this will log for now
-    });
-  };
-
-  const handleReset = () => {
-    setStudentAddress("");
-    setCohortId("");
-    setTrack("");
-    setFormErrors({});
-    resetError();
-    hasAutoFilled.current = false;
-  };
-
   return (
     <div className="max-w-2xl mx-auto p-6">
       <Card>
@@ -188,38 +213,137 @@ export default function LogAttendance() {
             Log Student Attendance
           </CardTitle>
           <CardDescription>
-            Log attendance for a student in a specific cohort and track
+            Select cohort, track, and student to log attendance
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Student Address */}
+          <div className="space-y-6">
+            {/* Cohort Selection */}
             <div className="space-y-2">
-              <Label htmlFor="studentAddress">Student Address</Label>
-              <Input
-                id="studentAddress"
-                type="text"
-                placeholder="0x..."
-                value={studentAddress}
-                onChange={(e) => setStudentAddress(e.target.value)}
-                className={formErrors.studentAddress ? "border-red-500" : ""}
-              />
-              {formErrors.studentAddress && (
-                <p className="text-sm text-red-500">
-                  {formErrors.studentAddress}
-                </p>
+              <Label htmlFor="cohort">Cohort</Label>
+              <Select value={selectedCohort} onValueChange={setSelectedCohort}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Choose a cohort" />
+                </SelectTrigger>
+                <SelectContent>
+                  {cohorts.map((cohort) => (
+                    <SelectItem key={cohort.id} value={cohort.id}>
+                      {cohort.name} ({cohort.status})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Track Selection */}
+            <div className="space-y-2">
+              <Label htmlFor="track">Track</Label>
+              <Select
+                value={selectedTrack}
+                onValueChange={setSelectedTrack}
+                disabled={!selectedCohort}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Choose a track" />
+                </SelectTrigger>
+                <SelectContent>
+                  {selectedCohortData?.tracks.map((track) => (
+                    <SelectItem key={track} value={track.toString()}>
+                      {track === 0
+                        ? "Web2"
+                        : track === 1
+                        ? "Web3"
+                        : `Track ${track}`}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Student Selection */}
+            <div className="space-y-2">
+              <Label htmlFor="student">Student</Label>
+              <Select
+                value={selectedStudent}
+                onValueChange={setSelectedStudent}
+                disabled={!selectedTrack || isLoadingStudents}
+              >
+                <SelectTrigger>
+                  <SelectValue
+                    placeholder={
+                      isLoadingStudents
+                        ? "Loading students..."
+                        : filteredStudents.length === 0
+                        ? "No students found"
+                        : "Choose a student"
+                    }
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  {filteredStudents.map((student) => (
+                    <SelectItem
+                      key={student.studentAddress}
+                      value={student.studentAddress}
+                    >
+                      {student.firstname} {student.lastname} ({student.username}
+                      )
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {isLoadingStudents && (
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Loading students...
+                </div>
               )}
+              {!isLoadingStudents &&
+                filteredStudents.length === 0 &&
+                selectedTrack && (
+                  <div className="text-sm text-gray-500">
+                    No students found for this cohort and track
+                  </div>
+                )}
+            </div>
+
+            {/* Date Picker */}
+            <div className="space-y-2">
+              <Label htmlFor="attendanceDate">Attendance Date</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    id="attendanceDate"
+                    variant="outline"
+                    className="w-full justify-between"
+                    type="button"
+                  >
+                    {attendanceDate
+                      ? format(attendanceDate, "PPP")
+                      : "Select date"}
+                    <Calendar className="ml-2 h-4 w-4 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <UiCalendar
+                    mode="single"
+                    selected={attendanceDate || undefined}
+                    onSelect={setAttendanceDate}
+                    captionLayout="dropdown"
+                    required={true}
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
 
             {/* Student Information Display */}
-            {isLoadingStudent && (
+            {isLoadingStudent && selectedStudent && (
               <div className="flex items-center gap-2 text-sm text-gray-600">
                 <Loader2 className="h-4 w-4 animate-spin" />
                 Loading student information...
               </div>
             )}
 
-            {isStudentError && studentAddress && (
+            {isStudentError && selectedStudent && (
               <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>
@@ -238,9 +362,9 @@ export default function LogAttendance() {
                     </span>
                     {/* Attendance Status Indicator */}
                     {attendanceDate &&
-                      studentAddress &&
-                      cohortId &&
-                      track &&
+                      selectedStudent &&
+                      selectedCohort &&
+                      selectedTrack &&
                       (hasAttendance === undefined ? (
                         <span className="ml-3 text-xs text-gray-500 flex items-center gap-1">
                           <Loader2 className="h-3 w-3 animate-spin" />
@@ -249,7 +373,7 @@ export default function LogAttendance() {
                       ) : hasAttendance ? (
                         <span className="ml-3 px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-xs flex items-center gap-1">
                           <CheckCircle className="h-3 w-3" />
-                          Attendance Taken
+                          Attendance Already Taken
                         </span>
                       ) : (
                         <span className="ml-3 px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-700 text-xs flex items-center gap-1">
@@ -292,92 +416,11 @@ export default function LogAttendance() {
               </Card>
             )}
 
-            {/* Cohort ID */}
-            <div className="space-y-2">
-              <Label htmlFor="cohortId">Cohort ID</Label>
-              <Input
-                id="cohortId"
-                type="number"
-                placeholder="1"
-                value={cohortId}
-                onChange={(e) => setCohortId(e.target.value)}
-                className={formErrors.cohortId ? "border-red-500" : ""}
-              />
-              {formErrors.cohortId && (
-                <p className="text-sm text-red-500">{formErrors.cohortId}</p>
-              )}
-            </div>
-
-            {/* Track */}
-            <div className="space-y-2">
-              <Label htmlFor="track">Track</Label>
-              <Select value={track} onValueChange={setTrack}>
-                <SelectTrigger
-                  className={formErrors.track ? "border-red-500" : ""}
-                >
-                  <SelectValue placeholder="Select track" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="0">Web2</SelectItem>
-                  <SelectItem value="1">Web3</SelectItem>
-                </SelectContent>
-              </Select>
-              {formErrors.track && (
-                <p className="text-sm text-red-500">{formErrors.track}</p>
-              )}
-            </div>
-
-            {/* Date Picker */}
-            <div className="space-y-2">
-              <Label htmlFor="attendanceDate">Attendance Date</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    id="attendanceDate"
-                    variant="outline"
-                    className={`w-full justify-between ${
-                      formErrors.attendanceDate ? "border-red-500" : ""
-                    }`}
-                    type="button"
-                  >
-                    {attendanceDate
-                      ? format(attendanceDate, "PPP")
-                      : "Select date"}
-                    <CalendarIcon className="ml-2 h-4 w-4 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={attendanceDate || undefined}
-                    onSelect={setAttendanceDate}
-                    captionLayout="dropdown"
-                    required={true}
-                  />
-                </PopoverContent>
-              </Popover>
-              {formErrors.attendanceDate && (
-                <p className="text-sm text-red-500">
-                  {formErrors.attendanceDate}
-                </p>
-              )}
-            </div>
-
             {/* Duplicate Error */}
             {duplicateError && (
               <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>{duplicateError}</AlertDescription>
-              </Alert>
-            )}
-
-            {/* Success Message */}
-            {isSuccess && (
-              <Alert>
-                <CheckCircle className="h-4 w-4" />
-                <AlertDescription>
-                  Attendance logged successfully!
-                </AlertDescription>
               </Alert>
             )}
 
@@ -389,31 +432,47 @@ export default function LogAttendance() {
               </Alert>
             )}
 
-            {/* Action Buttons */}
-            <div className="flex gap-3">
-              <Button type="submit" disabled={isLoading}>
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Logging...
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle className="mr-2 h-4 w-4" />
-                    Log Attendance
-                  </>
-                )}
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleReset}
-                disabled={isLoading}
-              >
-                Reset
-              </Button>
-            </div>
-          </form>
+            {/* Attendance Check Error */}
+            {hasAttendanceError && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  Error checking attendance: {hasAttendanceError.message}
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {/* Action Button */}
+            <Button
+              onClick={handleLogAttendance}
+              disabled={
+                isLoading ||
+                !selectedStudent ||
+                !selectedCohort ||
+                !selectedTrack ||
+                !attendanceDate ||
+                hasAttendance
+              }
+              className="w-full"
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Logging Attendance...
+                </>
+              ) : hasAttendance ? (
+                <>
+                  <CheckCircle className="mr-2 h-4 w-4" />
+                  Attendance Already Logged
+                </>
+              ) : (
+                <>
+                  <CheckCircle className="mr-2 h-4 w-4" />
+                  Log Attendance
+                </>
+              )}
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </div>

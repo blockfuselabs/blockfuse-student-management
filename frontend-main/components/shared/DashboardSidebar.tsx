@@ -76,6 +76,11 @@ const DashboardSidebar = () => {
             </h3>
             <div className="space-y-1">
               {adminRoutes.general.map((item) => {
+                // Only show Admins link to super admins
+                if (item.href === "/admin/admins" && !isSuperAdmin) {
+                  return null;
+                }
+
                 const isActive =
                   pathname === item.href ||
                   (item.href !== "/dashboard" && pathname?.includes(item.href));

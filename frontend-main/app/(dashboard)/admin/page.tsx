@@ -47,7 +47,10 @@ const AdminDashboard = () => {
           <span className="inline md:hidden leading-none tracking-tighter">
             <br />
           </span>
-          {namePart}
+          <span className="">
+             {namePart}
+          </span>
+          
           &nbsp; 👋🏾.
         </h3>
 

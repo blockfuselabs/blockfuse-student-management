@@ -1,16 +1,16 @@
+"use client";
+
 import { useState, useEffect } from "react";
 import { useWriteContract, useWaitForTransactionReceipt } from "wagmi";
-import StudentFacetABI from "@/lib/contract/StudentFacet.json";
 import { CONTRACT_ADDRESS } from "@/lib/contract/address";
+import AdminFacetABI from "@/lib/contract/AdminFacet.json";
 import { toast } from "sonner";
 
-export interface LogAttendanceParams {
-  studentAddress: string;
-  cohortId: number;
-  track: number; // 0 = Web2, 1 = Web3
+export interface DeactivateAdminParams {
+  adminAddress: string;
 }
 
-export const useLogAttendance = () => {
+export const useDeactivateAdmin = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -59,29 +59,35 @@ export const useLogAttendance = () => {
     }
   }, [isWriteError, isConfirmError, writeError, confirmError]);
 
-  const logAttendance = async (params: LogAttendanceParams) => {
+  const deactivateAdmin = async (params: DeactivateAdminParams) => {
     try {
       setIsLoading(true);
       setError(null);
       setIsSuccess(false);
 
-      console.log("Logging attendance with params:", params);
+      console.log("Deactivating admin with params:", params);
 
       if (!writeContract) {
         throw new Error("Contract write function not available");
       }
 
-      // Call the contract function with 3 arguments
+      // Validate admin address
+      const addressRegex = /^0x[a-fA-F0-9]{40}$/;
+      if (!addressRegex.test(params.adminAddress)) {
+        throw new Error("Invalid Ethereum address format");
+      }
+
+      // Call the contract function
       await writeContract({
         address: CONTRACT_ADDRESS as `0x${string}`,
-        abi: StudentFacetABI.abi,
-        functionName: "logAttendance",
-        args: [params.studentAddress, params.cohortId, params.track],
+        abi: AdminFacetABI.abi,
+        functionName: "removeAdmin",
+        args: [params.adminAddress as `0x${string}`],
       });
     } catch (err) {
-      console.log("Error logging attendance:", err);
+      console.error("Error deactivating admin:", err);
       const errorMessage =
-        err instanceof Error ? err.message : "Failed to log attendance";
+        err instanceof Error ? err.message : "Failed to deactivate admin";
       setError(errorMessage);
       setIsLoading(false);
       toast.error(errorMessage);
@@ -96,7 +102,7 @@ export const useLogAttendance = () => {
   };
 
   return {
-    logAttendance,
+    deactivateAdmin,
     isLoading: isLoading || isConfirming,
     isSuccess,
     error,
