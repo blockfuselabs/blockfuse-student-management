@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
-import { useGetAttendanceByCohortAndTrack } from "@/hooks/useGetAttendance";
-import { useGetStudent } from "@/lib/hooks/useGetStudent";
+import { useState, useMemo } from "react";
+import { useGetCohorts } from "@/lib/hooks/useGetCohorts";
+import { useGetStudentsForCohorts } from "@/lib/hooks/useGetStudents";
+import { useGetAttendanceForMultipleStudents } from "@/lib/hooks/useGetAttendance";
+import { useIsMounted } from "@/lib/hooks/useIsMounted";
 
 import { Label } from "@/components/ui/label";
 import {
@@ -19,7 +21,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+
 import {
   Table,
   TableBody,
@@ -29,36 +31,154 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Calendar,
   Users,
-  Clock,
   AlertCircle,
   Loader2,
   CheckCircle,
   XCircle,
+  CalendarDays,
+  UserCheck,
+  UserX,
 } from "lucide-react";
+import { Calendar as UiCalendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from "@/components/ui/popover";
+import { format } from "date-fns";
 
 export default function ViewAttendance() {
-  const [cohortId, setCohortId] = useState("");
-  const [track, setTrack] = useState("");
+  const isMounted = useIsMounted();
+  const [selectedCohort, setSelectedCohort] = useState<string>("");
+  const [selectedTrack, setSelectedTrack] = useState<string>("");
+  const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
 
-  const { attendance, isLoading, isError, error } =
-    useGetAttendanceByCohortAndTrack(Number(cohortId), Number(track));
+  // Get cohorts
+  const { cohorts } = useGetCohorts();
 
-  const formatDate = (timestamp: number) => {
-    return new Date(timestamp * 1000).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
+  // Get selected cohort data
+  const selectedCohortData = useMemo(() => {
+    return cohorts.find((c) => c.id === selectedCohort);
+  }, [cohorts, selectedCohort]);
+
+  // Get students for selected cohort and track
+  const cohortForStudents = useMemo(() => {
+    if (!selectedCohortData) return [];
+    return [selectedCohortData];
+  }, [selectedCohortData]);
+
+  const { students: cohortStudents, isLoading: isLoadingStudents } =
+    useGetStudentsForCohorts(cohortForStudents);
+
+  // Filter students by selected track
+  const filteredStudents = useMemo(() => {
+    if (!selectedTrack || !cohortStudents.length) return [];
+    const trackNum = Number(selectedTrack);
+    return cohortStudents.filter((student) => student.track === trackNum);
+  }, [cohortStudents, selectedTrack]);
+
+  // Convert selected date to day number (same as contract calculation)
+  const selectedDay = selectedDate
+    ? Math.floor(selectedDate.getTime() / (1000 * 60 * 60 * 24))
+    : 0;
+
+  // Check attendance for all students
+  const { attendanceData, isLoading: isLoadingAttendance } =
+    useGetAttendanceForMultipleStudents(
+      filteredStudents,
+      Number(selectedCohort),
+      Number(selectedTrack),
+      selectedDay
+    );
+
+  // Debug logging
+  console.log("ViewAttendance Debug:", {
+    selectedDate,
+    selectedDay,
+    selectedCohort,
+    selectedTrack,
+    filteredStudentsLength: filteredStudents.length,
+    attendanceDataKeys: Object.keys(attendanceData),
+  });
+
+  // Combine student data with attendance data
+  const studentsWithAttendance = useMemo(() => {
+    if (!selectedCohort || !selectedTrack || !selectedDate) return [];
+
+    return filteredStudents.map((student) => ({
+      ...student,
+      hasAttendance: attendanceData[student.studentAddress],
+      isCheckingAttendance: isLoadingAttendance,
+    }));
+  }, [
+    filteredStudents,
+    selectedCohort,
+    selectedTrack,
+    selectedDate,
+    attendanceData,
+    isLoadingAttendance,
+  ]);
+
+  // Calculate attendance statistics
+  const attendanceStats = useMemo(() => {
+    if (!studentsWithAttendance.length) return null;
+
+    const totalStudents = studentsWithAttendance.length;
+    const presentStudents = studentsWithAttendance.filter(
+      (s) => s.hasAttendance === true
+    ).length;
+    const absentStudents = studentsWithAttendance.filter(
+      (s) => s.hasAttendance === false
+    ).length;
+    const loadingStudents = studentsWithAttendance.filter(
+      (s) => s.isCheckingAttendance
+    ).length;
+    const attendanceRate =
+      totalStudents > 0 ? (presentStudents / totalStudents) * 100 : 0;
+
+    return {
+      total: totalStudents,
+      present: presentStudents,
+      absent: absentStudents,
+      loading: loadingStudents,
+      rate: attendanceRate,
+    };
+  }, [studentsWithAttendance]);
 
   const getTrackName = (trackNumber: number) => {
     return trackNumber === 0 ? "Web2" : "Web3";
   };
+
+  const formatDate = (date: Date) => {
+    return format(date, "EEEE, MMMM d, yyyy");
+  };
+
+  // Don't render until mounted to prevent hydration mismatch
+  if (!isMounted) {
+    return (
+      <div className="max-w-6xl mx-auto p-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Calendar className="h-5 w-5 text-blue-600" />
+              View Attendance Records
+            </CardTitle>
+            <CardDescription>Loading...</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+              <span className="ml-2 text-gray-600">Loading...</span>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-6xl mx-auto p-6">
@@ -69,67 +189,100 @@ export default function ViewAttendance() {
             View Attendance Records
           </CardTitle>
           <CardDescription>
-            View attendance records for specific cohorts and tracks
+            Check who was present or absent on a specific date
           </CardDescription>
         </CardHeader>
         <CardContent>
           {/* Filters */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            {/* Cohort Selection */}
             <div className="space-y-2">
-              <Label htmlFor="cohortId">Cohort ID</Label>
-              <Select value={cohortId} onValueChange={setCohortId}>
+              <Label htmlFor="cohort">Cohort</Label>
+              <Select value={selectedCohort} onValueChange={setSelectedCohort}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select a cohort" />
+                  <SelectValue placeholder="Choose a cohort" />
                 </SelectTrigger>
                 <SelectContent>
-                  {Array.from({ length: 10 }, (_, i) => i + 1).map((id) => (
-                    <SelectItem key={id} value={id.toString()}>
-                      Cohort {id}
+                  {cohorts.map((cohort) => (
+                    <SelectItem key={cohort.id} value={cohort.id}>
+                      {cohort.name} ({cohort.status})
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
 
+            {/* Track Selection */}
             <div className="space-y-2">
               <Label htmlFor="track">Track</Label>
-              <Select value={track} onValueChange={setTrack}>
+              <Select
+                value={selectedTrack}
+                onValueChange={setSelectedTrack}
+                disabled={!selectedCohort}
+              >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select a track" />
+                  <SelectValue placeholder="Choose a track" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="0">Web2</SelectItem>
-                  <SelectItem value="1">Web3</SelectItem>
+                  {selectedCohortData?.tracks.map((track) => (
+                    <SelectItem key={track} value={track.toString()}>
+                      {track === 0
+                        ? "Web2"
+                        : track === 1
+                        ? "Web3"
+                        : `Track ${track}`}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
+
+            {/* Date Picker */}
+            <div className="space-y-2">
+              <Label htmlFor="attendanceDate">Date</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    id="attendanceDate"
+                    variant="outline"
+                    className="w-full justify-between"
+                    type="button"
+                  >
+                    {selectedDate ? format(selectedDate, "PPP") : "Select date"}
+                    <Calendar className="ml-2 h-4 w-4 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <UiCalendar
+                    mode="single"
+                    selected={selectedDate || undefined}
+                    onSelect={setSelectedDate}
+                    captionLayout="dropdown"
+                    required={true}
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
           </div>
 
-          {/* Error Alert */}
-          {isError && (
-            <Alert variant="destructive" className="mb-6">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>
-                {error?.message || "Failed to load attendance data"}
-              </AlertDescription>
-            </Alert>
-          )}
-
           {/* Loading State */}
-          {isLoading && (
+          {(isLoadingStudents || isLoadingAttendance) && (
             <div className="flex items-center justify-center py-8">
               <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
               <span className="ml-2 text-gray-600">
-                Loading attendance data...
+                {isLoadingStudents
+                  ? "Loading students..."
+                  : "Checking attendance..."}
               </span>
             </div>
           )}
 
-          {/* Attendance Data */}
-          {attendance && !isLoading && (
-            <div className="space-y-6">
-              {/* Summary Stats */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Attendance Statistics */}
+          {attendanceStats &&
+            selectedCohort &&
+            selectedTrack &&
+            selectedDate && (
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">
@@ -139,10 +292,11 @@ export default function ViewAttendance() {
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold">
-                      {attendance.students.length}
+                      {attendanceStats.total}
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      in Cohort {cohortId} - {getTrackName(Number(track))}
+                      in {selectedCohortData?.name} -{" "}
+                      {getTrackName(Number(selectedTrack))}
                     </p>
                   </CardContent>
                 </Card>
@@ -150,16 +304,16 @@ export default function ViewAttendance() {
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">
-                      Attendance Days
+                      Present
                     </CardTitle>
-                    <Calendar className="h-4 w-4 text-muted-foreground" />
+                    <UserCheck className="h-4 w-4 text-green-600" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">
-                      {attendance.dates.length}
+                    <div className="text-2xl font-bold text-green-600">
+                      {attendanceStats.present}
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      days with attendance records
+                      {attendanceStats.rate.toFixed(1)}% attendance rate
                     </p>
                   </CardContent>
                 </Card>
@@ -167,148 +321,150 @@ export default function ViewAttendance() {
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">
-                      Latest Attendance
+                      Absent
                     </CardTitle>
-                    <Clock className="h-4 w-4 text-muted-foreground" />
+                    <UserX className="h-4 w-4 text-red-600" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-red-600">
+                      {attendanceStats.absent}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {(100 - attendanceStats.rate).toFixed(1)}% absence rate
+                    </p>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Date</CardTitle>
+                    <CalendarDays className="h-4 w-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
                     <div className="text-sm font-bold">
-                      {attendance.dates.length > 0
-                        ? formatDate(
-                            attendance.dates[attendance.dates.length - 1]
-                          )
-                        : "No records"}
+                      {formatDate(selectedDate)}
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      most recent entry
+                      Day {selectedDay}
                     </p>
                   </CardContent>
                 </Card>
               </div>
+            )}
 
-              {/* Students Table */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">
-                    Students with Attendance
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {attendance.students.length > 0 ? (
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Student Address</TableHead>
-                          <TableHead>Name</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead>Attendance Count</TableHead>
+          {/* Students Table */}
+          {selectedCohort && selectedTrack && selectedDate && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Users className="h-5 w-5" />
+                  Student Attendance for {formatDate(selectedDate)}
+                </CardTitle>
+                <CardDescription>
+                  Showing attendance status for {selectedCohortData?.name} -{" "}
+                  {getTrackName(Number(selectedTrack))}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {filteredStudents.length > 0 ? (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Student</TableHead>
+                        <TableHead>Username</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Attendance</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {studentsWithAttendance.map((student) => (
+                        <TableRow key={student.studentAddress}>
+                          <TableCell>
+                            <div>
+                              <div className="font-medium">
+                                {student.firstname} {student.lastname}
+                              </div>
+                              <div className="text-sm text-gray-500 font-mono">
+                                {student.studentAddress.slice(0, 6)}...
+                                {student.studentAddress.slice(-4)}
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <span className="font-medium">
+                              @{student.username}
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              variant={
+                                student.isActive ? "default" : "secondary"
+                              }
+                            >
+                              {student.isActive ? (
+                                <>
+                                  <CheckCircle className="h-3 w-3 mr-1" />
+                                  Active
+                                </>
+                              ) : (
+                                <>
+                                  <XCircle className="h-3 w-3 mr-1" />
+                                  Inactive
+                                </>
+                              )}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            {student.isCheckingAttendance ? (
+                              <div className="flex items-center gap-2">
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                                <span className="text-sm text-gray-500">
+                                  Checking...
+                                </span>
+                              </div>
+                            ) : student.hasAttendance === true ? (
+                              <Badge className="bg-green-100 text-green-700 hover:bg-green-200">
+                                <CheckCircle className="h-3 w-3 mr-1" />
+                                Present
+                              </Badge>
+                            ) : student.hasAttendance === false ? (
+                              <Badge variant="destructive">
+                                <XCircle className="h-3 w-3 mr-1" />
+                                Absent
+                              </Badge>
+                            ) : (
+                              <Badge variant="outline">
+                                <AlertCircle className="h-3 w-3 mr-1" />
+                                Unknown
+                              </Badge>
+                            )}
+                          </TableCell>
                         </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {attendance.students.map((studentAddress) => (
-                          <StudentRow
-                            key={studentAddress}
-                            studentAddress={studentAddress}
-                            attendanceCount={1} // This would need to be calculated properly
-                          />
-                        ))}
-                      </TableBody>
-                    </Table>
-                  ) : (
-                    <div className="text-center py-8 text-gray-500">
-                      No students found with attendance records for this cohort
-                      and track.
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Attendance Dates */}
-              {attendance.dates.length > 0 && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">Attendance Dates</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
-                      {attendance.dates.map((date, index) => (
-                        <Badge
-                          key={index}
-                          variant="outline"
-                          className="text-xs"
-                        >
-                          {formatDate(date)}
-                        </Badge>
                       ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-            </div>
+                    </TableBody>
+                  </Table>
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <Users className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                    <p>No students found for this cohort and track.</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           )}
 
-          {/* No Data State */}
-          {!isLoading && !attendance && cohortId && track && (
+          {/* No Selection State */}
+          {(!selectedCohort || !selectedTrack || !selectedDate) && (
             <div className="text-center py-8 text-gray-500">
               <Calendar className="h-12 w-12 mx-auto mb-4 text-gray-300" />
               <p>
-                No attendance data found for Cohort {cohortId} -{" "}
-                {getTrackName(Number(track))}
+                Please select a cohort, track, and date to view attendance
+                records.
               </p>
             </div>
           )}
         </CardContent>
       </Card>
     </div>
-  );
-}
-
-// Student Row Component
-function StudentRow({
-  studentAddress,
-  attendanceCount,
-}: {
-  studentAddress: string;
-  attendanceCount: number;
-}) {
-  const { student, isLoading } = useGetStudent(studentAddress);
-
-  return (
-    <TableRow>
-      <TableCell className="font-mono text-sm">
-        {studentAddress.slice(0, 6)}...{studentAddress.slice(-4)}
-      </TableCell>
-      <TableCell>
-        {isLoading ? (
-          <Loader2 className="h-4 w-4 animate-spin" />
-        ) : student ? (
-          <span>
-            {student.firstname} {student.lastname}
-          </span>
-        ) : (
-          <span className="text-gray-500">Unknown</span>
-        )}
-      </TableCell>
-      <TableCell>
-        {student && (
-          <Badge variant={student.isActive ? "default" : "secondary"}>
-            {student.isActive ? (
-              <>
-                <CheckCircle className="h-3 w-3 mr-1" />
-                Active
-              </>
-            ) : (
-              <>
-                <XCircle className="h-3 w-3 mr-1" />
-                Inactive
-              </>
-            )}
-          </Badge>
-        )}
-      </TableCell>
-      <TableCell>
-        <Badge variant="outline">{attendanceCount}</Badge>
-      </TableCell>
-    </TableRow>
   );
 }

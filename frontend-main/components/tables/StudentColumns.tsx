@@ -6,10 +6,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "../ui/button";
 import { MoreHorizontal, Pencil, Trash2, Shield, Star } from "lucide-react";
-import { useDeactivateAdmin } from "@/lib/hooks/useDeactivateAdminTx";
-import { useActivateAdmin } from "@/lib/hooks/useActivateAdminTx";
 import { toast } from "sonner";
-import React, { useEffect, useRef } from "react";
+import React from "react";
 
 export type Student = {
   id: string;
@@ -22,7 +20,8 @@ export type Student = {
 
 export const studentColumns = (
   onAddScore?: (studentAddress: string) => void,
-  onEdit?: (studentAddress: string) => void
+  onEdit?: (studentAddress: string) => void,
+  onStudentStatusChanged?: () => void
 ) => [
   {
     header: "Name",
@@ -90,13 +89,33 @@ export const studentColumns = (
               Add Score
             </DropdownMenuItem>
           )}
-          <DropdownMenuItem
-            className="flex items-center gap-2 cursor-pointer text-red-600 focus:text-red-600"
-            onClick={() => console.log("Delete", item.id)}
-          >
-            <Trash2 className="h-4 w-4" />
-            Delete
-          </DropdownMenuItem>
+          {item.status === "active" ? (
+            <DropdownMenuItem
+              className="flex items-center gap-2 cursor-pointer text-red-600 focus:text-red-600"
+              onClick={() => {
+                toast.info("Student deactivation coming soon!");
+                if (onStudentStatusChanged) {
+                  onStudentStatusChanged();
+                }
+              }}
+            >
+              <Trash2 className="h-4 w-4" />
+              Deactivate Student
+            </DropdownMenuItem>
+          ) : (
+            <DropdownMenuItem
+              className="flex items-center gap-2 cursor-pointer text-green-600 focus:text-green-600"
+              onClick={() => {
+                toast.info("Student activation coming soon!");
+                if (onStudentStatusChanged) {
+                  onStudentStatusChanged();
+                }
+              }}
+            >
+              <Shield className="h-4 w-4" />
+              Activate Student
+            </DropdownMenuItem>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
     ),
@@ -108,128 +127,6 @@ export type Admin = {
   address: string;
   isActive: boolean;
   username?: string;
-};
-
-// Separate component for admin actions to use hooks properly
-const AdminActions = ({
-  admin,
-  onAdminRemoved,
-  onReplaceWallet,
-}: {
-  admin: Admin;
-  onAdminRemoved?: () => void;
-  onReplaceWallet?: (admin: Admin) => void;
-}) => {
-  const {
-    deactivateAdmin,
-    isLoading: isDeactivating,
-    isSuccess: isDeactivated,
-    resetState: resetDeactivate,
-  } = useDeactivateAdmin();
-
-  const {
-    activateAdmin,
-    isLoading: isActivating,
-    isSuccess: isActivated,
-    resetState: resetActivate,
-  } = useActivateAdmin();
-
-  const hasShownDeactivateToast = useRef(false);
-  const hasShownActivateToast = useRef(false);
-
-  // Handle deactivation success
-  useEffect(() => {
-    if (isDeactivated && !hasShownDeactivateToast.current) {
-      hasShownDeactivateToast.current = true;
-      toast.success("Admin deactivated successfully!");
-      if (onAdminRemoved) {
-        onAdminRemoved();
-      }
-      resetDeactivate();
-    }
-  }, [isDeactivated, onAdminRemoved, resetDeactivate]);
-
-  // Handle activation success
-  useEffect(() => {
-    if (isActivated && !hasShownActivateToast.current) {
-      hasShownActivateToast.current = true;
-      toast.success("Admin activated successfully!");
-      if (onAdminRemoved) {
-        onAdminRemoved();
-      }
-      resetActivate();
-    }
-  }, [isActivated, onAdminRemoved, resetActivate]);
-
-  const handleRemoveAdmin = async () => {
-    try {
-      hasShownDeactivateToast.current = false;
-      await deactivateAdmin({
-        adminAddress: admin.address,
-      });
-    } catch (error) {
-      console.error("Error deactivating admin:", error);
-    }
-  };
-
-  const handleAddAdmin = async () => {
-    try {
-      hasShownActivateToast.current = false;
-      await activateAdmin({
-        adminAddress: admin.address,
-      });
-    } catch (error) {
-      console.error("Error activating admin:", error);
-    }
-  };
-
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="h-8 w-8 p-0">
-          <span className="sr-only">Open menu</span>
-          <MoreHorizontal className="h-4 w-4" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem
-          className="flex items-center gap-2 cursor-pointer"
-          onClick={() => console.log("View", admin.address)}
-        >
-          <Pencil className="h-4 w-4" />
-          View Details
-        </DropdownMenuItem>
-        {onReplaceWallet && (
-          <DropdownMenuItem
-            className="flex items-center gap-2 cursor-pointer text-blue-600 focus:text-blue-600"
-            onClick={() => onReplaceWallet(admin)}
-          >
-            <Shield className="h-4 w-4" />
-            Replace Wallet Address
-          </DropdownMenuItem>
-        )}
-        {admin.isActive ? (
-          <DropdownMenuItem
-            className="flex items-center gap-2 cursor-pointer text-red-600 focus:text-red-600"
-            onClick={handleRemoveAdmin}
-            disabled={isDeactivating}
-          >
-            <Trash2 className="h-4 w-4" />
-            {isDeactivating ? "Deactivating..." : "Deactivate Admin"}
-          </DropdownMenuItem>
-        ) : (
-          <DropdownMenuItem
-            className="flex items-center gap-2 cursor-pointer text-green-600 focus:text-green-600"
-            onClick={handleAddAdmin}
-            disabled={isActivating}
-          >
-            <Shield className="h-4 w-4" />
-            {isActivating ? "Activating..." : "Activate Admin"}
-          </DropdownMenuItem>
-        )}
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
 };
 
 export const adminColumns = (
@@ -275,11 +172,39 @@ export const adminColumns = (
     header: "Actions",
     accessor: "id" as const,
     render: (item: Admin) => (
-      <AdminActions
-        admin={item}
-        onAdminRemoved={onAdminRemoved}
-        onReplaceWallet={onReplaceWallet}
-      />
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" className="h-8 w-8 p-0">
+            <span className="sr-only">Open menu</span>
+            <MoreHorizontal className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem
+            className="flex items-center gap-2 cursor-pointer"
+            onClick={() => console.log("View", item.address)}
+          >
+            <Pencil className="h-4 w-4" />
+            View Details
+          </DropdownMenuItem>
+          {onReplaceWallet && (
+            <DropdownMenuItem
+              className="flex items-center gap-2 cursor-pointer text-blue-600 focus:text-blue-600"
+              onClick={() => onReplaceWallet(item)}
+            >
+              <Shield className="h-4 w-4" />
+              Replace Wallet Address
+            </DropdownMenuItem>
+          )}
+          <DropdownMenuItem
+            className="flex items-center gap-2 cursor-pointer text-red-600 focus:text-red-600"
+            onClick={() => console.log("Deactivate", item.address)}
+          >
+            <Trash2 className="h-4 w-4" />
+            Deactivate Admin
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     ),
   },
 ];

@@ -22,14 +22,6 @@ import {
 import { RefreshCw } from "lucide-react";
 import { ReplaceStudentWalletModal } from "@/components/modals/ReplaceStudentWalletModal";
 
-const statusTabs = [
-  { label: "All", value: "all" },
-  { label: "Active", value: "active" },
-  { label: "Graduated", value: "graduated" },
-  { label: "Evicted", value: "evicted" },
-  { label: "Suspended", value: "suspended" },
-];
-
 const trackOptions = [
   { label: "Web2", value: "0" },
   { label: "Web3", value: "1" },
@@ -59,7 +51,7 @@ const StudentsPage = () => {
   const [addScoreModalOpen, setAddScoreModalOpen] = useState(false);
   const [selectedStudentAddress, setSelectedStudentAddress] =
     useState<string>("");
-  const [selectedTab, setSelectedTab] = useState("all");
+
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCohort, setSelectedCohort] = useState<string>("");
   const [selectedTrack, setSelectedTrack] = useState<string>("");
@@ -93,13 +85,9 @@ const StudentsPage = () => {
     );
   }, [allOnChainStudents, cohorts]);
 
-  // Filtered students for search, tab, cohort, and track
+  // Filtered students for search, cohort, and track
   const filteredStudents = useMemo(() => {
     return mappedStudents.filter((student) => {
-      // Status filter
-      const matchesTab =
-        selectedTab === "all" ? true : student.status === selectedTab;
-
       // Search filter
       const matchesSearch =
         student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -115,9 +103,9 @@ const StudentsPage = () => {
         !selectedTrack ||
         student.email === (selectedTrack === "0" ? "web2" : "web3");
 
-      return matchesTab && matchesSearch && matchesCohort && matchesTrack;
+      return matchesSearch && matchesCohort && matchesTrack;
     });
-  }, [mappedStudents, selectedTab, searchTerm, selectedCohort, selectedTrack]);
+  }, [mappedStudents, searchTerm, selectedCohort, selectedTrack]);
 
   // Get unique cohort names for dropdown
   const cohortOptions = useMemo(() => {
@@ -138,7 +126,6 @@ const StudentsPage = () => {
   };
 
   const handleResetFilters = () => {
-    setSelectedTab("all");
     setSearchTerm("");
     setSelectedCohort("");
     setSelectedTrack("");
@@ -192,25 +179,6 @@ const StudentsPage = () => {
 
       {/* Filters Section */}
       <div className="mt-7 mb-4 space-y-4">
-        {/* Status Tabs */}
-        <div className="flex gap-2">
-          {statusTabs.map((tab) => (
-            <button
-              key={tab.value}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors focus:outline-none
-                ${
-                  selectedTab === tab.value
-                    ? "bg-black text-white"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }
-              `}
-              onClick={() => setSelectedTab(tab.value)}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-
         {/* Cohort and Track Selection */}
         <div className="flex items-center gap-4">
           {/* Cohort Dropdown */}
@@ -270,10 +238,7 @@ const StudentsPage = () => {
         </div>
 
         {/* Active Filters Display */}
-        {(selectedCohort ||
-          selectedTrack ||
-          selectedTab !== "all" ||
-          searchTerm) && (
+        {(selectedCohort || selectedTrack || searchTerm) && (
           <div className="flex items-center gap-2 text-sm text-gray-600">
             <span>Active filters:</span>
             {selectedCohort && (
@@ -286,11 +251,6 @@ const StudentsPage = () => {
               <span className="bg-green-100 text-green-800 px-2 py-1 rounded">
                 Track:{" "}
                 {trackOptions.find((t) => t.value === selectedTrack)?.label}
-              </span>
-            )}
-            {selectedTab !== "all" && (
-              <span className="bg-purple-100 text-purple-800 px-2 py-1 rounded">
-                Status: {statusTabs.find((t) => t.value === selectedTab)?.label}
               </span>
             )}
             {searchTerm && (
@@ -322,7 +282,9 @@ const StudentsPage = () => {
       <div className="mt-2 w-full">
         <Table
           data={filteredStudents}
-          columns={studentColumns(handleAddScore, handleEditStudent)}
+          columns={studentColumns(handleAddScore, handleEditStudent, () =>
+            setRefreshKey((k) => k + 1)
+          )}
           title=""
           searchable={false}
           exportable={false}
